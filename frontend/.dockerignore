@@ -1,0 +1,6 @@
+node_modules
+.next
+mock
+.env
+.env.local
+*.md
