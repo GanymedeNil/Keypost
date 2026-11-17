@@ -7,7 +7,7 @@
 - Base：同源，路径前缀 `/admin-api`。Next.js `rewrites` 把 `/admin-api/*`、`/storefront-api/*`、`/v1/*`、`/download/*`、`/billing`、`/checkout/*`、`/webhooks/*`、`/healthz` 反代到 Go（`BACKEND_URL`，默认 `http://localhost:8080`）。
 - 鉴权：登录后服务端下发 HttpOnly Cookie `df_admin`。**所有 POST/PUT/PATCH/DELETE 必须带请求头 `X-Requested-With: df-admin`**（CSRF 防护），否则 403。
 - 未登录 → `401 {"error":{"code":"unauthenticated",...}}`；权限不足 → `403 {"error":{"code":"forbidden"}}`。
-- 角色：`owner`（全部）> `admin`（除用户/API Key/设置中的密钥写入外全部）> `viewer`（只读；所有写操作 403）。
+- 角色：`owner`（全部）> `admin`（除「用户管理 / API Key 创建与吊销 / 设置写入」外全部）> `viewer`（只读，写操作 403；**例外**：`PATCH /me`、`POST /me/password`、`DELETE /me/stripe` 任何角色都可调用）。详见 §8。
 - 请求/响应均为 `application/json`（上传除外：`multipart/form-data`）。字段 snake_case。时间 RFC3339 UTC（`2026-11-17T09:30:00Z`）；金额为整数（最小货币单位，美分）。
 - 错误：`{"error":{"code":"validation_failed","message":"…","fields":{"email":"is invalid"}}}`；常见 code：`unauthenticated forbidden not_found validation_failed conflict stripe_error rate_limited internal`。
 - 列表：查询参数 `page`（默认 1）、`per_page`（默认 25，最大 100）、`q`（搜索）、`sort`（如 `-created_at`，默认各资源不同）、`test_mode=true|false`（默认 `false`）、`store_id`、各资源自有过滤。响应：
@@ -58,7 +58,7 @@
 
 下面 `[]` 表示可选；`R`=只读列表+详情，`CRUD` 表示 `GET list / POST / GET one / PATCH / DELETE`。
 
-### stores — CRUD（owner/admin）
+### stores — 读：任何已登录角色；写：owner/admin
 `Store`：`{id,name,slug,domain,url,avatar_url,plan,country,currency,support_email,email_from_name,receipt_subject,receipt_intro,stripe_account_id,total_sales,total_revenue,thirty_day_sales,thirty_day_revenue,created_at,updated_at}`
 POST/PATCH 字段：`name,slug,domain,url,avatar_url,country,currency,support_email,email_from_name,receipt_subject,receipt_intro`。
 
@@ -122,7 +122,7 @@ POST/PATCH 字段：`name,slug,domain,url,avatar_url,country,currency,support_em
 `GET /stripe-events?status=&type=&q=`；`GET /stripe-events/{id}`（含 `payload`）；`POST /stripe-events/{id}/replay`（重新处理）。
 `StripeEvent`：`{id,type,account,livemode,status(received|processed|ignored|failed),attempts,error,received_at,processed_at}`
 
-### api-keys（LS 兼容 `/v1/*` 使用的 Bearer Key）— owner/admin
+### api-keys（LS 兼容 `/v1/*` 使用的 Bearer Key）— 列表 owner/admin，创建/吊销 owner
 `GET /api-keys`；`POST /api-keys` `{"name","test_mode","expires_at"?}` → `{...APIKey,"token":"dfk_live_…"}`（**token 仅此一次返回**）；`DELETE /api-keys/{id}`（吊销）。
 `APIKey`：`{id,name,prefix,test_mode,owner_email,last_used_at,expires_at,revoked_at,created_at}`
 
@@ -203,3 +203,30 @@ Cookie `df_customer`（HttpOnly，30 天）。POST 同样需要 `X-Requested-Wit
 ```
 
 `download_url`/`billing_url` 为相对路径，浏览器直接导航即可（后端 302/流式返回）。**页面路由（Next.js）**：`/my-orders`（邮箱登录 + 订单列表）、`/my-orders/verify`（魔法链接落地页）、`/my-orders/[identifier]`（订单详情，支持 `?signature=`）。
+
+## 8. 约定补充（实现已按此执行）
+
+**权限矩阵**
+
+| 资源 | viewer | admin | owner |
+| --- | --- | --- | --- |
+| 大多数列表/详情（orders、customers、subscriptions、license-keys、products、webhooks、deliveries、stripe-events、stores、audit-logs、email-logs、imports） | 读 | 读写 | 读写 |
+| `GET /settings`、`GET /api-keys`、`GET /stripe/*` 写操作、Webhook 配置等 | ✗ | ✓ | ✓ |
+| `PUT /settings`、`POST/DELETE /api-keys`、`/users`、导入 LS（`POST /imports/lemonsqueezy*`） | ✗ | ✗ | ✓ |
+| 自己的资料 `PATCH /me`、`POST /me/password`、`DELETE /me/stripe` | ✓ | ✓ | ✓ |
+
+**通用**
+- 校验失败 `422`（`validation_failed`，带 `fields`；设置项的 key 是点号路径，如 `smtp.port`）；创建成功 `201`；更新/动作 `200`；删除 `204`；权限/CSRF `403`；未登录 `401`；资源不存在 `404`；唯一冲突/不可删除 `409`；Stripe 上游错误 `502`（`stripe_error`）。
+- 详情接口按 ID 取，**不受 `test_mode` 参数影响**（不会因切换测试模式而 404）。
+- 清空可空字段：字符串用 `""` 或 `null` 均可（`PATCH /customers`、`PATCH /users` 的 `stripe_*`、`PATCH /prices` 的可空数值用 `null`）。
+- `POST /me/password`：账号还没有密码（仅 Stripe 登录）时，`current_password` 可为空，用于设置首个密码。
+- 所有分页列表返回 `{data, meta}`；以下返回**裸数组**：`GET /imports/{id}/logs`、`GET /webhook-events`、`GET /stripe/catalog`。
+- `StripeEvent.id` 是 Stripe 事件 ID **字符串**（`evt_…`），不是数字。
+
+**响应形状**
+- `POST /orders/{id}/refund` → 更新后的 `Order`（同列表项形状）。
+- `POST /license-keys` → 新建的 `LicenseKey` 详情（含 `instances`）。
+- `POST /stripe/catalog/import` → `{"products":n,"variants":n,"prices":n,"skipped":n}`。
+- `PUT /settings` → 与 `GET /settings` 相同的完整结构。
+- `POST /imports/*` → `ImportJob`。`ImportJob.options` 永不包含 LS API Key 明文（只保留末 4 位）。
+- 上传文件：表单里的 `name` 若不带扩展名，会自动补上传文件的扩展名。
