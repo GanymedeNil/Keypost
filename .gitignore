@@ -26,3 +26,7 @@ next-env.d.ts
 .DS_Store
 .idea/
 .vscode/
+
+# build outputs from `go build ./cmd/...` run inside backend/
+/backend/dfctl
+/backend/server
