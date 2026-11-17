@@ -69,6 +69,7 @@ type Customer struct {
 	Metadata map[string]string `json:"metadata"`
 	Livemode bool              `json:"livemode"`
 	Deleted  bool              `json:"deleted"`
+	Created  int64             `json:"created"`
 }
 
 type Product struct {

@@ -206,7 +206,14 @@ func (c *Client) CancelSubscriptionNow(ctx context.Context, id string) (*Subscri
 
 func (c *Client) RetrieveInvoice(ctx context.Context, id string) (*Invoice, error) {
 	var i Invoice
-	return &i, c.do(ctx, "GET", "/v1/invoices/"+id, P().Expand("payments"), "", &i)
+	err := c.do(ctx, "GET", "/v1/invoices/"+id, P().Expand("payments"), "", &i)
+	var se *Error
+	if errors.As(err, &se) && se.Status == http.StatusBadRequest && strings.Contains(se.Message, "expand") {
+		// pre-basil API versions have no invoice.payments; payment_intent/charge are plain fields there
+		i = Invoice{}
+		err = c.do(ctx, "GET", "/v1/invoices/"+id, nil, "", &i)
+	}
+	return &i, err
 }
 
 func (c *Client) RetrievePaymentIntent(ctx context.Context, id string) (*PaymentIntent, error) {
@@ -287,6 +294,29 @@ func (c *Client) ListPrices(ctx context.Context, activeOnly bool) ([]Price, erro
 		}
 		var l list[Price]
 		if err := c.do(ctx, "GET", "/v1/prices", p, "", &l); err != nil {
+			return all, err
+		}
+		all = append(all, l.Data...)
+		if !l.HasMore || len(l.Data) == 0 {
+			break
+		}
+		after = l.Data[len(l.Data)-1].ID
+	}
+	return all, nil
+}
+
+// ListSubscriptions returns every subscription of a customer in any status
+// (auto-paginated, capped at 1000).
+func (c *Client) ListSubscriptions(ctx context.Context, customerID string) ([]Subscription, error) {
+	var all []Subscription
+	after := ""
+	for len(all) < 1000 {
+		p := P().Set("customer", customerID).Set("status", "all").Int("limit", 100)
+		if after != "" {
+			p.Set("starting_after", after)
+		}
+		var l list[Subscription]
+		if err := c.do(ctx, "GET", "/v1/subscriptions", p, "", &l); err != nil {
 			return all, err
 		}
 		all = append(all, l.Data...)
