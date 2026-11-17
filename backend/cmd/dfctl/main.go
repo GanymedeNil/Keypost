@@ -4,6 +4,7 @@
 //	dfctl admin create --email you@example.com --password '…' [--name Name] [--role owner|admin|viewer]
 //	dfctl admin reset-password --email you@example.com --password '…'
 //	dfctl apikey create --name ci [--test] [--email owner@example.com]
+//	dfctl demo-data [--test-mode] [--force]   sample catalogue, orders, licences… to explore the UI
 package main
 
 import (
@@ -48,6 +49,8 @@ func main() {
 			usage()
 		}
 		adminCmd(g, os.Args[2], os.Args[3:])
+	case "demo-data":
+		demoData(g, cfg, os.Args[2:])
 	case "apikey":
 		if len(os.Args) < 3 || os.Args[2] != "create" {
 			usage()
@@ -121,7 +124,7 @@ func apikeyCreate(g *gorm.DB, args []string) {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: dfctl migrate | admin create|reset-password --email … --password … | apikey create --name … [--test]")
+	fmt.Fprintln(os.Stderr, "usage: dfctl migrate | demo-data | admin create|reset-password --email … --password … | apikey create --name … [--test]")
 	os.Exit(2)
 }
 

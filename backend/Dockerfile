@@ -12,7 +12,7 @@ FROM alpine:3.21
 RUN apk add --no-cache ca-certificates tzdata && adduser -D -u 10001 app && mkdir -p /data && chown app /data
 COPY --from=build /out/server /out/dfctl /usr/local/bin/
 USER app
-ENV APP_ENV=production LISTEN_ADDR=:8080 DATA_DIR=/data
+ENV APP_ENV=production LISTEN_ADDR=:8080 DATA_DIR=/data DATABASE_URL=sqlite:/data/fulfillment.db
 VOLUME /data
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s CMD wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1
