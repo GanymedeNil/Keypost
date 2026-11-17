@@ -66,7 +66,7 @@ make test-pg         # 同一套测试跑在真实 PostgreSQL 16 上
 
 ## 从 Lemon Squeezy 迁出
 
-1. 后台 *导入* → 填 LS API Key（只读即可）→ 先 **Dry run** 看数量 → 正式导入（含文件下载）。也支持离线 ZIP 与订单 CSV。
+1. 后台 *迁移* → 填 LS API Key（只读即可）→ 先 **Dry run** 看数量 → 正式导入（含文件下载）。也支持离线 ZIP（`scripts/export-lemonsqueezy.py` 在本机导出，Key 不出你的电脑）与订单 CSV。
 2. 上传 LS 迁移工具给出的「LS 客户 ID → Stripe 客户 ID」映射表；对订阅、商品同理。其余用「自动匹配」按邮箱/名称匹配，*下载缺口报告* 处理剩余项。
 3. 把应用里的 `https://api.lemonsqueezy.com` 换成你的域名，License Key、实例 ID、Webhook 处理逻辑无需改动；把新 Webhook 的 URL/Secret 配上。
 4. 在 LS 停止服务（2027-03-31）前完成切换。
