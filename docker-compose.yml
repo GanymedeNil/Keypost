@@ -1,0 +1,40 @@
+# Production-style stack: PostgreSQL + Go API + Next.js (admin & customer pages).
+# Put your TLS reverse proxy (Caddy / nginx / Traefik) in front of port 3000.
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fulfillment
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: fulfillment
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fulfillment -d fulfillment"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://fulfillment:${POSTGRES_PASSWORD}@postgres:5432/fulfillment?sslmode=disable
+      TRUST_PROXY_HEADERS: "true"
+    depends_on:
+      postgres: { condition: service_healthy }
+    volumes: [filedata:/data]
+    expose: ["8080"]
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8080
+    depends_on: [backend]
+    ports: ["3000:3000"]
+
+volumes:
+  pgdata:
+  filedata:
