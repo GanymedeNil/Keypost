@@ -1,0 +1,28 @@
+# Go
+backend/bin/
+backend/data/
+*.db
+*.db-shm
+*.db-wal
+*.test
+*.out
+coverage.*
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+frontend/.env.local
+frontend/.env*.local
+*.tsbuildinfo
+next-env.d.ts
+
+# Env & secrets
+.env
+.env.local
+*.pem
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
