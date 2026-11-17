@@ -229,4 +229,6 @@ Cookie `df_customer`（HttpOnly，30 天）。POST 同样需要 `X-Requested-Wit
 - `POST /stripe/catalog/import` → `{"products":n,"variants":n,"prices":n,"skipped":n}`。
 - `PUT /settings` → 与 `GET /settings` 相同的完整结构。
 - `POST /imports/*` → `ImportJob`。`ImportJob.options` 永不包含 LS API Key 明文（只保留末 4 位）。
+- `ImportJob.kind`：`lemonsqueezy_api` | `lemonsqueezy_files`（ZIP）| `stripe_mapping` | `stripe_auto_match`。同一 kind 同时只能运行一个（再次启动返回 409）。
+- `progress`：`{stage, done, total, counts:{…}, warnings, errors?, dry_run?}`。`done/total` 是**当前阶段**的进度，`total=0` 表示未知。`stage` 取值：LS 导入为资源名（`stores customers products variants prices files orders order_items subscriptions subscription_items subscription_invoices license_keys license_key_instances`）；映射任务为 `customers|products|subscriptions`；自动匹配为 `customers products prices subscriptions`。
 - 上传文件：表单里的 `name` 若不带扩展名，会自动补上传文件的扩展名。

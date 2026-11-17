@@ -28,10 +28,12 @@ services:
     expose: ["8080"]
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # Next.js bakes rewrites at build time: changing this needs a rebuild.
+        BACKEND_URL: http://backend:8080
     restart: unless-stopped
-    environment:
-      BACKEND_URL: http://backend:8080
     depends_on: [backend]
     ports: ["3000:3000"]
 
