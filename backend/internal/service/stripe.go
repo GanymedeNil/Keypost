@@ -150,6 +150,9 @@ func (s *Svc) toUSD(amount int64, cur string) int64 {
 	return int64(float64(amount)*r + 0.5)
 }
 
+// ToUSD converts minor units of cur into USD cents (approximate, see fx.rates).
+func (s *Svc) ToUSD(amount int64, cur string) int64 { return s.toUSD(amount, cur) }
+
 // currencyRate formats the LS "currency_rate" (units of cur per 1 USD).
 func (s *Svc) currencyRate(cur string) string {
 	r := s.usdPerMinorUnit(cur)

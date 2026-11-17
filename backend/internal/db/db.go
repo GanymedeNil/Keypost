@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,7 +22,9 @@ func Open(url string, debug bool) (*gorm.DB, error) {
 		lvl = logger.Info
 	}
 	cfg := &gorm.Config{
-		Logger:                                   logger.Default.LogMode(lvl),
+		Logger: logger.New(log.New(os.Stderr, "", log.LstdFlags), logger.Config{
+			SlowThreshold: 500 * time.Millisecond, LogLevel: lvl, IgnoreRecordNotFoundError: true,
+		}),
 		NowFunc:                                  func() time.Time { return time.Now().UTC() },
 		DisableForeignKeyConstraintWhenMigrating: true,
 		TranslateError:                           true,

@@ -219,6 +219,9 @@ func (b *Builder) CustomerStats(ids []int64) map[int64]CustomerStats {
 	return out
 }
 
+// MonthlyAmount normalises a recurring amount to a monthly value (MRR).
+func MonthlyAmount(amount int64, unit string, qty int) int64 { return monthlyAmount(amount, unit, qty) }
+
 func maxInt(a, b int) int {
 	if a > b {
 		return a

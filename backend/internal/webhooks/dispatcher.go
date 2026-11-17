@@ -194,10 +194,14 @@ func (d *Dispatcher) Run(ctx context.Context) {
 func (d *Dispatcher) drain(ctx context.Context) {
 	for {
 		var due []db.WebhookDelivery
-		if err := d.DB.WithContext(ctx).Where("status = ? AND next_attempt_at <= ?", "pending", db.Now()).Order("id").Limit(25).Find(&due).Error; err != nil || len(due) == 0 {
+		if err := d.DB.WithContext(ctx).Where("status = ? AND next_attempt_at <= ?", "pending", db.Now()).Order("id").Limit(50).Find(&due).Error; err != nil || len(due) == 0 {
 			return
 		}
-		claimed := 0
+		// Deliveries to one endpoint are sent sequentially, in creation order
+		// (order_created must reach the merchant before license_key_created);
+		// different endpoints are served concurrently.
+		byHook := map[int64][]int64{}
+		var hooks []int64
 		for _, rec := range due {
 			// lease the row so concurrent instances do not double-send
 			res := d.DB.Model(&db.WebhookDelivery{}).Where("id = ? AND status = ? AND next_attempt_at <= ?", rec.ID, "pending", db.Now()).
@@ -205,16 +209,24 @@ func (d *Dispatcher) drain(ctx context.Context) {
 			if res.Error != nil || res.RowsAffected == 0 {
 				continue
 			}
-			claimed++
+			if _, seen := byHook[rec.WebhookID]; !seen {
+				hooks = append(hooks, rec.WebhookID)
+			}
+			byHook[rec.WebhookID] = append(byHook[rec.WebhookID], rec.ID)
+		}
+		if len(hooks) == 0 || ctx.Err() != nil {
+			return
+		}
+		for _, wid := range hooks {
+			ids := byHook[wid]
 			d.sem <- struct{}{}
 			d.wg.Add(1)
-			go func(id int64) {
+			go func() {
 				defer func() { <-d.sem; d.wg.Done() }()
-				d.deliver(context.Background(), id)
-			}(rec.ID)
-		}
-		if claimed == 0 || ctx.Err() != nil {
-			return
+				for _, id := range ids {
+					d.deliver(context.Background(), id)
+				}
+			}()
 		}
 	}
 }

@@ -3,6 +3,7 @@
 package settings
 
 import (
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -76,6 +77,7 @@ func New(g *gorm.DB, c *config.Config) *Service {
 		DownloadURLTTLSeconds:  strconv.Itoa(int(c.DownloadURLTTL / time.Second)),
 		CheckoutSuccessURL:     "",
 		CheckoutCancelURL:      "",
+		"fx.rates":             os.Getenv("FX_RATES"), // JSON, e.g. {"EUR":1.09,"GBP":1.28}: USD per 1 unit
 	}
 	return &Service{db: g, defaults: d, cache: map[string]string{}}
 }

@@ -322,7 +322,7 @@ func (s *Svc) FulfillCheckoutSession(ctx context.Context, sessionID, account str
 	var ssub *stripe.Subscription
 	if sess.Mode == "subscription" && sess.Subscription.ID != "" {
 		var sx stripe.Subscription
-		if !sess.Subscription.Decode(&sx) {
+		if !sess.Subscription.Decode(&sx) || sx.Status == "" {
 			fresh, e := cl.RetrieveSubscription(ctx, sess.Subscription.ID)
 			if e != nil {
 				return Result{}, fmt.Errorf("retrieve subscription: %w", e)
@@ -603,6 +603,11 @@ func maxI(a, b int) int {
 }
 
 // ---------------------------------------------------------------- receipts
+
+// ResendReceipt re-sends the receipt, optionally to another address.
+func (s *Svc) ResendReceipt(ctx context.Context, orderID int64, to string) error {
+	return s.sendReceipt(ctx, orderID, to)
+}
 
 // SendReceipt emails the order receipt (license keys, order link).
 func (s *Svc) SendReceipt(ctx context.Context, orderID int64) error {

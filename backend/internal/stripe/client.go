@@ -22,6 +22,8 @@ type Client struct {
 	APIVersion string
 	Base       string
 	HTTP       *http.Client
+	// ConnectedAccount, when set, sends the Stripe-Account header.
+	ConnectedAccount string
 }
 
 func NewClient(key, version, base string) *Client {
@@ -101,6 +103,9 @@ func (c *Client) do(ctx context.Context, method, path string, p *Params, idem st
 	}
 	if body != nil {
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	if c.ConnectedAccount != "" {
+		req.Header.Set("Stripe-Account", c.ConnectedAccount)
 	}
 	if idem != "" {
 		req.Header.Set("Idempotency-Key", idem)
