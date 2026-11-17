@@ -12,6 +12,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sort"
 	"sync"
 	"syscall"
 	"time"
@@ -34,13 +35,24 @@ type Dispatcher struct {
 	wake chan struct{}
 	sem  chan struct{}
 	wg   sync.WaitGroup
+
+	qmu    sync.Mutex
+	queues map[int64]*hookQueue
+}
+
+// hookQueue serialises deliveries to one endpoint: ids are sent one at a time
+// in ascending (= creation) order, even when they were claimed in different scans.
+type hookQueue struct {
+	mu      sync.Mutex
+	ids     []int64
+	running bool
 }
 
 func New(g *gorm.DB, res *resource.Builder, log *slog.Logger, maxAttempts int) *Dispatcher {
 	if maxAttempts < 1 {
 		maxAttempts = 4
 	}
-	d := &Dispatcher{DB: g, Res: res, Log: log, MaxAttempts: maxAttempts, wake: make(chan struct{}, 1), sem: make(chan struct{}, 8)}
+	d := &Dispatcher{DB: g, Res: res, Log: log, MaxAttempts: maxAttempts, wake: make(chan struct{}, 1), sem: make(chan struct{}, 8), queues: map[int64]*hookQueue{}}
 	d.Client = &http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
@@ -218,17 +230,50 @@ func (d *Dispatcher) drain(ctx context.Context) {
 			return
 		}
 		for _, wid := range hooks {
-			ids := byHook[wid]
-			d.sem <- struct{}{}
-			d.wg.Add(1)
-			go func() {
-				defer func() { <-d.sem; d.wg.Done() }()
-				for _, id := range ids {
-					d.deliver(context.Background(), id)
-				}
-			}()
+			d.enqueue(wid, byHook[wid])
 		}
 	}
+}
+
+// enqueue appends claimed deliveries to the endpoint's queue and makes sure
+// exactly one goroutine is draining it.
+func (d *Dispatcher) enqueue(hookID int64, ids []int64) {
+	d.qmu.Lock()
+	q := d.queues[hookID]
+	if q == nil {
+		q = &hookQueue{}
+		d.queues[hookID] = q
+	}
+	d.qmu.Unlock()
+
+	q.mu.Lock()
+	q.ids = append(q.ids, ids...)
+	sort.Slice(q.ids, func(i, j int) bool { return q.ids[i] < q.ids[j] })
+	start := !q.running
+	if start {
+		q.running = true
+	}
+	q.mu.Unlock()
+	if !start {
+		return
+	}
+	d.sem <- struct{}{}
+	d.wg.Add(1)
+	go func() {
+		defer func() { <-d.sem; d.wg.Done() }()
+		for {
+			q.mu.Lock()
+			if len(q.ids) == 0 {
+				q.running = false
+				q.mu.Unlock()
+				return
+			}
+			id := q.ids[0]
+			q.ids = q.ids[1:]
+			q.mu.Unlock()
+			d.deliver(context.Background(), id)
+		}
+	}()
 }
 
 func backoff(attempt int) time.Duration {
