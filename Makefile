@@ -14,7 +14,7 @@ test:                   ## backend tests (SQLite in memory) + race detector
 
 test-pg:                ## backend tests against PostgreSQL (starts a throwaway container)
 	-docker rm -f df-pg >/dev/null 2>&1
-	docker run -d --name df-pg -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=fulfillment -p 55433:5432 postgres:16-alpine
+	docker run -d --name df-pg -e POSTGRES_PASSWORD=pw -e POSTGRES_DB=fulfillment -p 55433:5432 postgres:18-alpine
 	until docker exec df-pg pg_isready -U postgres -d fulfillment >/dev/null 2>&1; do sleep 1; done
 	# -p 1: the packages share one database and each test run recreates the schema
 	cd backend && TEST_DATABASE_URL='$(PG_URL)' go test ./... -count=1 -p 1; rc=$$?; docker rm -f df-pg >/dev/null; exit $$rc

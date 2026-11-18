@@ -1,14 +1,16 @@
 # Production-style stack: PostgreSQL + Go API + Next.js (admin & customer pages).
 # Put your TLS reverse proxy (Caddy / nginx / Traefik) in front of port 3000.
+name: keypost
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: fulfillment
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: fulfillment
-    volumes: [pgdata:/var/lib/postgresql/data]
+    # PostgreSQL 18 images keep the cluster in /var/lib/postgresql/18/docker: mount the parent directory
+    volumes: [pgdata:/var/lib/postgresql]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U fulfillment -d fulfillment"]
       interval: 5s
