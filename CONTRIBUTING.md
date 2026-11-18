@@ -2,6 +2,10 @@
 
 Thanks for helping with Keypost. Keypost handles payments and license entitlements, so changes are reviewed and tested before they reach `main`.
 
+## Issues
+
+Use the issue forms: **Bug report**, **Lemon Squeezy compatibility difference** (include both responses side by side) and **Feature request**. Never paste secrets, license keys or customer data into an issue. Mask Stripe keys, Lemon Squeezy API keys, `APP_SECRET`, signed URLs and customer e-mail addresses first.
+
 ## Pull requests only
 
 Nobody pushes to `main` directly, including the maintainers. Every change goes through a pull request:

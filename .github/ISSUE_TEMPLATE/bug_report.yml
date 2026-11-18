@@ -1,0 +1,109 @@
+name: Bug report
+description: Something in Keypost does not work as documented.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. Keypost is provided as is (see the [Disclaimer](https://github.com/GanymedeNil/Keypost#disclaimer)); clear reports are what make fixes possible.
+
+        **Never paste secrets.** Remove or mask Stripe keys (`sk_…`, `rk_…`, `whsec_…`), Lemon Squeezy API keys, `APP_SECRET`, license keys, signed URLs, passwords, TOTP secrets and recovery codes. Also mask customer names and e-mail addresses.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - License API (/v1/licenses/*)
+        - JSON:API (/v1/*)
+        - Outgoing webhooks
+        - Stripe fulfillment (checkout, renewals, refunds)
+        - Stripe webhook handling
+        - Lemon Squeezy import / migration
+        - Admin back office
+        - Customer pages (My orders, downloads)
+        - E-mail
+        - Two-factor authentication / sign-in
+        - Deployment (Docker, configuration)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do and what did you see? Include the exact error message, HTTP status or screenshot if you have one.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: The smallest set of steps (or API calls) that triggers it. Use Stripe test mode where possible.
+      placeholder: |
+        1. …
+        2. …
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Keypost version
+      description: Output of `dfctl version`, or `server --version`, or the first log line after start-up.
+      placeholder: "0.1.0 (a1b2c3d)"
+    validations:
+      required: true
+  - type: dropdown
+    id: database
+    attributes:
+      label: Database
+      options:
+        - PostgreSQL 18
+        - Other PostgreSQL version
+        - SQLite
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: How do you run it?
+      options:
+        - Docker Compose (from the repository)
+        - Own Docker setup
+        - Binaries / from source
+        - Local development (make dev-backend / dev-frontend)
+    validations:
+      required: true
+  - type: dropdown
+    id: stripe-mode
+    attributes:
+      label: Stripe mode
+      options:
+        - Test mode
+        - Live mode
+        - Not related to Stripe
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Server log lines around the problem, with secrets and customer data removed. This is rendered as code.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and the docs.
+          required: true
+        - label: I removed secrets, license keys and customer data from everything I pasted.
+          required: true
