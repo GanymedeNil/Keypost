@@ -12,6 +12,7 @@ import stripe from './messages/stripe';
 import imports from './messages/imports';
 import settings from './messages/settings';
 import team from './messages/team';
+import mfa from './messages/mfa';
 import storefront from './messages/storefront';
 
 export type Lang = 'en' | 'zh';
@@ -35,6 +36,7 @@ const groups = [
   imports,
   settings,
   team,
+  mfa,
   storefront,
 ] as const;
 

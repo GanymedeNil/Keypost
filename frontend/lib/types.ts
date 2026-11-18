@@ -30,8 +30,19 @@ export interface User {
   stripe_account_label: string | null;
   disabled: boolean;
   has_password: boolean;
+  mfa_enabled: boolean;
+  /** Only on /me, login and /auth/mfa/verify. */
+  mfa?: MfaState;
   last_login_at: string | null;
   created_at: string;
+}
+
+/** Two-step verification (docs/ADMIN_API.md §1.1): `verified` is about the current session. */
+export interface MfaState {
+  required: boolean;
+  enabled: boolean;
+  verified: boolean;
+  recovery_codes_left: number;
 }
 
 export interface AuthConfig {

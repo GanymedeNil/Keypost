@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Ban, CheckCircle2, Lock, Pencil, Plus, Trash2, Users } from 'lucide-react';
+import { Ban, CheckCircle2, Lock, Pencil, Plus, ShieldOff, Trash2, Users } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
@@ -20,6 +20,7 @@ import {
   SearchInput,
   StatusBadge,
   Toolbar,
+  useConfirm,
   useConfirmDelete,
   usePageTitle,
   type Column,
@@ -34,6 +35,7 @@ const ROLES: Role[] = ['owner', 'admin', 'viewer'];
 function TeamContent() {
   const { t, te } = useI18n();
   const { user: me } = useAdmin();
+  const confirm = useConfirm();
   const confirmDelete = useConfirmDelete();
   const { run } = useAction();
   const list = useList<User>('/users', { filters: ['role'] });
@@ -43,6 +45,17 @@ function TeamContent() {
     const res = await run(() => adminApi.patch<User>(`/users/${u.id}`, { disabled }), {
       success: disabled ? t('team.users.disabled') : t('team.users.enabled'),
     });
+    if (res.ok) void list.mutate();
+  }
+
+  async function resetMfa(u: User) {
+    const ok = await confirm({
+      title: t('team.users.mfaResetTitle'),
+      description: t('team.users.mfaResetBody', { name: u.name || u.email }),
+      confirmLabel: t('team.users.mfaReset'),
+    });
+    if (!ok) return;
+    const res = await run(() => adminApi.post(`/users/${u.id}/mfa/reset`), { success: t('team.users.mfaResetDone') });
     if (res.ok) void list.mutate();
   }
 
@@ -96,6 +109,12 @@ function TeamContent() {
       ),
     },
     {
+      key: 'mfa',
+      header: t('team.users.col.mfa'),
+      hideBelow: 'md',
+      cell: (u) => (u.mfa_enabled ? <Badge tone="success">{t('team.users.mfaOn')}</Badge> : <Badge tone="warning">{t('team.users.mfaOff')}</Badge>),
+    },
+    {
       key: 'last_login',
       header: t('team.users.col.lastLogin'),
       hideBelow: 'lg',
@@ -116,6 +135,9 @@ function TeamContent() {
               icon: u.disabled ? <CheckCircle2 /> : <Ban />,
               onSelect: () => void setDisabled(u, !u.disabled),
             },
+            ...(u.id !== me.id && u.mfa_enabled
+              ? [{ key: 'mfa-reset', label: t('team.users.mfaReset'), icon: <ShieldOff />, onSelect: () => void resetMfa(u) }]
+              : []),
             { key: 'delete', label: t('common.delete'), icon: <Trash2 />, tone: 'danger', separatorBefore: true, onSelect: () => void remove(u) },
           ]}
         />

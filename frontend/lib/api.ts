@@ -71,6 +71,15 @@ function redirectToLogin() {
   window.location.assign(target);
 }
 
+function redirectToMfa() {
+  if (typeof window === 'undefined') return;
+  const { pathname, search, origin } = window.location;
+  if (pathname.startsWith('/admin/mfa') || pathname.startsWith('/admin/login')) return;
+  const target = new URL('/admin/mfa', origin);
+  target.searchParams.set('next', pathname + search);
+  window.location.assign(target);
+}
+
 async function parseError(res: Response): Promise<ApiError> {
   let code = 'internal';
   let message = res.statusText || `HTTP ${res.status}`;
@@ -117,6 +126,9 @@ export async function request<T>(url: string, opts: RequestOptions = {}): Promis
     const err = await parseError(res);
     if (res.status === 401 && opts.redirectOn401 !== false && url.startsWith(ADMIN_BASE) && !url.startsWith(`${ADMIN_BASE}/auth/`)) {
       redirectToLogin();
+    }
+    if (res.status === 403 && (err.code === 'mfa_required' || err.code === 'mfa_setup_required') && url.startsWith(ADMIN_BASE)) {
+      redirectToMfa();
     }
     throw err;
   }

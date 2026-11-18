@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense, type ReactNode } from 'react';
+import { Suspense, useEffect, type ReactNode } from 'react';
+import { usePathname } from 'next/navigation';
 import useSWR from 'swr';
 import { FlaskConical } from 'lucide-react';
 import { adminApi, fetcher, isApiError } from '@/lib/api';
@@ -52,6 +53,12 @@ function Frame({ children }: { children: ReactNode }) {
 export default function AdminShellLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n();
   const { data: user, error } = useSWR<User>(adminApi.url('/me'), fetcher, { revalidateOnFocus: false });
+  const pathname = usePathname();
+  // MFA is required for every member: a session that has not passed it only gets the MFA page
+  const needsMfa = !!user?.mfa?.required && !user.mfa.verified;
+  useEffect(() => {
+    if (needsMfa) window.location.replace(`/admin/mfa?next=${encodeURIComponent(pathname)}`);
+  }, [needsMfa, pathname]);
 
   if (error && !isApiError(error)) {
     return <ErrorState error={error} title={t('shell.sessionError')} className="min-h-dvh" />;
@@ -69,7 +76,7 @@ export default function AdminShellLayout({ children }: { children: ReactNode }) 
       </div>
     );
   }
-  if (!user) {
+  if (!user || needsMfa) {
     return (
       <div className="grid min-h-dvh place-items-center text-sm text-muted" role="status">
         <div className="flex items-center gap-2">
