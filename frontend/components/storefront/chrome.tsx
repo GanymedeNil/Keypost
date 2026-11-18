@@ -11,7 +11,7 @@ export function StorefrontHeader() {
     <header className="border-b border-line bg-surface print:hidden">
       <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-3 px-4">
         <Link href="/my-orders" className="flex min-h-10 items-center gap-2.5 rounded-md">
-          <BrandMark className="h-7 w-auto shrink-0 text-fg" />
+          <BrandMark className="h-6 w-auto shrink-0 text-fg" />
           <span className="text-sm font-semibold tracking-tight">{t('storefront.brand')}</span>
         </Link>
         <div className="flex items-center gap-1">

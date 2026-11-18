@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BrandMark } from '@/components/brand-mark';
+import { BrandLogo } from '@/components/brand-mark';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/provider';
 import { NAV, SETTINGS_ITEM, type NavItem } from './nav';
@@ -36,8 +36,7 @@ export function Brand() {
   const t = useT();
   return (
     <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-1">
-      <BrandMark className="h-6 w-auto shrink-0 text-fg" />
-      <span className="text-sm font-semibold tracking-tight text-fg">{t('shell.brand')}</span>
+      <BrandLogo label={t('shell.brand')} className="h-6 w-auto shrink-0 text-fg" />
     </Link>
   );
 }

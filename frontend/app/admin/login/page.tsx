@@ -3,7 +3,7 @@
 import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
-import { BrandMark } from '@/components/brand-mark';
+import { BrandLogo } from '@/components/brand-mark';
 import { adminApi, ApiError, ADMIN_BASE } from '@/lib/api';
 import type { AuthConfig, User } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/provider';
@@ -132,7 +132,7 @@ function LoginInner() {
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <BrandMark className="mb-4 h-14 w-auto text-fg" />
+          <BrandLogo className="mb-5 h-11 w-auto text-fg" />
           <h1 className="text-xl font-semibold tracking-tight">{setup ? t('auth.setupTitle') : t('auth.title')}</h1>
           <p className="mt-1 text-sm text-muted">{setup ? t('auth.setupDesc') : t('auth.subtitle')}</p>
         </div>

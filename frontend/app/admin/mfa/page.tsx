@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR, { mutate as globalMutate } from 'swr';
 import QRCode from 'qrcode';
-import { BrandMark } from '@/components/brand-mark';
+import { BrandLogo } from '@/components/brand-mark';
 import { adminApi, ApiError, fetcher } from '@/lib/api';
 import type { User } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/provider';
@@ -212,7 +212,7 @@ function MfaInner() {
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <BrandMark className="mb-4 h-14 w-auto text-fg" />
+          <BrandLogo className="mb-5 h-11 w-auto text-fg" />
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
           {user && <p className="mt-1 text-sm text-muted">{user.email}</p>}
         </div>
