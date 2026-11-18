@@ -5,7 +5,7 @@ import { FileText, UploadCloud, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatBytes } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/provider';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/kit';
 
 /** Single-file drop target with click-to-browse. `extensions` are lower-case, with the dot (e.g. `.zip`). */
 export function FileDropzone({
@@ -50,11 +50,11 @@ export function FileDropzone({
         }}
       />
       {file ? (
-        <div className="flex items-center gap-3 rounded-lg border border-line-strong bg-surface-2 px-3 py-2.5">
-          <FileText aria-hidden className="size-5 shrink-0 text-subtle" />
+        <div className="flex items-center gap-3 rounded-lg border border-input bg-muted px-3 py-2.5">
+          <FileText aria-hidden className="size-5 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-fg">{file.name}</p>
-            <p className="text-xs text-subtle">{formatBytes(file.size, locale)}</p>
+            <p className="truncate text-sm font-medium text-foreground">{file.name}</p>
+            <p className="text-xs text-muted-foreground">{formatBytes(file.size, locale)}</p>
           </div>
           <Button size="sm" variant="ghost" onClick={() => inputRef.current?.click()} disabled={disabled}>
             {t('imports.dropzone.replace')}
@@ -80,12 +80,12 @@ export function FileDropzone({
           }}
           className={cn(
             'flex w-full flex-col items-center gap-1.5 rounded-lg border border-dashed px-4 py-7 text-center transition-colors',
-            over ? 'border-accent bg-accent-soft' : 'border-line-strong bg-surface-2/50 hover:border-subtle hover:bg-surface-2',
+            over ? 'border-primary bg-accent' : 'border-input bg-muted/50 hover:border-muted-foreground hover:bg-muted',
             message && 'border-danger',
           )}
         >
-          <UploadCloud aria-hidden className="size-6 text-subtle" />
-          <span className="text-sm text-muted">{prompt}</span>
+          <UploadCloud aria-hidden className="size-6 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">{prompt}</span>
         </button>
       )}
       {message && (

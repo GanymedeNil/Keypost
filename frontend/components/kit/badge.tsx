@@ -2,22 +2,23 @@
 
 import type { ReactNode } from 'react';
 import { cn, humanize } from '@/lib/utils';
+import { Badge as UiBadge } from '@/components/ui/badge';
 import { useI18n } from '@/lib/i18n/provider';
 
 export type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
 
 const tones: Record<Tone, string> = {
-  neutral: 'bg-surface-3 text-muted',
-  accent: 'bg-accent-soft text-accent-text',
-  success: 'bg-success-soft text-success-text',
-  warning: 'bg-warning-soft text-warning-text',
-  danger: 'bg-danger-soft text-danger-text',
-  info: 'bg-info-soft text-info-text',
+  neutral: '',
+  accent: '',
+  success: 'border-transparent bg-success-soft text-success-text',
+  warning: 'border-transparent bg-warning-soft text-warning-text',
+  danger: 'border-transparent bg-danger-soft text-danger-text',
+  info: 'border-transparent bg-info-soft text-info-text',
 };
 
 const dots: Record<Tone, string> = {
-  neutral: 'bg-subtle',
-  accent: 'bg-accent',
+  neutral: 'bg-muted-foreground',
+  accent: 'bg-primary',
   success: 'bg-success',
   warning: 'bg-warning',
   danger: 'bg-danger',
@@ -36,10 +37,10 @@ export function Badge({
   children: ReactNode;
 }) {
   return (
-    <span className={cn('inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium', tones[tone], className)}>
+    <UiBadge variant={tone === 'accent' ? 'default' : tone === 'neutral' ? 'secondary' : 'outline'} className={cn('gap-1.5', tones[tone], className)}>
       {dot && <span aria-hidden className={cn('size-1.5 rounded-full', dots[tone])} />}
       {children}
-    </span>
+    </UiBadge>
   );
 }
 
@@ -76,7 +77,7 @@ const statusTone: Record<string, Tone> = {
 /** Colour-coded status pill with an i18n label (`status.<value>`), falls back to a humanised value. */
 export function StatusBadge({ status, label, className }: { status: string | null | undefined; label?: string; className?: string }) {
   const { te } = useI18n();
-  if (!status) return <span className="text-subtle">—</span>;
+  if (!status) return <span className="text-muted-foreground">—</span>;
   return (
     <Badge dot tone={statusTone[status] ?? 'neutral'} className={className}>
       {label ?? te(`status.${status}`, humanize(status))}

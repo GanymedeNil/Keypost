@@ -10,7 +10,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { AdminProvider, useAdmin } from '@/components/admin/admin-context';
 import { Sidebar } from '@/components/admin/sidebar';
 import { Topbar } from '@/components/admin/topbar';
-import { Button, ButtonLink, ErrorState, PageSkeleton, Spinner } from '@/components/ui';
+import { Button, ButtonLink, ErrorState, PageSkeleton, Spinner } from '@/components/kit';
 
 function TestBanner() {
   const { t } = useI18n();
@@ -34,7 +34,7 @@ function Frame({ children }: { children: ReactNode }) {
     <div className="flex min-h-dvh">
       <a
         href="#main"
-        className="sr-only z-[200] rounded-md bg-accent px-3 py-1.5 text-accent-fg focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
+        className="sr-only z-[200] rounded-md bg-primary px-3 py-1.5 text-primary-foreground focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
       >
         {t('shell.skipToContent')}
       </a>
@@ -78,7 +78,7 @@ export default function AdminShellLayout({ children }: { children: ReactNode }) 
   }
   if (!user || needsMfa) {
     return (
-      <div className="grid min-h-dvh place-items-center text-sm text-muted" role="status">
+      <div className="grid min-h-dvh place-items-center text-sm text-muted-foreground" role="status">
         <div className="flex items-center gap-2">
           <Spinner />
           {t('shell.loadingSession')}

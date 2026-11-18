@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import type { Price } from '@/lib/types';
-import { Button, Modal } from '@/components/ui';
+import { Button, Modal } from '@/components/kit';
 import { PriceFields } from './price-fields';
 import { draftToInput, emptyDraft, priceToDraft, validateDraft, type DraftErrors, type PriceDraft } from './price-utils';
 

@@ -7,7 +7,7 @@ import { JobsTable } from '@/components/admin/imports/jobs-table';
 import { LemonSqueezyStep } from '@/components/admin/imports/lemonsqueezy-step';
 import { MappingStep } from '@/components/admin/imports/mapping-step';
 import { ReportStep } from '@/components/admin/imports/report-step';
-import { Callout, PageHeader } from '@/components/ui';
+import { Callout, PageHeader } from '@/components/kit';
 
 export default function ImportsPage() {
   const t = useT();

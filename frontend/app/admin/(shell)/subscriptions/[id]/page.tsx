@@ -32,7 +32,7 @@ import {
   StatusBadge,
   TestModeBadge,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 
 function InvoicesCard({ invoices }: { invoices: SubscriptionInvoice[] }) {
@@ -55,9 +55,9 @@ function InvoicesCard({ invoices }: { invoices: SubscriptionInvoice[] }) {
       header: t('subscriptions.invoices.refunded'),
       align: 'right',
       hideBelow: 'sm',
-      cell: (i) => (i.refunded_amount ? <MoneyText amount={i.refunded_amount} currency={i.currency} className="text-danger-text" /> : <span className="text-subtle">—</span>),
+      cell: (i) => (i.refunded_amount ? <MoneyText amount={i.refunded_amount} currency={i.currency} className="text-danger-text" /> : <span className="text-muted-foreground">—</span>),
     },
-    { key: 'date', header: t('common.date'), hideBelow: 'sm', cell: (i) => <DateText value={i.created_at} style="date" className="text-muted" /> },
+    { key: 'date', header: t('common.date'), hideBelow: 'sm', cell: (i) => <DateText value={i.created_at} style="date" className="text-muted-foreground" /> },
     {
       key: 'link',
       header: <span className="sr-only">{t('subscriptions.invoices.link')}</span>,
@@ -70,12 +70,12 @@ function InvoicesCard({ invoices }: { invoices: SubscriptionInvoice[] }) {
             rel="noreferrer"
             aria-label={t('subscriptions.invoices.open')}
             title={t('subscriptions.invoices.open')}
-            className="inline-flex size-7 items-center justify-center rounded-md text-accent-text hover:bg-surface-2"
+            className="inline-flex size-7 items-center justify-center rounded-md text-primary hover:bg-muted"
           >
             <ExternalLink className="size-3.5" />
           </a>
         ) : (
-          <span className="text-subtle">—</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
   ];
@@ -99,14 +99,14 @@ function LicenseKeysCard({ keys }: { keys: LicenseKey[] }) {
       {keys.length === 0 ? (
         <EmptyState title={t('subscriptions.keys.empty')} className="py-10" />
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-border">
           {keys.map((k) => (
             <li key={k.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5">
               <div className="min-w-0">
-                <Link href={`/admin/license-keys/${k.id}`} className="font-mono text-sm font-medium text-fg hover:text-accent-text">
+                <Link href={`/admin/license-keys/${k.id}`} className="font-mono text-sm font-medium text-foreground hover:text-primary">
                   {k.key_short}
                 </Link>
-                <p className="truncate text-xs text-subtle">
+                <p className="truncate text-xs text-muted-foreground">
                   {k.product_name} · {k.variant_name}
                 </p>
               </div>
@@ -154,18 +154,18 @@ export default function SubscriptionDetailPage() {
               {sub.cancelled && sub.status !== 'expired' && <Callout tone="warning">{t('subscriptions.cancelledNote')}</Callout>}
               <DL cols={2}>
                 <DI label={t('subscriptions.field.customer')}>
-                  <Link href={`/admin/customers/${sub.customer_id}`} className="font-medium text-accent-text hover:underline">
+                  <Link href={`/admin/customers/${sub.customer_id}`} className="font-medium text-primary hover:underline">
                     {sub.user_name || sub.user_email}
                   </Link>
-                  <span className="block text-xs text-subtle">{sub.user_email}</span>
+                  <span className="block text-xs text-muted-foreground">{sub.user_email}</span>
                 </DI>
                 <DI label={t('subscriptions.field.order')}>
-                  <Link href={`/admin/orders/${sub.order_id}`} className="text-accent-text hover:underline">
+                  <Link href={`/admin/orders/${sub.order_id}`} className="text-primary hover:underline">
                     {t('subscriptions.orderLink', { id: sub.order_id })}
                   </Link>
                 </DI>
                 <DI label={t('subscriptions.field.product')}>
-                  <Link href={`/admin/products/${sub.product_id}`} className="hover:text-accent-text hover:underline">
+                  <Link href={`/admin/products/${sub.product_id}`} className="hover:text-primary hover:underline">
                     {sub.product_name}
                   </Link>
                 </DI>
@@ -191,7 +191,7 @@ export default function SubscriptionDetailPage() {
               </DL>
               {sub.pause !== null && sub.pause !== undefined && (
                 <div>
-                  <p className="mb-1 text-xs text-subtle">{t('subscriptions.field.pause')}</p>
+                  <p className="mb-1 text-xs text-muted-foreground">{t('subscriptions.field.pause')}</p>
                   <JsonViewer value={sub.pause} maxHeight={160} />
                 </div>
               )}
@@ -204,7 +204,7 @@ export default function SubscriptionDetailPage() {
             <CardBody className="space-y-4">
               {sub.stripe_subscription_id ? (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-subtle">{t('subscriptions.stripe.subscriptionId')}</p>
+                  <p className="text-xs text-muted-foreground">{t('subscriptions.stripe.subscriptionId')}</p>
                   <CopyField value={sub.stripe_subscription_id} label={t('subscriptions.stripe.subscriptionId')} />
                 </div>
               ) : (
@@ -224,7 +224,7 @@ export default function SubscriptionDetailPage() {
               )}
               {sub.stripe_customer_id && (
                 <div className="space-y-1.5">
-                  <p className="text-xs text-subtle">{t('subscriptions.stripe.customerId')}</p>
+                  <p className="text-xs text-muted-foreground">{t('subscriptions.stripe.customerId')}</p>
                   <CopyField value={sub.stripe_customer_id} label={t('subscriptions.stripe.customerId')} />
                 </div>
               )}

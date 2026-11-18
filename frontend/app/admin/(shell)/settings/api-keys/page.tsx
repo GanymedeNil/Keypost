@@ -25,7 +25,7 @@ import {
   useConfirm,
   usePageTitle,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { CreateKeyDialog, TokenDialog } from '@/components/admin/team/api-key-dialogs';
 import { useOrigin } from '@/components/admin/team/use-origin';
@@ -56,7 +56,7 @@ function UsageCard() {
         </div>
         <div className="space-y-1.5">
           <p className="text-xs font-medium">{t('team.apiKeys.example')}</p>
-          <div className="relative rounded-lg border border-line bg-surface-2">
+          <div className="relative rounded-lg border border-border bg-muted">
             <div className="absolute right-1.5 top-1.5">
               <CopyButton value={example} label={t('team.apiKeys.example')} />
             </div>
@@ -99,31 +99,31 @@ function KeysCard() {
       cell: (k) => (
         <div className="min-w-0">
           <p className="truncate font-medium">{k.name}</p>
-          <p className="truncate text-xs text-subtle sm:hidden">
+          <p className="truncate text-xs text-muted-foreground sm:hidden">
             <code>{k.prefix}…</code>
           </p>
         </div>
       ),
     },
-    { key: 'prefix', header: t('team.apiKeys.col.prefix'), hideBelow: 'sm', cell: (k) => <code className="rounded bg-surface-3 px-1.5 py-0.5 text-xs">{k.prefix}…</code> },
+    { key: 'prefix', header: t('team.apiKeys.col.prefix'), hideBelow: 'sm', cell: (k) => <code className="rounded bg-accent px-1.5 py-0.5 text-xs">{k.prefix}…</code> },
     {
       key: 'mode',
       header: t('team.apiKeys.col.mode'),
       hideBelow: 'md',
       cell: (k) => <Badge tone={k.test_mode ? 'warning' : 'accent'}>{k.test_mode ? t('team.apiKeys.modeTest') : t('team.apiKeys.modeLive')}</Badge>,
     },
-    { key: 'owner', header: t('team.apiKeys.col.owner'), hideBelow: 'xl', cell: (k) => <span className="text-muted">{k.owner_email ?? '—'}</span> },
+    { key: 'owner', header: t('team.apiKeys.col.owner'), hideBelow: 'xl', cell: (k) => <span className="text-muted-foreground">{k.owner_email ?? '—'}</span> },
     {
       key: 'last_used',
       header: t('team.apiKeys.col.lastUsed'),
       hideBelow: 'lg',
-      cell: (k) => (k.last_used_at ? <DateText value={k.last_used_at} relative /> : <span className="text-subtle">{t('team.apiKeys.neverUsed')}</span>),
+      cell: (k) => (k.last_used_at ? <DateText value={k.last_used_at} relative /> : <span className="text-muted-foreground">{t('team.apiKeys.neverUsed')}</span>),
     },
     {
       key: 'expires',
       header: t('team.apiKeys.col.expires'),
       hideBelow: 'lg',
-      cell: (k) => (k.expires_at ? <DateText value={k.expires_at} style="date" /> : <span className="text-subtle">{t('common.never')}</span>),
+      cell: (k) => (k.expires_at ? <DateText value={k.expires_at} style="date" /> : <span className="text-muted-foreground">{t('common.never')}</span>),
     },
     {
       key: 'status',
@@ -137,7 +137,7 @@ function KeysCard() {
         );
       },
     },
-    { key: 'created', header: t('common.created'), hideBelow: 'xl', cell: (k) => <DateText value={k.created_at} style="date" className="text-muted" /> },
+    { key: 'created', header: t('common.created'), hideBelow: 'xl', cell: (k) => <DateText value={k.created_at} style="date" className="text-muted-foreground" /> },
     {
       key: 'actions',
       header: <span className="sr-only">{t('common.actions')}</span>,
@@ -169,7 +169,7 @@ function KeysCard() {
           <SearchInput value={list.q} onChange={list.setSearch} placeholder={t('team.apiKeys.searchPlaceholder')} />
         </Toolbar>
         <DataTable
-          className="mt-3 border-t border-line"
+          className="mt-3 border-t border-border"
           columns={columns}
           rows={list.rows}
           rowKey={(k) => k.id}

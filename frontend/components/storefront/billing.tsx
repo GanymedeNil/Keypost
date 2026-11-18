@@ -4,7 +4,7 @@ import { CreditCard } from 'lucide-react';
 import { storefrontApi } from '@/lib/api';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Button, ButtonAnchor, useToast, type ButtonVariant } from '@/components/ui';
+import { Button, ButtonAnchor, useToast, type ButtonVariant } from '@/components/kit';
 
 function BillingPortalButton({ variant, className }: { variant: ButtonVariant; className?: string }) {
   const t = useT();

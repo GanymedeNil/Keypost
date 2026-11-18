@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { invalidate } from '@/lib/swr';
 import type { Webhook } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
-import { Button, CopyButton, Field, Input, Modal, SwitchField } from '@/components/ui';
+import { Button, CopyButton, Field, Input, Modal, SwitchField } from '@/components/kit';
 import { useAdmin } from '@/components/admin/admin-context';
 import { StoreSelect, useDefaultStoreId } from '@/components/admin/store-select';
 import { EventPicker } from './event-picker';
@@ -158,7 +158,7 @@ export function WebhookFormModal({ webhook, onClose, onSaved }: { webhook: Webho
             placeholder={webhook?.secret_set ? t('webhooks.form.secretPlaceholderKeep') : undefined}
           />
         </Field>
-        <div className="space-y-3 rounded-lg border border-line p-3">
+        <div className="space-y-3 rounded-lg border border-border p-3">
           <SwitchField label={t('webhooks.form.disabled')} description={t('webhooks.form.disabledHint')} checked={disabled} onCheckedChange={setDisabled} />
           <SwitchField label={t('webhooks.form.testMode')} description={t('webhooks.form.testModeHint')} checked={test} onCheckedChange={setTest} />
         </div>

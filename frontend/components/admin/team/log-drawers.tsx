@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n/provider';
 import type { AuditLog, EmailLog } from '@/lib/types';
-import { Callout, DateText, DI, DL, Drawer, JsonViewer, Mono, StatusBadge } from '@/components/ui';
+import { Callout, DateText, DI, DL, Drawer, JsonViewer, Mono, StatusBadge } from '@/components/kit';
 
 export function resourceLabel(log: AuditLog): string {
   if (!log.resource_type) return '—';
@@ -35,7 +35,7 @@ export function AuditDrawer({ log, onClose }: { log: AuditLog | null; onClose: (
           </DL>
           <div className="space-y-1.5">
             <p className="text-xs font-medium">{t('team.audit.col.details')}</p>
-            {hasDetails(log.details) ? <JsonViewer value={log.details} /> : <p className="text-sm text-subtle">{t('team.audit.noDetails')}</p>}
+            {hasDetails(log.details) ? <JsonViewer value={log.details} /> : <p className="text-sm text-muted-foreground">{t('team.audit.noDetails')}</p>}
           </div>
         </div>
       )}
@@ -63,7 +63,7 @@ export function EmailDrawer({ log, onClose }: { log: EmailLog | null; onClose: (
             </DI>
             <DI label={t('team.email.col.order')}>
               {log.order_id ? (
-                <Link href={`/admin/orders/${log.order_id}`} className="text-accent-text hover:underline">
+                <Link href={`/admin/orders/${log.order_id}`} className="text-primary hover:underline">
                   {t('team.email.openOrder')} #{log.order_id}
                 </Link>
               ) : null}
@@ -71,7 +71,7 @@ export function EmailDrawer({ log, onClose }: { log: EmailLog | null; onClose: (
           </DL>
           <div className="space-y-1.5">
             <p className="text-xs font-medium">{t('team.email.col.error')}</p>
-            {log.error ? <Callout tone="danger"><span className="break-words font-mono text-xs">{log.error}</span></Callout> : <p className="text-sm text-subtle">{t('team.email.noError')}</p>}
+            {log.error ? <Callout tone="danger"><span className="break-words font-mono text-xs">{log.error}</span></Callout> : <p className="text-sm text-muted-foreground">{t('team.email.noError')}</p>}
           </div>
         </div>
       )}

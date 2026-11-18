@@ -5,7 +5,7 @@ import { formatBytes, formatNumber } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/provider';
 import { isRecord } from '@/lib/utils';
 import type { ImportJob } from '@/lib/types';
-import { Badge, Card, CardBody, CardHeader, DateText, DI, DL } from '@/components/ui';
+import { Badge, Card, CardBody, CardHeader, DateText, DI, DL } from '@/components/kit';
 import { formatDuration, jobDuration, useImportLabels } from './utils';
 
 const SECRET_KEYS = new Set(['api_key', 'apikey', 'token', 'secret']);
@@ -13,7 +13,7 @@ const SECRET_KEYS = new Set(['api_key', 'apikey', 'token', 'secret']);
 function OptionValue({ name, value }: { name: string; value: unknown }): ReactNode {
   const { t, te, locale } = useI18n();
   const labels = useImportLabels();
-  if (SECRET_KEYS.has(name.toLowerCase())) return <span className="text-subtle">{t('imports.options.masked')}</span>;
+  if (SECRET_KEYS.has(name.toLowerCase())) return <span className="text-muted-foreground">{t('imports.options.masked')}</span>;
   if (typeof value === 'boolean') return t(value ? 'common.yesNo.true' : 'common.yesNo.false');
   if (typeof value === 'number') return name === 'size' ? formatBytes(value, locale) : formatNumber(value, locale);
   if (typeof value === 'string') {
@@ -55,7 +55,7 @@ export function JobDetails({ job }: { job: ImportJob }) {
           <DI label={t('imports.options.duration')}>{ms !== null ? formatDuration(ms) : null}</DI>
         </DL>
         {options.length > 0 && (
-          <DL className="border-t border-line pt-4">
+          <DL className="border-t border-border pt-4">
             {options.map(([k, v]) => (
               <DI key={k} label={labels.option(k)}>
                 <OptionValue name={k} value={v} />

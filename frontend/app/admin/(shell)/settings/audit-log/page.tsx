@@ -5,7 +5,7 @@ import { ScrollText } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider';
 import { useList } from '@/lib/use-api';
 import type { AuditLog } from '@/lib/types';
-import { Card, CardHeader, DataTable, DateText, FilterSelect, Mono, SearchInput, Toolbar, usePageTitle, type Column } from '@/components/ui';
+import { Card, CardHeader, DataTable, DateText, FilterSelect, Mono, SearchInput, Toolbar, usePageTitle, type Column } from '@/components/kit';
 import { AuditDrawer, resourceLabel } from '@/components/admin/team/log-drawers';
 
 const RESOURCE_TYPES = [
@@ -45,22 +45,22 @@ export default function AuditLogPage() {
       header: t('common.date'),
       cell: (l) => (
         <div className="min-w-0">
-          <DateText value={l.created_at} className="text-muted" />
+          <DateText value={l.created_at} className="text-muted-foreground" />
           <div className="mt-1 sm:hidden">
             <Mono className="inline-block max-w-full truncate align-top">{l.action}</Mono>
           </div>
         </div>
       ),
     },
-    { key: 'user', header: t('team.audit.col.user'), hideBelow: 'sm', cell: (l) => <span className="block max-w-48 truncate">{l.user_email ?? <span className="text-subtle">{t('team.audit.system')}</span>}</span> },
+    { key: 'user', header: t('team.audit.col.user'), hideBelow: 'sm', cell: (l) => <span className="block max-w-48 truncate">{l.user_email ?? <span className="text-muted-foreground">{t('team.audit.system')}</span>}</span> },
     { key: 'action', header: t('team.audit.col.action'), hideBelow: 'sm', cell: (l) => <Mono>{l.action}</Mono> },
-    { key: 'resource', header: t('team.audit.col.resource'), hideBelow: 'lg', cell: (l) => <span className="text-muted">{resourceLabel(l)}</span> },
-    { key: 'ip', header: t('team.audit.col.ip'), hideBelow: 'xl', cell: (l) => <span className="font-mono text-xs text-muted">{l.ip ?? '—'}</span> },
+    { key: 'resource', header: t('team.audit.col.resource'), hideBelow: 'lg', cell: (l) => <span className="text-muted-foreground">{resourceLabel(l)}</span> },
+    { key: 'ip', header: t('team.audit.col.ip'), hideBelow: 'xl', cell: (l) => <span className="font-mono text-xs text-muted-foreground">{l.ip ?? '—'}</span> },
     {
       key: 'details',
       header: t('team.audit.col.details'),
       hideBelow: 'xl',
-      cell: (l) => <span className="block max-w-72 truncate font-mono text-xs text-subtle">{compact(l.details)}</span>,
+      cell: (l) => <span className="block max-w-72 truncate font-mono text-xs text-muted-foreground">{compact(l.details)}</span>,
     },
   ];
 

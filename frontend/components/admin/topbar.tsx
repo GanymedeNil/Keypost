@@ -11,8 +11,8 @@ import { LANGS, LANG_LABELS } from '@/lib/i18n';
 import { useI18n } from '@/lib/i18n/provider';
 import { useTheme, type Theme } from '@/lib/theme';
 import { cn } from '@/lib/utils';
-import { Badge, Button, Switch } from '@/components/ui';
-import { DropdownContent, DropdownItemView, DropdownLabel, DropdownSeparator, type ActionItem } from '@/components/ui/dropdown';
+import { Badge, Button, Switch } from '@/components/kit';
+import { DropdownContent, DropdownItemView, DropdownLabel, DropdownSeparator, type ActionItem } from '@/components/kit/dropdown';
 import { useAdmin } from './admin-context';
 import { Brand, NavList } from './sidebar';
 
@@ -35,9 +35,9 @@ function StoreSwitcher() {
     <Menu.Root>
       <Menu.Trigger asChild>
         <Button variant="secondary" size="md" aria-label={t('shell.store')} className="max-w-28 gap-2 sm:max-w-48">
-          <StoreIcon className="size-3.5 text-subtle" />
+          <StoreIcon className="size-3.5 text-muted-foreground" />
           <span className="truncate">{current?.name ?? t('common.allStores')}</span>
-          <ChevronDown className="size-3.5 text-subtle" />
+          <ChevronDown className="size-3.5 text-muted-foreground" />
         </Button>
       </Menu.Trigger>
       <DropdownContent align="start">
@@ -57,7 +57,7 @@ function TestModeToggle() {
     <label
       className={cn(
         'flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1 text-sm transition-colors',
-        testMode ? 'border-warning/40 bg-warning-soft text-warning-text' : 'border-line bg-surface text-muted hover:bg-surface-2',
+        testMode ? 'border-warning/40 bg-warning-soft text-warning-text' : 'border-border bg-card text-muted-foreground hover:bg-muted',
       )}
     >
       <FlaskConical className="size-3.5" />
@@ -133,16 +133,16 @@ function UserMenu() {
         <button
           type="button"
           aria-label={t('shell.userMenu')}
-          className="grid size-8 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent-text ring-1 ring-line hover:ring-accent/50"
+          className="grid size-8 place-items-center rounded-full bg-accent text-xs font-semibold text-primary ring-1 ring-border hover:ring-ring/50"
         >
           {initials(user.name, user.email)}
         </button>
       </Menu.Trigger>
       <DropdownContent className="w-60">
         <div className="px-2.5 py-2">
-          <p className="text-xs text-subtle">{t('shell.signedInAs')}</p>
+          <p className="text-xs text-muted-foreground">{t('shell.signedInAs')}</p>
           <p className="truncate text-sm font-medium">{user.name || user.email}</p>
-          <p className="truncate text-xs text-muted">{user.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{user.email}</p>
           <Badge tone={role === 'owner' ? 'accent' : 'neutral'} className="mt-1.5">
             {te(`role.${role}`, role)}
           </Badge>
@@ -166,8 +166,8 @@ function MobileNav() {
         </Button>
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-50 animate-fade-in bg-scrim lg:hidden" />
-        <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] animate-slide-in-left flex-col border-r border-line bg-surface shadow-[var(--shadow-pop)] focus:outline-none lg:hidden">
+        <Dialog.Overlay className="fixed inset-0 z-50 animate-fade-in bg-black/50 lg:hidden" />
+        <Dialog.Content className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85vw] animate-slide-in-left flex-col border-r border-border bg-card shadow-[var(--shadow-pop)] focus:outline-none lg:hidden">
           <Dialog.Title className="sr-only">{t('shell.brand')}</Dialog.Title>
           <Dialog.Description className="sr-only">{t('shell.openMenu')}</Dialog.Description>
           <div className="flex h-14 items-center px-3">
@@ -182,7 +182,7 @@ function MobileNav() {
 
 export function Topbar() {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-surface/85 px-3 backdrop-blur sm:px-5">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-border bg-card/85 px-3 backdrop-blur sm:px-5">
       <MobileNav />
       <StoreSwitcher />
       <div className="ml-auto flex shrink-0 items-center gap-1">

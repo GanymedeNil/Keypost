@@ -1,7 +1,8 @@
 import { cn } from '@/lib/utils';
+import { Skeleton as UiSkeleton } from '@/components/ui/skeleton';
 
 export function Skeleton({ className }: { className?: string }) {
-  return <div aria-hidden className={cn('animate-shimmer rounded-md bg-surface-3', className)} />;
+  return <UiSkeleton aria-hidden className={className} />;
 }
 
 /** Generic content placeholder: a title line plus a few text lines. */

@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/lib/i18n/provider';
 import type { Delivery } from '@/lib/types';
-import { Button, ButtonLink, Callout, DI, DL, Modal, StatusBadge } from '@/components/ui';
+import { Button, ButtonLink, Callout, DI, DL, Modal, StatusBadge } from '@/components/kit';
 import { CodeBlock } from './code-block';
 
 /** Result of "Send test": the synchronous Delivery returned by `POST /webhooks/{id}/test`. */
@@ -41,13 +41,13 @@ export function TestResultModal({ delivery, onClose }: { delivery: Delivery; onC
         </DL>
         {delivery.last_error && (
           <div>
-            <p className="mb-1 text-xs font-medium text-fg">{t('webhooks.drawer.error')}</p>
+            <p className="mb-1 text-xs font-medium text-foreground">{t('webhooks.drawer.error')}</p>
             <CodeBlock value={delivery.last_error} maxHeight={140} />
           </div>
         )}
         <div>
-          <p className="mb-1 text-xs font-medium text-fg">{t('common.response')}</p>
-          {body ? <CodeBlock value={body} /> : <p className="text-xs text-subtle">{t('webhooks.test.noResponse')}</p>}
+          <p className="mb-1 text-xs font-medium text-foreground">{t('common.response')}</p>
+          {body ? <CodeBlock value={body} /> : <p className="text-xs text-muted-foreground">{t('webhooks.test.noResponse')}</p>}
         </div>
       </div>
     </Modal>

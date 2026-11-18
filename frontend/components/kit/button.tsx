@@ -1,36 +1,29 @@
 import Link from 'next/link';
 import type { ComponentProps, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import { Button as UiButton, buttonVariants } from '@/components/ui/button';
 import { Spinner } from './spinner';
 
+/* The app-level button API on top of shadcn's Button: the names pages use map onto shadcn variants. */
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-outline';
 export type ButtonSize = 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm';
 
-const variants: Record<ButtonVariant, string> = {
-  primary: 'bg-accent text-accent-fg hover:bg-accent-hover shadow-card',
-  secondary: 'border border-line-strong bg-surface text-fg hover:bg-surface-2 shadow-card',
-  ghost: 'text-muted hover:bg-surface-2 hover:text-fg',
-  danger: 'bg-danger text-white hover:opacity-90 shadow-card',
-  'danger-outline': 'border border-danger/40 bg-surface text-danger-text hover:bg-danger-soft',
-};
+const variantMap = {
+  primary: { variant: 'default' },
+  secondary: { variant: 'outline' },
+  ghost: { variant: 'ghost' },
+  danger: { variant: 'destructive' },
+  'danger-outline': {
+    variant: 'outline',
+    className: 'border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive dark:border-destructive/50',
+  },
+} as const;
 
-const sizes: Record<ButtonSize, string> = {
-  sm: 'h-7 gap-1 rounded-md px-2.5 text-xs',
-  md: 'h-8 gap-1.5 rounded-md px-3 text-sm',
-  lg: 'h-10 gap-2 rounded-lg px-4 text-sm',
-  icon: 'size-8 rounded-md',
-  'icon-sm': 'size-7 rounded-md',
-};
+const sizeMap = { sm: 'sm', md: 'default', lg: 'lg', icon: 'icon', 'icon-sm': 'icon-sm' } as const;
 
 export function buttonClass(variant: ButtonVariant = 'secondary', size: ButtonSize = 'md', className?: string) {
-  return cn(
-    'inline-flex shrink-0 select-none items-center justify-center whitespace-nowrap font-medium transition-colors',
-    'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent',
-    'disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
-    variants[variant],
-    sizes[size],
-    className,
-  );
+  const v = variantMap[variant];
+  return cn(buttonVariants({ variant: v.variant, size: sizeMap[size] }), 'className' in v && v.className, className);
 }
 
 export interface ButtonProps extends ComponentProps<'button'> {
@@ -41,11 +34,19 @@ export interface ButtonProps extends ComponentProps<'button'> {
 }
 
 export function Button({ variant = 'secondary', size = 'md', loading, icon, className, children, disabled, type = 'button', ...props }: ButtonProps) {
+  const v = variantMap[variant];
   return (
-    <button type={type} disabled={disabled || loading} className={buttonClass(variant, size, className)} {...props}>
+    <UiButton
+      type={type}
+      variant={v.variant}
+      size={sizeMap[size]}
+      disabled={disabled || loading}
+      className={cn('className' in v && v.className, className)}
+      {...props}
+    >
       {loading ? <Spinner className="size-3.5" /> : icon}
       {children}
-    </button>
+    </UiButton>
   );
 }
 

@@ -22,19 +22,19 @@ import {
   useConfirmDelete,
   useToast,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useAdmin } from '../admin-context';
 import { StoreFormModal } from './store-form-modal';
 
 function StoreCell({ store }: { store: Store }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-soft text-xs font-semibold uppercase text-accent-text">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent text-xs font-semibold uppercase text-primary">
         {store.name.slice(0, 2)}
       </span>
       <div className="min-w-0">
-        <p className="truncate font-medium text-fg">{store.name}</p>
-        <p className="truncate font-mono text-xs text-subtle">{store.slug}</p>
+        <p className="truncate font-medium text-foreground">{store.name}</p>
+        <p className="truncate font-mono text-xs text-muted-foreground">{store.slug}</p>
       </div>
     </div>
   );
@@ -66,8 +66,8 @@ export function StoresPanel() {
       hideBelow: 'md',
       cell: (s) => (
         <div className="min-w-0 text-xs">
-          <p className="truncate text-fg">{s.domain || '—'}</p>
-          <p className="truncate text-subtle">{s.support_email || ''}</p>
+          <p className="truncate text-foreground">{s.domain || '—'}</p>
+          <p className="truncate text-muted-foreground">{s.support_email || ''}</p>
         </div>
       ),
     },
@@ -76,7 +76,7 @@ export function StoresPanel() {
       header: t('settings.stores.col.region'),
       hideBelow: 'lg',
       cell: (s) => (
-        <span className="whitespace-nowrap text-xs text-muted">
+        <span className="whitespace-nowrap text-xs text-muted-foreground">
           {s.country || '—'} · {s.currency}
         </span>
       ),
@@ -88,8 +88,8 @@ export function StoresPanel() {
       hideBelow: 'sm',
       cell: (s) => (
         <div className="text-xs tabular-nums">
-          <p className="text-fg">{new Intl.NumberFormat(locale).format(s.total_sales)}</p>
-          <p className="text-subtle">{t('settings.stores.last30', { value: new Intl.NumberFormat(locale).format(s.thirty_day_sales) })}</p>
+          <p className="text-foreground">{new Intl.NumberFormat(locale).format(s.total_sales)}</p>
+          <p className="text-muted-foreground">{t('settings.stores.last30', { value: new Intl.NumberFormat(locale).format(s.thirty_day_sales) })}</p>
         </div>
       ),
     },
@@ -99,8 +99,8 @@ export function StoresPanel() {
       align: 'right',
       cell: (s) => (
         <div className="text-xs">
-          <MoneyText amount={s.total_revenue} currency={s.currency} className="block text-fg" />
-          <span className="block text-subtle">
+          <MoneyText amount={s.total_revenue} currency={s.currency} className="block text-foreground" />
+          <span className="block text-muted-foreground">
             {t('settings.stores.last30', { value: formatMoney(s.thirty_day_revenue, s.currency, locale) })}
           </span>
         </div>

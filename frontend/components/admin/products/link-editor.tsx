@@ -3,7 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react';
 import { useT } from '@/lib/i18n/provider';
 import type { VariantLink } from '@/lib/types';
-import { Button, Input } from '@/components/ui';
+import { Button, Input } from '@/components/kit';
 
 /** Repeatable title + url rows (links delivered to the customer with the order). */
 export function LinkEditor({ links, onChange }: { links: VariantLink[]; onChange: (links: VariantLink[]) => void }) {
@@ -11,7 +11,7 @@ export function LinkEditor({ links, onChange }: { links: VariantLink[]; onChange
   const update = (i: number, patch: Partial<VariantLink>) => onChange(links.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
   return (
     <div className="space-y-2">
-      {links.length === 0 && <p className="text-xs text-subtle">{t('products.links.empty')}</p>}
+      {links.length === 0 && <p className="text-xs text-muted-foreground">{t('products.links.empty')}</p>}
       {links.map((l, i) => (
         <div key={i} className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto]">
           <Input

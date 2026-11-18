@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { ApiError } from './api';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/kit/toast';
 import { useT } from './i18n/provider';
 import { errorText } from './error-text';
 

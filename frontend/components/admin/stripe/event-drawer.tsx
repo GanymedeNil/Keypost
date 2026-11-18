@@ -7,7 +7,7 @@ import { invalidate } from '@/lib/swr';
 import type { StripeEventDetail } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { useApi } from '@/lib/use-api';
-import { Button, Callout, DateText, DI, DL, Drawer, ErrorState, JsonViewer, SkeletonText, StatusBadge } from '@/components/ui';
+import { Button, Callout, DateText, DI, DL, Drawer, ErrorState, JsonViewer, SkeletonText, StatusBadge } from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { LivemodeBadge } from './livemode-badge';
 
@@ -69,8 +69,8 @@ export function EventDrawer({ id, onClose }: { id: number | null; onClose: () =>
             </Callout>
           )}
           <section>
-            <h3 className="mb-1.5 text-xs font-medium text-fg">{t('stripe.events.payload')}</h3>
-            {hasPayload ? <JsonViewer value={data.payload} maxHeight={480} /> : <p className="text-xs text-subtle">{t('stripe.events.noPayload')}</p>}
+            <h3 className="mb-1.5 text-xs font-medium text-foreground">{t('stripe.events.payload')}</h3>
+            {hasPayload ? <JsonViewer value={data.payload} maxHeight={480} /> : <p className="text-xs text-muted-foreground">{t('stripe.events.noPayload')}</p>}
           </section>
         </div>
       )}

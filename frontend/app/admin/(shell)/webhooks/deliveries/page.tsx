@@ -4,7 +4,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import type { Delivery, Paginated, Webhook } from '@/lib/types';
 import { useApi, useList } from '@/lib/use-api';
 import { useUrlState } from '@/lib/url-state';
-import { Button, Card, DataTable, DateText, FilterSelect, StatusBadge, Toolbar, type Column, type FilterOption } from '@/components/ui';
+import { Button, Card, DataTable, DateText, FilterSelect, StatusBadge, Toolbar, type Column, type FilterOption } from '@/components/kit';
 import { DeliveryDrawer } from '@/components/admin/webhooks/delivery-drawer';
 import { useWebhookEvents } from '@/components/admin/webhooks/use-webhook-events';
 import { cn } from '@/lib/utils';
@@ -39,12 +39,12 @@ export default function DeliveriesPage() {
         <div className="min-w-0">
           <p className="font-mono text-xs font-medium">{d.event_name}</p>
           {d.resource_type && (
-            <p className="font-mono text-[11px] text-subtle">
+            <p className="font-mono text-[11px] text-muted-foreground">
               {d.resource_type}
               {d.resource_id !== null ? ` #${d.resource_id}` : ''}
             </p>
           )}
-          <DateText value={d.created_at} relative className="text-[11px] text-subtle sm:hidden" />
+          <DateText value={d.created_at} relative className="text-[11px] text-muted-foreground sm:hidden" />
         </div>
       ),
     },
@@ -53,7 +53,7 @@ export default function DeliveriesPage() {
       header: t('webhooks.deliveries.col.endpoint'),
       hideBelow: 'md',
       cell: (d) => (
-        <span className="block max-w-xs truncate font-mono text-xs text-muted" title={d.webhook_url}>
+        <span className="block max-w-xs truncate font-mono text-xs text-muted-foreground" title={d.webhook_url}>
           {trimUrl(d.webhook_url)}
         </span>
       ),
@@ -67,7 +67,7 @@ export default function DeliveriesPage() {
         <span
           className={cn(
             'font-mono text-xs tabular-nums',
-            d.last_status_code === null ? 'text-subtle' : d.last_status_code >= 200 && d.last_status_code < 300 ? 'text-success-text' : 'text-danger-text',
+            d.last_status_code === null ? 'text-muted-foreground' : d.last_status_code >= 200 && d.last_status_code < 300 ? 'text-success-text' : 'text-danger-text',
           )}
         >
           {d.last_status_code ?? '—'}
@@ -80,9 +80,9 @@ export default function DeliveriesPage() {
       header: t('webhooks.deliveries.col.duration'),
       hideBelow: 'lg',
       align: 'right',
-      cell: (d) => <span className="tabular-nums text-muted">{d.duration_ms === null ? '—' : t('webhooks.durationMs', { ms: d.duration_ms })}</span>,
+      cell: (d) => <span className="tabular-nums text-muted-foreground">{d.duration_ms === null ? '—' : t('webhooks.durationMs', { ms: d.duration_ms })}</span>,
     },
-    { key: 'created', header: t('webhooks.deliveries.col.created'), hideBelow: 'sm', cell: (d) => <DateText value={d.created_at} relative className="text-muted" /> },
+    { key: 'created', header: t('webhooks.deliveries.col.created'), hideBelow: 'sm', cell: (d) => <DateText value={d.created_at} relative className="text-muted-foreground" /> },
   ];
 
   return (

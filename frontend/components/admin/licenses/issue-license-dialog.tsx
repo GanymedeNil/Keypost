@@ -9,7 +9,7 @@ import { invalidate } from '@/lib/swr';
 import type { LicenseKey, Paginated, Variant } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { useApi } from '@/lib/use-api';
-import { Button, Checkbox, Field, Input, Modal, Select } from '@/components/ui';
+import { Button, Checkbox, Field, Input, Modal, Select } from '@/components/kit';
 
 interface VariantGroup {
   product: string;

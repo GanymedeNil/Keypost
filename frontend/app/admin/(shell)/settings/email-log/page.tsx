@@ -6,7 +6,7 @@ import { Mail, Send } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider';
 import { useList } from '@/lib/use-api';
 import type { EmailLog } from '@/lib/types';
-import { Button, Card, CardHeader, DataTable, DateText, FilterSelect, Mono, SearchInput, StatusBadge, Toolbar, usePageTitle, type Column } from '@/components/ui';
+import { Button, Card, CardHeader, DataTable, DateText, FilterSelect, Mono, SearchInput, StatusBadge, Toolbar, usePageTitle, type Column } from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { EmailDrawer } from '@/components/admin/team/log-drawers';
 import { TestEmailDialog } from '@/components/admin/team/test-email-dialog';
@@ -35,7 +35,7 @@ export default function EmailLogPage() {
       header: t('common.date'),
       cell: (l) => (
         <div className="min-w-0">
-          <DateText value={l.created_at} className="text-muted" />
+          <DateText value={l.created_at} className="text-muted-foreground" />
           <p className="mt-0.5 max-w-44 truncate text-xs sm:hidden">{l.to}</p>
         </div>
       ),
@@ -47,7 +47,7 @@ export default function EmailLogPage() {
       cell: (l) => (
         <div className="min-w-0">
           <span className="block max-w-48 truncate">{l.to}</span>
-          <span className="block max-w-48 truncate text-xs text-subtle xl:hidden">{l.subject}</span>
+          <span className="block max-w-48 truncate text-xs text-muted-foreground xl:hidden">{l.subject}</span>
         </div>
       ),
     },
@@ -57,7 +57,7 @@ export default function EmailLogPage() {
       hideBelow: 'xl',
       cell: (l) => (
         <div className="min-w-0">
-          <span className="block max-w-72 truncate text-muted">{l.subject}</span>
+          <span className="block max-w-72 truncate text-muted-foreground">{l.subject}</span>
           <span className="flex max-w-72 items-center gap-2 text-xs">
             {l.template && <Mono className="shrink-0 text-[11px]">{l.template}</Mono>}
             {l.error && (
@@ -76,11 +76,11 @@ export default function EmailLogPage() {
       hideBelow: 'xl',
       cell: (l) =>
         l.order_id ? (
-          <Link href={`/admin/orders/${l.order_id}`} className="text-accent-text hover:underline">
+          <Link href={`/admin/orders/${l.order_id}`} className="text-primary hover:underline">
             #{l.order_id}
           </Link>
         ) : (
-          <span className="text-subtle">—</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
   ];

@@ -16,13 +16,13 @@ function highlight(text: string): ReactNode[] {
     if (idx > last) out.push(text.slice(last, idx));
     const [full, str, colon, lit, num] = m;
     let cls = '';
-    if (str) cls = colon ? 'text-accent-text' : 'text-success-text';
+    if (str) cls = colon ? 'text-primary' : 'text-success-text';
     else if (lit) cls = 'text-warning-text';
     else if (num) cls = 'text-info-text';
     out.push(
       <span key={i++} className={cls}>
         {str ? str : full}
-        {colon && <span className="text-muted">{colon}</span>}
+        {colon && <span className="text-muted-foreground">{colon}</span>}
       </span>,
     );
     last = idx + full.length;
@@ -36,12 +36,12 @@ export function JsonViewer({ value, maxHeight = 420, className }: { value: unkno
   const text = useMemo(() => prettyJson(value), [value]);
   const nodes = useMemo(() => (text.length > MAX_HIGHLIGHT ? text : highlight(text)), [text]);
   return (
-    <div className={cn('relative rounded-lg border border-line bg-surface-2', className)}>
+    <div className={cn('relative rounded-lg border border-border bg-muted', className)}>
       <div className="absolute right-1.5 top-1.5 z-10">
         <CopyButton value={text} label="JSON" />
       </div>
       <pre
-        className="overflow-auto whitespace-pre-wrap break-all p-3 pr-10 text-xs leading-relaxed text-fg"
+        className="overflow-auto whitespace-pre-wrap break-all p-3 pr-10 text-xs leading-relaxed text-foreground"
         style={{ maxHeight }}
         tabIndex={0}
       >

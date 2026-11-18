@@ -9,29 +9,22 @@ import type { PageMeta } from '@/lib/types';
 import { Pagination } from './pagination';
 import { EmptyState, ErrorState } from './states';
 import { Skeleton } from './skeleton';
+import { Table as UiTable, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
-/* ----------------------------------------------------------- primitives */
+/* ----------------------------------------------------------- primitives (shadcn Table) */
 
 export function TableWrap({ className, ...props }: ComponentProps<'div'>) {
   return <div className={cn('relative w-full overflow-x-auto', className)} {...props} />;
 }
-export function Table({ className, ...props }: ComponentProps<'table'>) {
-  return <table className={cn('w-full border-collapse text-left text-sm', className)} {...props} />;
-}
-export function THead({ className, ...props }: ComponentProps<'thead'>) {
-  return <thead className={cn('border-b border-line bg-surface-2/60 text-xs text-subtle', className)} {...props} />;
-}
-export function TBody({ className, ...props }: ComponentProps<'tbody'>) {
-  return <tbody className={cn('divide-y divide-line', className)} {...props} />;
-}
-export function TR({ className, ...props }: ComponentProps<'tr'>) {
-  return <tr className={cn('transition-colors', className)} {...props} />;
-}
+export const Table = UiTable;
+export const THead = TableHeader;
+export const TBody = TableBody;
+export const TR = TableRow;
 export function TH({ className, ...props }: ComponentProps<'th'>) {
-  return <th scope="col" className={cn('whitespace-nowrap px-4 py-2 text-left font-medium', className)} {...props} />;
+  return <TableHead scope="col" className={cn('h-10 px-4 text-xs text-muted-foreground', className)} {...props} />;
 }
 export function TD({ className, ...props }: ComponentProps<'td'>) {
-  return <td className={cn('px-4 py-2.5 align-middle', className)} {...props} />;
+  return <TableCell className={cn('px-4 py-2.5', className)} {...props} />;
 }
 
 /* ------------------------------------------------------------ DataTable */
@@ -151,7 +144,7 @@ export function DataTable<T>({
                     <button
                       type="button"
                       onClick={() => toggleSort(col)}
-                      className={cn('inline-flex items-center gap-1 hover:text-fg', col.align === 'right' && 'flex-row-reverse')}
+                      className={cn('inline-flex items-center gap-1 hover:text-foreground', col.align === 'right' && 'flex-row-reverse')}
                     >
                       {col.header}
                       {sortIcon(col)}
@@ -180,7 +173,7 @@ export function DataTable<T>({
                     onClick={clickable ? (e) => handleClick(e, row) : undefined}
                     onKeyDown={clickable ? (e) => handleKey(e, row) : undefined}
                     tabIndex={clickable ? 0 : undefined}
-                    className={cn(clickable && 'cursor-pointer hover:bg-surface-2/70 focus-visible:bg-surface-2')}
+                    className={cn(clickable && 'cursor-pointer hover:bg-muted/70 focus-visible:bg-muted')}
                   >
                     {columns.map((col) => (
                       <TD key={col.key} className={cn(col.align && alignCls[col.align], col.hideBelow && hideBelow[col.hideBelow], col.className)}>

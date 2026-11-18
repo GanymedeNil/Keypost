@@ -23,7 +23,7 @@ import {
   Toolbar,
   useConfirmDelete,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { TestResultModal } from '@/components/admin/webhooks/test-result-modal';
 import { WebhookFormModal } from '@/components/admin/webhooks/webhook-form-modal';
@@ -35,7 +35,7 @@ function EventsChip({ events }: { events: string[] }) {
       <DropdownTrigger asChild>
         <button
           type="button"
-          className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-surface-3 px-2 py-0.5 text-xs font-medium text-muted hover:text-fg"
+          className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-muted-foreground hover:text-foreground"
           aria-label={events.length === 1 ? t('webhooks.eventsCountOne') : t('webhooks.eventsCount', { count: events.length })}
         >
           {events.length === 1 ? t('webhooks.eventsCountOne') : t('webhooks.eventsCount', { count: events.length })}
@@ -45,7 +45,7 @@ function EventsChip({ events }: { events: string[] }) {
       <DropdownContent align="start" className="max-h-72 min-w-56 overflow-y-auto p-2">
         <ul className="space-y-1">
           {events.map((e) => (
-            <li key={e} className="font-mono text-xs text-fg">
+            <li key={e} className="font-mono text-xs text-foreground">
               {e}
             </li>
           ))}
@@ -97,7 +97,7 @@ export default function WebhooksPage() {
       cell: (w) => (
         <div className="flex min-w-0 max-w-[14rem] flex-col gap-1 xl:max-w-sm">
           {can.write ? (
-            <button type="button" onClick={() => setEditing(w)} className="truncate text-left font-mono text-xs font-medium text-fg hover:text-accent-text hover:underline" title={w.url}>
+            <button type="button" onClick={() => setEditing(w)} className="truncate text-left font-mono text-xs font-medium text-foreground hover:text-primary hover:underline" title={w.url}>
               {w.url}
             </button>
           ) : (
@@ -112,7 +112,7 @@ export default function WebhooksPage() {
           <div className="flex flex-wrap items-center gap-1.5">
             {w.test_mode && <TestModeBadge />}
             <span
-              className="inline-flex items-center gap-1 text-[11px] text-subtle"
+              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
               title={w.secret_set ? t('webhooks.secretSet') : t('webhooks.secretMissing')}
             >
               {w.secret_set ? <Lock className="size-3 text-success" /> : <LockOpen className="size-3 text-warning" />}
@@ -124,7 +124,7 @@ export default function WebhooksPage() {
     },
     { key: 'events', header: t('webhooks.col.events'), hideBelow: 'md', cell: (w) => <EventsChip events={w.events} /> },
     { key: 'status', header: t('webhooks.col.status'), hideBelow: 'md', cell: (w) => <StatusPill disabled={w.disabled} /> },
-    { key: 'last_sent', header: t('webhooks.col.lastSent'), hideBelow: 'xl', cell: (w) => <DateText value={w.last_sent_at} relative className="text-muted" /> },
+    { key: 'last_sent', header: t('webhooks.col.lastSent'), hideBelow: 'xl', cell: (w) => <DateText value={w.last_sent_at} relative className="text-muted-foreground" /> },
     {
       key: 'stats',
       header: t('webhooks.col.last24h'),
@@ -134,7 +134,7 @@ export default function WebhooksPage() {
           <span className="text-success-text" title={t('webhooks.stat.success', { count: w.stats.success_24h })}>
             ✓ {w.stats.success_24h}
           </span>
-          <span className={w.stats.failed_24h > 0 ? 'text-danger-text' : 'text-subtle'} title={t('webhooks.stat.failed', { count: w.stats.failed_24h })}>
+          <span className={w.stats.failed_24h > 0 ? 'text-danger-text' : 'text-muted-foreground'} title={t('webhooks.stat.failed', { count: w.stats.failed_24h })}>
             ✕ {w.stats.failed_24h}
           </span>
         </span>

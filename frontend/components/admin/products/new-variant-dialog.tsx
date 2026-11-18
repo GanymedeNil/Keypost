@@ -6,7 +6,7 @@ import { useT, useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { slugify } from '@/lib/utils';
 import type { Variant } from '@/lib/types';
-import { Button, Field, Input, Modal, Select, Textarea } from '@/components/ui';
+import { Button, Field, Input, Modal, Select, Textarea } from '@/components/kit';
 import { PriceFields } from './price-fields';
 import { draftToInput, emptyDraft, validateDraft, VARIANT_STATUSES, type DraftErrors, type PriceDraft } from './price-utils';
 
@@ -101,7 +101,7 @@ function NewVariantInner({ onOpenChange, productId, currency, onCreated }: Omit<
             ))}
           </Select>
         </Field>
-        <div className="border-t border-line pt-4">
+        <div className="border-t border-border pt-4">
           <h3 className="mb-3 text-sm font-semibold">{t('products.variant.initialPrice')}</h3>
           <PriceFields draft={price} onChange={(patch) => setPrice((d) => ({ ...d, ...patch }))} errors={errors} serverErrors={fieldErrors} />
         </div>

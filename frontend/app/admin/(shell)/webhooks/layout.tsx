@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { useT } from '@/lib/i18n/provider';
-import { PageHeader, TabLinks } from '@/components/ui';
+import { PageHeader, TabLinks } from '@/components/kit';
 
 export default function WebhooksLayout({ children }: { children: ReactNode }) {
   const t = useT();

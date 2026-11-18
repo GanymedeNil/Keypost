@@ -8,9 +8,9 @@ import { adminApi, ApiError, ADMIN_BASE } from '@/lib/api';
 import type { AuthConfig, User } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { useToast } from '@/components/ui';
+import { useToast } from '@/components/kit';
 import { errorText } from '@/lib/error-text';
-import { Button, ButtonAnchor, Callout, Field, Input, Skeleton, usePageTitle } from '@/components/ui';
+import { Button, ButtonAnchor, Callout, Field, Input, Skeleton, usePageTitle } from '@/components/kit';
 import { LanguageMenu, ThemeMenu } from '@/components/admin/topbar';
 
 const ERROR_CODES = ['stripe_denied', 'stripe_state', 'stripe_not_allowed', 'stripe_exchange', 'disabled'];
@@ -132,11 +132,11 @@ function LoginInner() {
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <BrandLogo className="mb-5 h-11 w-auto text-fg" />
+          <BrandLogo className="mb-5 h-11 w-auto text-foreground" />
           <h1 className="text-xl font-semibold tracking-tight">{setup ? t('auth.setupTitle') : t('auth.title')}</h1>
-          <p className="mt-1 text-sm text-muted">{setup ? t('auth.setupDesc') : t('auth.subtitle')}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{setup ? t('auth.setupDesc') : t('auth.subtitle')}</p>
         </div>
-        <div className="rounded-xl border border-line bg-surface p-5 shadow-card sm:p-6">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-card sm:p-6">
           {errorCode && (
             <Callout tone="danger" className="mb-4">
               {ERROR_CODES.includes(errorCode) ? te(`auth.error.${errorCode}`, t('auth.error.unknown')) : t('auth.error.unknown')}
@@ -156,10 +156,10 @@ function LoginInner() {
             <div className="space-y-4">
               {config.password_login && <PasswordForm onDone={done} />}
               {config.password_login && config.stripe_login && (
-                <div className="flex items-center gap-3 text-xs text-subtle">
-                  <span className="h-px flex-1 bg-line" />
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span className="h-px flex-1 bg-border" />
                   {t('auth.or')}
-                  <span className="h-px flex-1 bg-line" />
+                  <span className="h-px flex-1 bg-border" />
                 </div>
               )}
               {config.stripe_login && (

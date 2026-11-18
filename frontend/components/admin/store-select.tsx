@@ -1,6 +1,6 @@
 'use client';
 
-import { Select } from '@/components/ui';
+import { Select } from '@/components/kit';
 import { useAdmin } from './admin-context';
 
 /** Store picker for create forms. Defaults are up to the caller (`storeId ?? stores[0]?.id`). */

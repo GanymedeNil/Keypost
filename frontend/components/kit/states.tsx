@@ -23,9 +23,9 @@ export function EmptyState({
 }) {
   return (
     <div className={cn('flex flex-col items-center justify-center gap-2 px-6 py-14 text-center', className)}>
-      <div className="grid size-10 place-items-center rounded-full bg-surface-3 text-subtle">{icon ?? <Inbox className="size-5" />}</div>
-      <p className="text-sm font-medium text-fg">{title}</p>
-      {description && <p className="max-w-sm text-xs text-subtle">{description}</p>}
+      <div className="grid size-10 place-items-center rounded-full bg-accent text-muted-foreground">{icon ?? <Inbox className="size-5" />}</div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      {description && <p className="max-w-sm text-xs text-muted-foreground">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -49,8 +49,8 @@ export function ErrorState({
       <div className="grid size-10 place-items-center rounded-full bg-danger-soft text-danger-text">
         <AlertTriangle className="size-5" />
       </div>
-      <p className="text-sm font-medium text-fg">{title ?? (notFound ? t('errors.notFound') : t('errors.loadFailed'))}</p>
-      {error !== undefined && !notFound && <p className="max-w-md text-xs text-subtle">{errorText(error, t)}</p>}
+      <p className="text-sm font-medium text-foreground">{title ?? (notFound ? t('errors.notFound') : t('errors.loadFailed'))}</p>
+      {error !== undefined && !notFound && <p className="max-w-md text-xs text-muted-foreground">{errorText(error, t)}</p>}
       {onRetry && !notFound && (
         <Button size="sm" className="mt-2" onClick={onRetry}>
           {t('common.retry')}

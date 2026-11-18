@@ -2,7 +2,7 @@
 
 import { useI18n } from '@/lib/i18n/provider';
 import { useUrlState } from '@/lib/url-state';
-import { PageHeader, Tabs } from '@/components/ui';
+import { PageHeader, Tabs } from '@/components/kit';
 import { CatalogTab } from '@/components/admin/stripe/catalog-tab';
 import { EventsTab } from '@/components/admin/stripe/events-tab';
 import { StatusTab } from '@/components/admin/stripe/status-tab';

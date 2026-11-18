@@ -4,7 +4,7 @@ import { useId, useState, type FormEvent } from 'react';
 import { adminApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Button, Field, Input, Modal } from '@/components/ui';
+import { Button, Field, Input, Modal } from '@/components/kit';
 import { useAdmin } from '@/components/admin/admin-context';
 
 /** Sends a test message through the configured SMTP server. Mount only while open. */

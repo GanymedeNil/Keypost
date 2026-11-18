@@ -27,7 +27,7 @@ import {
   TestModeBadge,
   useConfirmDelete,
   useToast,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useAdmin, useCan } from '@/components/admin/admin-context';
 import { NewVariantDialog } from '@/components/admin/products/new-variant-dialog';
 import { ProductForm } from '@/components/admin/products/product-form';
@@ -121,7 +121,7 @@ export default function ProductDetailPage() {
             <CardBody>
               <div className="mb-4 flex items-center gap-3">
                 <Thumb url={product.large_thumb_url || product.thumb_url} label={product.name} className="size-14" />
-                <p className="text-xs text-subtle">{t('products.info.thumbHint')}</p>
+                <p className="text-xs text-muted-foreground">{t('products.info.thumbHint')}</p>
               </div>
               <DL cols={2}>
                 <DI label={t('common.id')}>{product.id}</DI>
@@ -143,7 +143,7 @@ export default function ProductDetailPage() {
               <h2 id="variants-heading" className="text-sm font-semibold">
                 {t('products.variants.title')}
               </h2>
-              <p className="text-xs text-subtle">{t('products.variants.hint')}</p>
+              <p className="text-xs text-muted-foreground">{t('products.variants.hint')}</p>
             </div>
             {can.write && (
               <Button variant="primary" size="sm" icon={<Plus className="size-3.5" />} onClick={() => setAdding(true)}>

@@ -8,7 +8,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import type { AuthConfig } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { useApi } from '@/lib/use-api';
-import { Badge, Button, ButtonAnchor, Callout, Card, CardBody, CardFooter, CardHeader, Field, Input, useConfirm, useToast } from '@/components/ui';
+import { Badge, Button, ButtonAnchor, Callout, Card, CardBody, CardFooter, CardHeader, Field, Input, useConfirm, useToast } from '@/components/kit';
 import { useAdmin } from '../admin-context';
 
 export function ProfileCard() {
@@ -138,9 +138,9 @@ export function StripeAccountCard() {
         {linked ? (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs text-subtle">{t('settings.profile.stripe.linked')}</p>
+              <p className="text-xs text-muted-foreground">{t('settings.profile.stripe.linked')}</p>
               {user.stripe_account_label && <p className="truncate text-sm font-medium">{user.stripe_account_label}</p>}
-              <code className="text-xs text-muted">{user.stripe_account_id}</code>
+              <code className="text-xs text-muted-foreground">{user.stripe_account_id}</code>
             </div>
             <Button variant="danger-outline" icon={<Unlink className="size-3.5" />} onClick={unlink} loading={pending} disabled={!user.has_password}>
               {t('settings.profile.stripe.unlink')}
@@ -148,7 +148,7 @@ export function StripeAccountCard() {
           </div>
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted">{config && !config.stripe_login ? t('settings.profile.stripe.loginDisabled') : t('settings.profile.stripe.notLinked')}</p>
+            <p className="text-sm text-muted-foreground">{config && !config.stripe_login ? t('settings.profile.stripe.loginDisabled') : t('settings.profile.stripe.notLinked')}</p>
             {config?.stripe_login && (
               <ButtonAnchor href={adminApi.url('/auth/stripe/start', { mode: 'link' })} variant="primary" icon={<Link2 className="size-3.5" />}>
                 {t('settings.profile.stripe.link')}

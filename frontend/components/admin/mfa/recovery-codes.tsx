@@ -3,7 +3,7 @@
 import { Download } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider';
 import { BRAND } from '@/lib/brand';
-import { Button, CopyButton } from '@/components/ui';
+import { Button, CopyButton } from '@/components/kit';
 
 /** The one-time list of recovery codes, with copy and download. */
 export function RecoveryCodes({ codes }: { codes: string[] }) {
@@ -22,7 +22,7 @@ export function RecoveryCodes({ codes }: { codes: string[] }) {
 
   return (
     <div className="space-y-3">
-      <ul className="grid grid-cols-2 gap-2 rounded-lg border border-line bg-surface-2/60 p-3 font-mono text-sm" aria-label="recovery codes">
+      <ul className="grid grid-cols-2 gap-2 rounded-lg border border-border bg-muted/60 p-3 font-mono text-sm" aria-label="recovery codes">
         {codes.map((c) => (
           <li key={c} className="text-center tracking-wide">
             {c}

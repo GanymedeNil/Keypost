@@ -4,7 +4,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import type { StripeEvent, StripeStatus } from '@/lib/types';
 import { useUrlState } from '@/lib/url-state';
 import { useApi, useList } from '@/lib/use-api';
-import { Button, Card, DataTable, DateText, FilterSelect, SearchInput, StatusBadge, Toolbar, type Column, type FilterOption } from '@/components/ui';
+import { Button, Card, DataTable, DateText, FilterSelect, SearchInput, StatusBadge, Toolbar, type Column, type FilterOption } from '@/components/kit';
 import { EventDrawer } from './event-drawer';
 import { LivemodeBadge } from './livemode-badge';
 
@@ -30,8 +30,8 @@ export function EventsTab() {
       cell: (e) => (
         <div className="min-w-0">
           <p className="font-mono text-xs font-medium">{e.type}</p>
-          {e.account && <p className="font-mono text-[11px] text-subtle">{e.account}</p>}
-          <DateText value={e.received_at} relative className="text-[11px] text-subtle sm:hidden" />
+          {e.account && <p className="font-mono text-[11px] text-muted-foreground">{e.account}</p>}
+          <DateText value={e.received_at} relative className="text-[11px] text-muted-foreground sm:hidden" />
         </div>
       ),
     },
@@ -48,11 +48,11 @@ export function EventsTab() {
             {e.error}
           </span>
         ) : (
-          <span className="text-subtle">—</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
-    { key: 'received', header: t('stripe.events.col.received'), hideBelow: 'sm', cell: (e) => <DateText value={e.received_at} relative className="text-muted" /> },
-    { key: 'processed', header: t('stripe.events.col.processed'), hideBelow: 'xl', cell: (e) => <DateText value={e.processed_at} relative className="text-muted" /> },
+    { key: 'received', header: t('stripe.events.col.received'), hideBelow: 'sm', cell: (e) => <DateText value={e.received_at} relative className="text-muted-foreground" /> },
+    { key: 'processed', header: t('stripe.events.col.processed'), hideBelow: 'xl', cell: (e) => <DateText value={e.processed_at} relative className="text-muted-foreground" /> },
   ];
 
   return (

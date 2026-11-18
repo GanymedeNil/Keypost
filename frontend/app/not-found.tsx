@@ -2,7 +2,7 @@
 
 import { FileQuestion } from 'lucide-react';
 import { useI18n } from '@/lib/i18n/provider';
-import { ButtonLink, EmptyState, usePageTitle } from '@/components/ui';
+import { ButtonLink, EmptyState, usePageTitle } from '@/components/kit';
 
 export default function NotFound() {
   const { t } = useI18n();

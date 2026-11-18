@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { invalidate } from '@/lib/swr';
 import { useAction } from '@/lib/use-action';
 import type { OrderDetail } from '@/lib/types';
-import { Button, Field, Input, Modal } from '@/components/ui';
+import { Button, Field, Input, Modal } from '@/components/kit';
 
 /** Mount only while open (fresh state on every open). */
 export function ResendReceiptDialog({ order, onClose, onDone }: { order: OrderDetail; onClose: () => void; onDone: () => void }) {

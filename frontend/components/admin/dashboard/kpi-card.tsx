@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react';
-import { Card } from '@/components/ui';
+import { Card } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import { formatPercent } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -36,11 +36,11 @@ export function KpiCard({
     const good = invertDelta ? !up : up;
     const Icon = flat ? Minus : up ? ArrowUpRight : ArrowDownRight;
     deltaNode = (
-      <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-subtle">
+      <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
         <span
           className={cn(
             'inline-flex items-center gap-0.5 rounded px-1 py-0.5 font-medium',
-            flat || delta === null ? 'bg-surface-3 text-muted' : good ? 'bg-success-soft text-success-text' : 'bg-danger-soft text-danger-text',
+            flat || delta === null ? 'bg-accent text-muted-foreground' : good ? 'bg-success-soft text-success-text' : 'bg-danger-soft text-danger-text',
           )}
         >
           <Icon className="size-3" />
@@ -53,14 +53,14 @@ export function KpiCard({
   return (
     <Card className="p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs font-medium text-muted">{label}</p>
-        <span className="grid size-7 place-items-center rounded-md bg-accent-soft text-accent-text [&_svg]:size-4">{icon}</span>
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+        <span className="grid size-7 place-items-center rounded-md bg-accent text-primary [&_svg]:size-4">{icon}</span>
       </div>
       <div className="mt-2 text-2xl font-semibold tracking-tight tabular-nums">
-        {loading ? <span className="block h-8 w-28 animate-shimmer rounded bg-surface-3" /> : value}
+        {loading ? <span className="block h-8 w-28 animate-shimmer rounded bg-accent" /> : value}
       </div>
       {deltaNode}
-      {sub && !loading && <p className="mt-1 text-xs text-subtle">{sub}</p>}
+      {sub && !loading && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
     </Card>
   );
 }

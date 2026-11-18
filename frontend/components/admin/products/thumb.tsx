@@ -10,7 +10,7 @@ export function Thumb({ url, label, className }: { url?: string | null; label: s
       aria-label={safe ? label : undefined}
       aria-hidden={safe ? undefined : true}
       style={safe ? { backgroundImage: `url("${safe}")` } : undefined}
-      className={cn('grid size-9 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface-3 bg-cover bg-center text-subtle', className)}
+      className={cn('grid size-9 shrink-0 place-items-center overflow-hidden rounded-lg border border-border bg-accent bg-cover bg-center text-muted-foreground', className)}
     >
       {!safe && <Package className="size-4" />}
     </span>

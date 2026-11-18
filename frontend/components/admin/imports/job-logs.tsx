@@ -5,7 +5,7 @@ import { Download } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useI18n } from '@/lib/i18n/provider';
 import type { ImportLog } from '@/lib/types';
-import { Button, Card, CardHeader, CopyButton, DateText, EmptyState, FilterSelect, Switch } from '@/components/ui';
+import { Button, Card, CardHeader, CopyButton, DateText, EmptyState, FilterSelect, Switch } from '@/components/kit';
 import { useJobLogs } from './use-job-logs';
 import { useScrollToEnd } from './use-scroll-to-end';
 
@@ -76,7 +76,7 @@ export function JobLogs({ jobId, live }: { jobId: number; live: boolean }) {
               ]}
               className="sm:w-36"
             />
-            <label className="flex items-center gap-2 text-xs text-muted">
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
               <Switch checked={autoScroll} onCheckedChange={setAutoScroll} aria-label={t('imports.logs.autoScroll')} />
               <span className="hidden sm:inline">{t('imports.logs.autoScroll')}</span>
             </label>
@@ -99,18 +99,18 @@ export function JobLogs({ jobId, live }: { jobId: number; live: boolean }) {
       ) : (
         <>
           {filtered.length > rendered.length && (
-            <p className="border-b border-line bg-surface-2/60 px-4 py-1.5 text-xs text-subtle">
+            <p className="border-b border-border bg-muted/60 px-4 py-1.5 text-xs text-muted-foreground">
               {t('imports.logs.truncated', { shown: rendered.length, total: filtered.length })}
             </p>
           )}
-          <div ref={boxRef} onScroll={onScroll} tabIndex={0} role="log" aria-live="off" className="max-h-96 overflow-auto bg-surface-2/40 px-4 py-2 font-mono text-xs leading-relaxed">
+          <div ref={boxRef} onScroll={onScroll} tabIndex={0} role="log" aria-live="off" className="max-h-96 overflow-auto bg-muted/40 px-4 py-2 font-mono text-xs leading-relaxed">
             {rendered.map((l) => {
               const lv = levelOf(l);
               return (
                 <div key={l.id} className="flex gap-3 py-0.5">
-                  <DateText value={l.created_at} relative className="w-24 shrink-0 text-subtle" />
+                  <DateText value={l.created_at} relative className="w-24 shrink-0 text-muted-foreground" />
                   <span className={cn('w-12 shrink-0 font-semibold uppercase', levelStyle[lv])}>{lv}</span>
-                  <span className={cn('min-w-0 flex-1 whitespace-pre-wrap break-words', lv === 'error' ? 'text-danger-text' : 'text-fg')}>{l.message}</span>
+                  <span className={cn('min-w-0 flex-1 whitespace-pre-wrap break-words', lv === 'error' ? 'text-danger-text' : 'text-foreground')}>{l.message}</span>
                 </div>
               );
             })}

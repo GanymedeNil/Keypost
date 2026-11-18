@@ -1,6 +1,6 @@
 # Frontend notes
 
-Next.js 16 (App Router, React 19, TypeScript strict, Tailwind v4, SWR, Radix primitives, lucide icons) in `frontend/`.
+Next.js 16 (App Router, React 19, TypeScript strict, Tailwind v4, **shadcn/ui** (new-york, neutral), SWR, lucide icons) in `frontend/`.
 Admin back office under `/admin/*`, customer pages under `/my-orders*`, `/` redirects to `/my-orders`.
 
 ## Run it
@@ -33,7 +33,9 @@ TypeScript is pinned to 6.0.x because `typescript-eslint` (used by `eslint-confi
 | Config | `next.config.ts` (rewrites, standalone), `proxy.ts`, `Dockerfile`, `.env.example`, `scripts/postbuild.mjs` |
 | API layer | `lib/api.ts` (client, `ApiError`, upload w/ progress), `lib/types.ts` (mirrors ADMIN_API.md), `lib/use-api.ts` (`useApi`, `useList`), `lib/use-action.ts`, `lib/swr.ts` (`invalidate`), `lib/url-state.ts` |
 | i18n | `lib/i18n/{index,provider,define}.ts(x)`, `lib/i18n/messages/<area>.ts` (en + zh side by side, key parity enforced by TS), language from cookie `df-lang` → `Accept-Language` |
-| UI kit | `components/ui/*` (Button, Field/Input/Select, Switch, Badge/StatusBadge, Card, DataTable, Tabs, Modal/Drawer, ActionMenu, Toast, ConfirmProvider, JsonViewer, CopyButton, Money/Date text, states, Progress…) |
+| shadcn/ui | `components/ui/*` are the stock shadcn components (button, card, input, dialog, sheet, dropdown-menu, tabs, switch, checkbox, table, badge, progress, skeleton, tooltip…), added with `pnpm dlx shadcn@latest add <name>`; config in `components.json`. Don't edit them for app needs |
+| UI kit | `components/kit/*` is the app-level API pages import from `@/components/kit`: Button (variants primary / secondary / ghost / danger), Field/Input/Select, Switch, Badge/StatusBadge, Card (Header/Body/Footer), DataTable, Tabs, Modal/Drawer, ActionMenu, Toast (Sonner), ConfirmProvider, JsonViewer, CopyButton, states, Progress… Each wraps the shadcn component, so restyling happens in one place |
+| Theme | `app/globals.css`: shadcn CSS variables (`--background`, `--foreground`, `--primary`, `--muted`, `--border`, `--sidebar-*`, `--radius`…) for light and dark, plus `success / warning / danger / info` extras (`bg-success-soft text-success-text` …). The logo, the primary button and the e-mails use the same near-black ink. Use the shadcn token classes (`bg-card`, `text-muted-foreground`, `border-border`) |
 | Admin shell | `app/admin/(shell)/layout.tsx`, `components/admin/{sidebar,topbar,admin-context,nav}` (store switcher, global test mode, theme, language, user menu) |
 | Dashboard | `app/admin/(shell)/page.tsx`, `components/admin/dashboard/*` (hand-rolled SVG chart, KPIs, health card) |
 | Orders / Customers | `orders/**`, `customers/**` + `components/admin/{orders,customers}` |

@@ -1,90 +1,134 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ------------------------------------------------------------------ tokens
-   Neutral palette + a single indigo accent. Light and dark are fully token driven. */
+/* ------------------------------------------------------------------ theme
+   shadcn/ui, "new-york" style, neutral base colour (https://ui.shadcn.com/docs/theming).
+   The product's ink is --primary / --foreground: the logo, the primary button and the e-mails use it too.
+   success / warning / info are extras shadcn does not ship; danger is --destructive. */
 :root {
   color-scheme: light;
-  --canvas: #f6f6f8;
-  --surface: #ffffff;
-  --surface-2: #f4f4f6;
-  --surface-3: #ebebef;
-  --line: #e4e4e9;
-  --line-strong: #cfcfd8;
-  --fg: #16161a;
-  --muted: #55555f;
-  --subtle: #8c8c98;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-fg: #ffffff;
-  --accent-soft: #eef0ff;
-  --accent-text: #4338ca;
-  --success: #16a34a;
-  --success-soft: #e3f6e9;
-  --success-text: #146c33;
-  --warning: #d97706;
-  --warning-soft: #fdf1d6;
-  --warning-text: #8a4a07;
-  --danger: #dc2626;
-  --danger-soft: #fde8e8;
-  --danger-text: #a51d1d;
-  --info: #0284c7;
-  --info-soft: #e1f1fb;
-  --info-text: #075e8e;
-  --shadow-card: 0 1px 2px rgb(16 16 24 / 0.04);
-  --shadow-pop: 0 10px 30px -6px rgb(16 16 24 / 0.18), 0 2px 8px rgb(16 16 24 / 0.08);
-  --scrim: rgb(14 14 20 / 0.45);
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  --success: oklch(0.627 0.194 149.2);
+  --success-soft: oklch(0.962 0.044 156.7);
+  --success-text: oklch(0.448 0.119 151.3);
+  --warning: oklch(0.666 0.179 58.3);
+  --warning-soft: oklch(0.962 0.059 95.6);
+  --warning-text: oklch(0.473 0.137 46.2);
+  --danger: var(--destructive);
+  --danger-soft: oklch(0.936 0.032 17.7);
+  --danger-text: oklch(0.444 0.177 26.9);
+  --info: oklch(0.588 0.158 241.97);
+  --info-soft: oklch(0.951 0.026 236.8);
+  --info-text: oklch(0.443 0.11 240.8);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-pop: 0 10px 30px -6px rgb(0 0 0 / 0.18), 0 2px 8px rgb(0 0 0 / 0.08);
 }
 
 .dark {
   color-scheme: dark;
-  --canvas: #0c0c0f;
-  --surface: #131317;
-  --surface-2: #1a1a1f;
-  --surface-3: #232329;
-  --line: #26262d;
-  --line-strong: #3a3a44;
-  --fg: #ececf1;
-  --muted: #a2a2b0;
-  --subtle: #70707e;
-  --accent: #6366f1;
-  --accent-hover: #7578f5;
-  --accent-fg: #ffffff;
-  --accent-soft: rgb(99 102 241 / 0.16);
-  --accent-text: #a5a8ff;
-  --success: #34d058;
-  --success-soft: rgb(52 208 88 / 0.14);
-  --success-text: #6fe08c;
-  --warning: #f0a030;
-  --warning-soft: rgb(240 160 48 / 0.15);
-  --warning-text: #f5bd6a;
-  --danger: #f06161;
-  --danger-soft: rgb(240 97 97 / 0.15);
-  --danger-text: #ff9a9a;
-  --info: #38b2f0;
-  --info-soft: rgb(56 178 240 / 0.15);
-  --info-text: #7ccbf7;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+
+  --success: oklch(0.792 0.209 151.7);
+  --success-soft: oklch(0.792 0.209 151.7 / 0.14);
+  --success-text: oklch(0.845 0.17 152);
+  --warning: oklch(0.769 0.188 70.1);
+  --warning-soft: oklch(0.769 0.188 70.1 / 0.15);
+  --warning-text: oklch(0.837 0.128 77);
+  --danger: var(--destructive);
+  --danger-soft: oklch(0.704 0.191 22.2 / 0.15);
+  --danger-text: oklch(0.808 0.114 19.6);
+  --info: oklch(0.746 0.145 237);
+  --info-soft: oklch(0.746 0.145 237 / 0.15);
+  --info-text: oklch(0.82 0.1 237);
+  --shadow-card: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-pop: 0 14px 40px -8px rgb(0 0 0 / 0.7), 0 2px 8px rgb(0 0 0 / 0.4);
-  --scrim: rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
-  --color-canvas: var(--canvas);
-  --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-surface-3: var(--surface-3);
-  --color-line: var(--line);
-  --color-line-strong: var(--line-strong);
-  --color-fg: var(--fg);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
-  --color-subtle: var(--subtle);
+  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-fg: var(--accent-fg);
-  --color-accent-soft: var(--accent-soft);
-  --color-accent-text: var(--accent-text);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
   --color-success-text: var(--success-text);
@@ -170,27 +214,19 @@
 }
 
 @layer base {
-  *,
-  ::before,
-  ::after {
-    border-color: var(--line);
+  * {
+    @apply border-border outline-ring/50;
   }
   html {
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
   }
   body {
-    background: var(--canvas);
-    color: var(--fg);
+    @apply bg-background text-foreground;
     font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-  }
-  :focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 4px;
   }
   /* A bare `grid` is a single column that may shrink below its content (tables scroll instead of widening the page). */
   .grid {
@@ -204,9 +240,6 @@
   button:disabled {
     cursor: not-allowed;
   }
-  ::selection {
-    background: var(--accent-soft);
-  }
   input[type='number']::-webkit-inner-spin-button {
     opacity: 0.4;
   }
@@ -216,10 +249,10 @@
   .font-mono {
     font-family: var(--font-mono);
   }
-  /* custom scrollbars: thin and unobtrusive */
+  /* thin, unobtrusive scrollbars */
   * {
     scrollbar-width: thin;
-    scrollbar-color: var(--line-strong) transparent;
+    scrollbar-color: var(--border) transparent;
   }
 }
 

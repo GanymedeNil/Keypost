@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useMemo, useState, type PointerEvent } from 'react';
-import { Card, CardHeader, EmptyState, Tabs } from '@/components/ui';
+import { Card, CardHeader, EmptyState, Tabs } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import { formatDate, formatMoney, formatNumber } from '@/lib/format';
 import type { Dashboard } from '@/lib/types';
@@ -78,12 +78,12 @@ export function SalesChart({ data, days, loading }: { data: Dashboard | undefine
       />
       <div className="p-4 pt-3">
         {loading && !data ? (
-          <div className="h-60 animate-shimmer rounded-lg bg-surface-3" />
+          <div className="h-60 animate-shimmer rounded-lg bg-accent" />
         ) : n === 0 || total === 0 ? (
           <EmptyState title={t('dashboard.chart.empty')} className="py-16" />
         ) : (
           <div className="relative flex gap-2">
-            <div className="flex h-[220px] w-12 shrink-0 flex-col justify-between pb-0 text-right text-[11px] tabular-nums text-subtle" aria-hidden>
+            <div className="flex h-[220px] w-12 shrink-0 flex-col justify-between pb-0 text-right text-[11px] tabular-nums text-muted-foreground" aria-hidden>
               {[...ticks].reverse().map((tk) => (
                 <span key={tk} className="leading-none">
                   {fmt(max * tk)}
@@ -105,17 +105,17 @@ export function SalesChart({ data, days, loading }: { data: Dashboard | undefine
                 <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="block h-[220px] w-full overflow-visible">
                   <defs>
                     <linearGradient id={`g${gid}`} x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.28" />
-                      <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.02" />
+                      <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.28" />
+                      <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.02" />
                     </linearGradient>
                   </defs>
                   {ticks.map((tk) => (
-                    <line key={tk} x1="0" x2={W} y1={y(max * tk)} y2={y(max * tk)} stroke="var(--line)" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray={tk === 0 ? undefined : '3 4'} />
+                    <line key={tk} x1="0" x2={W} y1={y(max * tk)} y2={y(max * tk)} stroke="var(--border)" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray={tk === 0 ? undefined : '3 4'} />
                   ))}
                   {metric === 'revenue' ? (
                     <>
                       <path d={area} fill={`url(#g${gid})`} />
-                      <path d={line} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                      <path d={line} fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
                     </>
                   ) : (
                     values.map((v, i) => (
@@ -126,49 +126,49 @@ export function SalesChart({ data, days, loading }: { data: Dashboard | undefine
                         width={barW}
                         height={Math.max(0, H - y(v))}
                         rx="2"
-                        fill="var(--accent)"
+                        fill="var(--primary)"
                         opacity={hover === null || hover === i ? 1 : 0.45}
                       />
                     ))
                   )}
                   {hover !== null && metric === 'revenue' && (
-                    <line x1={x(hover)} x2={x(hover)} y1="0" y2={H} stroke="var(--line-strong)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                    <line x1={x(hover)} x2={x(hover)} y1="0" y2={H} stroke="var(--input)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
                   )}
                 </svg>
                 {hover !== null && metric === 'revenue' && (
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-accent bg-surface"
+                    className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-primary bg-card"
                     style={{ left: `${leftPct}%`, top: `${(y(values[hover]) / H) * 100}%` }}
                   />
                 )}
                 {point && (
                   <div
                     className={cn(
-                      'pointer-events-none absolute top-0 z-10 w-44 rounded-lg border border-line bg-surface p-2.5 text-xs shadow-[var(--shadow-pop)]',
+                      'pointer-events-none absolute top-0 z-10 w-44 rounded-lg border border-border bg-card p-2.5 text-xs shadow-[var(--shadow-pop)]',
                       leftPct > 60 ? '-translate-x-[105%]' : 'translate-x-3',
                     )}
                     style={{ left: `${leftPct}%` }}
                   >
-                    <p className="mb-1 font-medium text-fg">{formatDate(point.date, locale, 'date')}</p>
-                    <dl className="space-y-0.5 tabular-nums text-muted">
+                    <p className="mb-1 font-medium text-foreground">{formatDate(point.date, locale, 'date')}</p>
+                    <dl className="space-y-0.5 tabular-nums text-muted-foreground">
                       <div className="flex justify-between gap-2">
                         <dt>{t('dashboard.chart.revenue')}</dt>
-                        <dd className="text-fg">{formatMoney(point.revenue, currency, locale)}</dd>
+                        <dd className="text-foreground">{formatMoney(point.revenue, currency, locale)}</dd>
                       </div>
                       <div className="flex justify-between gap-2">
                         <dt>{t('dashboard.chart.orders')}</dt>
-                        <dd className="text-fg">{formatNumber(point.orders, locale)}</dd>
+                        <dd className="text-foreground">{formatNumber(point.orders, locale)}</dd>
                       </div>
                       <div className="flex justify-between gap-2">
                         <dt>{t('dashboard.chart.refunds')}</dt>
-                        <dd className="text-fg">{formatMoney(point.refunds, currency, locale)}</dd>
+                        <dd className="text-foreground">{formatMoney(point.refunds, currency, locale)}</dd>
                       </div>
                     </dl>
                   </div>
                 )}
               </div>
-              <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-subtle" aria-hidden>
+              <div className="mt-1.5 flex justify-between text-[11px] tabular-nums text-muted-foreground" aria-hidden>
                 {labelIdx.map((i, k) => (
                   <span key={`${i}-${k}`}>{series[i] ? formatDate(series[i].date, locale, 'short') : ''}</span>
                 ))}

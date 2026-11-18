@@ -13,7 +13,7 @@ import { JobDetails } from '@/components/admin/imports/job-details';
 import { JobLogs } from '@/components/admin/imports/job-logs';
 import { JobProgress } from '@/components/admin/imports/job-progress';
 import { isActive } from '@/components/admin/imports/utils';
-import { Button, Callout, ErrorState, PageHeader, PageSkeleton, StatusBadge, useConfirm } from '@/components/ui';
+import { Button, Callout, ErrorState, PageHeader, PageSkeleton, StatusBadge, useConfirm } from '@/components/kit';
 
 export default function ImportJobPage() {
   const { t } = useI18n();

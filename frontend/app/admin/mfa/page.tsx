@@ -9,7 +9,7 @@ import { adminApi, ApiError, fetcher } from '@/lib/api';
 import type { User } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Button, Callout, CopyButton, Field, Input, Skeleton, usePageTitle } from '@/components/ui';
+import { Button, Callout, CopyButton, Field, Input, Skeleton, usePageTitle } from '@/components/kit';
 import { LanguageMenu, ThemeMenu } from '@/components/admin/topbar';
 import { RecoveryCodes } from '@/components/admin/mfa/recovery-codes';
 
@@ -60,10 +60,10 @@ function SetupStep({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-5" noValidate>
-      <p className="text-sm text-muted">{t('mfa.setup.desc')}</p>
+      <p className="text-sm text-muted-foreground">{t('mfa.setup.desc')}</p>
       <div className="flex flex-col items-center gap-3">
-        <p className="text-xs font-medium text-subtle">{t('mfa.setup.scan')}</p>
-        <div className="grid size-[224px] place-items-center rounded-xl border border-line bg-white p-2">
+        <p className="text-xs font-medium text-muted-foreground">{t('mfa.setup.scan')}</p>
+        <div className="grid size-[224px] place-items-center rounded-xl border border-border bg-white p-2">
           {qr ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={qr} width={208} height={208} alt="QR code" />
@@ -73,7 +73,7 @@ function SetupStep({ onEnabled }: { onEnabled: (codes: string[]) => void }) {
         </div>
         {setup && (
           <div className="w-full text-center">
-            <p className="text-xs text-subtle">{t('mfa.setup.manual')}</p>
+            <p className="text-xs text-muted-foreground">{t('mfa.setup.manual')}</p>
             <p className="mt-1 flex items-center justify-center gap-1 font-mono text-sm tracking-wider">
               <span>{groupSecret(setup.secret)}</span>
               <CopyButton value={setup.secret} label="secret key" />
@@ -106,10 +106,10 @@ function RecoveryStep({ codes, onDone }: { codes: string[]; onDone: () => void }
   const [saved, setSaved] = useState(false);
   return (
     <div className="space-y-5">
-      <p className="text-sm text-muted">{t('mfa.recovery.desc')}</p>
+      <p className="text-sm text-muted-foreground">{t('mfa.recovery.desc')}</p>
       <RecoveryCodes codes={codes} />
       <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" className="size-4 accent-[var(--accent)]" checked={saved} onChange={(e) => setSaved(e.target.checked)} />
+        <input type="checkbox" className="size-4 accent-primary" checked={saved} onChange={(e) => setSaved(e.target.checked)} />
         {t('mfa.recovery.saved')}
       </label>
       <Button variant="primary" size="lg" className="w-full" disabled={!saved} onClick={onDone}>
@@ -138,7 +138,7 @@ function VerifyStep({ onVerified }: { onVerified: () => void }) {
 
   return (
     <form onSubmit={submit} className="space-y-5" noValidate>
-      <p className="text-sm text-muted">{recovery ? t('mfa.verify.recoveryHint') : t('mfa.verify.desc')}</p>
+      <p className="text-sm text-muted-foreground">{recovery ? t('mfa.verify.recoveryHint') : t('mfa.verify.desc')}</p>
       {locked && <Callout tone="danger">{t('mfa.error.locked')}</Callout>}
       <Field
         label={recovery ? t('mfa.verify.recoveryLabel') : t('mfa.verify.code')}
@@ -162,7 +162,7 @@ function VerifyStep({ onVerified }: { onVerified: () => void }) {
       </Button>
       <button
         type="button"
-        className="mx-auto block text-sm text-accent-text hover:underline"
+        className="mx-auto block text-sm text-primary hover:underline"
         onClick={() => {
           setRecovery((r) => !r);
           setValue('');
@@ -212,11 +212,11 @@ function MfaInner() {
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <BrandLogo className="mb-5 h-11 w-auto text-fg" />
+          <BrandLogo className="mb-5 h-11 w-auto text-foreground" />
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
-          {user && <p className="mt-1 text-sm text-muted">{user.email}</p>}
+          {user && <p className="mt-1 text-sm text-muted-foreground">{user.email}</p>}
         </div>
-        <div className="rounded-xl border border-line bg-surface p-5 shadow-card sm:p-6">
+        <div className="rounded-xl border border-border bg-card p-5 shadow-card sm:p-6">
           {error ? (
             <Callout tone="danger">{error instanceof Error ? error.message : t('errors.generic')}</Callout>
           ) : !user ? (
@@ -232,7 +232,7 @@ function MfaInner() {
             <SetupStep onEnabled={setCodes} />
           )}
         </div>
-        <button type="button" onClick={signOut} className="mx-auto mt-4 block text-sm text-muted hover:text-fg hover:underline">
+        <button type="button" onClick={signOut} className="mx-auto mt-4 block text-sm text-muted-foreground hover:text-foreground hover:underline">
           {t('mfa.signOut')}
         </button>
       </div>

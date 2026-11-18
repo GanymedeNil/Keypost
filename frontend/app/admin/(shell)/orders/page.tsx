@@ -23,7 +23,7 @@ import {
   type Column,
   StatusBadge,
   DateText,
-} from '@/components/ui';
+} from '@/components/kit';
 
 const STATUSES: OrderStatus[] = ['paid', 'pending', 'partial_refund', 'refunded', 'failed', 'fraudulent'];
 
@@ -45,11 +45,11 @@ export default function OrdersPage() {
       header: t('orders.col.order'),
       cell: (o) => (
         <div className="min-w-0">
-          <Link href={`/admin/orders/${o.id}`} className="font-medium text-fg hover:text-accent-text">
+          <Link href={`/admin/orders/${o.id}`} className="font-medium text-foreground hover:text-primary">
             #{o.order_number}
           </Link>
-          <p className="max-w-40 truncate text-xs text-subtle sm:hidden">{o.user_name || o.user_email}</p>
-          <p className="hidden max-w-40 truncate font-mono text-[11px] text-subtle sm:block" title={o.identifier}>
+          <p className="max-w-40 truncate text-xs text-muted-foreground sm:hidden">{o.user_name || o.user_email}</p>
+          <p className="hidden max-w-40 truncate font-mono text-[11px] text-muted-foreground sm:block" title={o.identifier}>
             {o.identifier}
           </p>
         </div>
@@ -62,7 +62,7 @@ export default function OrdersPage() {
       cell: (o) => (
         <div className="min-w-0 max-w-56">
           <p className="truncate">{o.user_name || '—'}</p>
-          <p className="truncate text-xs text-subtle">{o.user_email}</p>
+          <p className="truncate text-xs text-muted-foreground">{o.user_email}</p>
         </div>
       ),
     },
@@ -74,13 +74,13 @@ export default function OrdersPage() {
         o.first_item ? (
           <div className="min-w-0 max-w-64">
             <p className="truncate">{o.first_item.product_name}</p>
-            <p className="truncate text-xs text-subtle">
+            <p className="truncate text-xs text-muted-foreground">
               {o.first_item.variant_name}
               {o.first_item.quantity > 1 ? ` × ${o.first_item.quantity}` : ''}
             </p>
           </div>
         ) : (
-          <span className="text-subtle">—</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
     {
@@ -92,7 +92,7 @@ export default function OrdersPage() {
         <div>
           <MoneyText amount={o.total} currency={o.currency} className="font-medium" />
           {o.refunded_amount > 0 && (
-            <p className="text-xs text-subtle">{t('orders.refundedAmount', { amount: formatMoney(o.refunded_amount, o.currency, locale) })}</p>
+            <p className="text-xs text-muted-foreground">{t('orders.refundedAmount', { amount: formatMoney(o.refunded_amount, o.currency, locale) })}</p>
           )}
         </div>
       ),
@@ -111,14 +111,14 @@ export default function OrdersPage() {
       key: 'source',
       header: t('orders.col.source'),
       hideBelow: 'xl',
-      cell: (o) => <span className="text-muted">{te(`source.${o.source}`, o.source)}</span>,
+      cell: (o) => <span className="text-muted-foreground">{te(`source.${o.source}`, o.source)}</span>,
     },
     {
       key: 'created',
       header: t('common.created'),
       sortKey: 'created_at',
       hideBelow: 'md',
-      cell: (o) => <DateText value={o.created_at} className="text-muted" />,
+      cell: (o) => <DateText value={o.created_at} className="text-muted-foreground" />,
     },
   ];
 
@@ -153,7 +153,7 @@ export default function OrdersPage() {
               onChange={(e) => list.set({ from: e.target.value })}
               className="w-36"
             />
-            <span className="text-xs text-subtle">–</span>
+            <span className="text-xs text-muted-foreground">–</span>
             <Input
               type="date"
               aria-label={t('common.dateTo')}

@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import { ExternalLink } from 'lucide-react';
-import { ButtonLink, Card, CardBody, CardHeader, CopyField, Field, Input, Select, SwitchField } from '@/components/ui';
+import { ButtonLink, Card, CardBody, CardHeader, CopyField, Field, Input, Select, SwitchField } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import type { Role, Settings, SettingsUpdate } from '@/lib/types';
 import { ChipInput } from './chip-input';

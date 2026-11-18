@@ -4,6 +4,9 @@ import { createContext, useContext, useId, type AriaAttributes, type ComponentPr
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/provider';
+import { Input as UiInput } from '@/components/ui/input';
+import { Textarea as UiTextarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface FieldCtx {
   id: string;
@@ -35,22 +38,22 @@ export function Field({ label, hint, error, required, optional, aside, className
         {(label || aside) && (
           <div className="flex items-center justify-between gap-2">
             {label && (
-              <label htmlFor={id} className="text-xs font-medium text-fg">
+              <Label htmlFor={id}>
                 {label}
-                {required && <span className="ml-0.5 text-danger" aria-hidden>*</span>}
-                {optional && <span className="ml-1 font-normal text-subtle">({t('common.optional')})</span>}
-              </label>
+                {required && <span className="text-destructive" aria-hidden>*</span>}
+                {optional && <span className="font-normal text-muted-foreground">({t('common.optional')})</span>}
+              </Label>
             )}
             {aside}
           </div>
         )}
         {children}
         {error ? (
-          <p id={`${id}-err`} role="alert" className="text-xs text-danger-text">
+          <p id={`${id}-err`} role="alert" className="text-xs text-destructive">
             {error}
           </p>
         ) : hint ? (
-          <p id={`${id}-hint`} className="text-xs text-subtle">
+          <p id={`${id}-hint`} className="text-xs text-muted-foreground">
             {hint}
           </p>
         ) : null}
@@ -68,29 +71,31 @@ function useFieldProps(props: { id?: string; 'aria-invalid'?: AriaAttributes['ar
   } as const;
 }
 
+/* The native <select> and the prefix/suffix input borrow the look of shadcn's Input. */
 const control =
-  'w-full rounded-md border border-line-strong bg-surface text-sm text-fg placeholder:text-subtle transition-colors ' +
-  'hover:border-subtle focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 ' +
-  'disabled:cursor-not-allowed disabled:bg-surface-2 disabled:text-muted aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/30 [&:is(input,textarea)[readonly]]:bg-surface-2';
+  'h-9 w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-[color,box-shadow] outline-none ' +
+  'placeholder:text-muted-foreground disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30 ' +
+  'focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 ' +
+  'aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40';
 
 export function Input({ className, ...props }: ComponentProps<'input'>) {
   const f = useFieldProps(props);
-  return <input {...f} {...props} className={cn(control, 'h-8 px-2.5', className)} />;
+  return <UiInput {...f} {...props} className={className} />;
 }
 
 export function Textarea({ className, rows = 3, ...props }: ComponentProps<'textarea'>) {
   const f = useFieldProps(props);
-  return <textarea rows={rows} {...f} {...props} className={cn(control, 'min-h-16 px-2.5 py-1.5', className)} />;
+  return <UiTextarea rows={rows} {...f} {...props} className={cn('min-h-16', className)} />;
 }
 
 export function Select({ className, children, ...props }: ComponentProps<'select'>) {
   const f = useFieldProps(props);
   return (
     <div className="relative">
-      <select {...f} {...props} className={cn(control, 'h-8 appearance-none py-0 pl-2.5 pr-8', className)}>
+      <select {...f} {...props} className={cn(control, 'appearance-none pr-8', className)}>
         {children}
       </select>
-      <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 size-3.5 -translate-y-1/2 text-subtle" />
+      <ChevronDown aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
     </div>
   );
 }
@@ -100,13 +105,9 @@ export function InputGroup({ prefix, suffix, className, ...props }: ComponentPro
   const f = useFieldProps(props);
   return (
     <div className="relative">
-      {prefix && <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-subtle">{prefix}</span>}
-      <input
-        {...f}
-        {...props}
-        className={cn(control, 'h-8', prefix ? 'pl-9' : 'pl-2.5', suffix ? 'pr-12' : 'pr-2.5', className)}
-      />
-      {suffix && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-subtle">{suffix}</span>}
+      {prefix && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{prefix}</span>}
+      <UiInput {...f} {...props} className={cn(prefix ? 'pl-10' : undefined, suffix ? 'pr-14' : undefined, className)} />
+      {suffix && <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{suffix}</span>}
     </div>
   );
 }

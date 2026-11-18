@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useCan } from '@/components/admin/admin-context';
 import type { Product } from '@/lib/types';
-import { Button, Card, CardBody, CardFooter, CardHeader, Field, Input, Select, SwitchField, Textarea } from '@/components/ui';
+import { Button, Card, CardBody, CardFooter, CardHeader, Field, Input, Select, SwitchField, Textarea } from '@/components/kit';
 
 interface Draft {
   name: string;

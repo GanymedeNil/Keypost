@@ -10,7 +10,7 @@ import { useList } from '@/lib/use-api';
 import { useCan } from '@/components/admin/admin-context';
 import { CreateCustomerDialog } from '@/components/admin/customers/customer-dialog';
 import { useStoreCurrency } from '@/components/admin/customers/store-currency';
-import { Badge, Button, Card, DataTable, DateText, MoneyText, PageHeader, SearchInput, TestModeBadge, Toolbar, type Column } from '@/components/ui';
+import { Badge, Button, Card, DataTable, DateText, MoneyText, PageHeader, SearchInput, TestModeBadge, Toolbar, type Column } from '@/components/kit';
 
 export default function CustomersPage() {
   const { t } = useI18n();
@@ -28,16 +28,16 @@ export default function CustomersPage() {
       cell: (c) => (
         <div className="min-w-0 max-w-64">
           <div className="flex items-center gap-1.5">
-            <Link href={`/admin/customers/${c.id}`} className="truncate font-medium hover:text-accent-text">
+            <Link href={`/admin/customers/${c.id}`} className="truncate font-medium hover:text-primary">
               {c.name || c.email}
             </Link>
             {c.test_mode && <TestModeBadge />}
           </div>
-          <p className="truncate text-xs text-subtle">{c.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{c.email}</p>
         </div>
       ),
     },
-    { key: 'country', header: t('common.country'), hideBelow: 'sm', cell: (c) => c.country || <span className="text-subtle">—</span> },
+    { key: 'country', header: t('common.country'), hideBelow: 'sm', cell: (c) => c.country || <span className="text-muted-foreground">—</span> },
     { key: 'orders', header: t('customers.col.orders'), align: 'right', hideBelow: 'sm', cell: (c) => <span className="tabular-nums">{c.orders_count}</span> },
     {
       key: 'subs',
@@ -65,7 +65,7 @@ export default function CustomersPage() {
       header: t('customers.col.mrr'),
       align: 'right',
       hideBelow: 'md',
-      cell: (c) => (c.mrr > 0 ? <MoneyText amount={c.mrr} currency={storeCurrency(c.store_id)} /> : <span className="text-subtle">—</span>),
+      cell: (c) => (c.mrr > 0 ? <MoneyText amount={c.mrr} currency={storeCurrency(c.store_id)} /> : <span className="text-muted-foreground">—</span>),
     },
     {
       key: 'stripe',
@@ -74,7 +74,7 @@ export default function CustomersPage() {
       cell: (c) =>
         c.stripe_customer_id ? <Badge tone="success">{t('customers.stripe.linked')}</Badge> : <Badge>{t('customers.stripe.notLinked')}</Badge>,
     },
-    { key: 'created', header: t('common.created'), sortKey: 'created_at', hideBelow: 'xl', cell: (c) => <DateText value={c.created_at} style="date" className="text-muted" /> },
+    { key: 'created', header: t('common.created'), sortKey: 'created_at', hideBelow: 'xl', cell: (c) => <DateText value={c.created_at} style="date" className="text-muted-foreground" /> },
   ];
 
   return (

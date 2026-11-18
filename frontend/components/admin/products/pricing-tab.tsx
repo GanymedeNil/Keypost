@@ -8,7 +8,7 @@ import { useAction } from '@/lib/use-action';
 import { errorText } from '@/lib/error-text';
 import { useCan } from '@/components/admin/admin-context';
 import type { Price, Variant } from '@/lib/types';
-import { Badge, Button, EmptyState, Mono, MoneyText, useConfirmDelete, useToast } from '@/components/ui';
+import { Badge, Button, EmptyState, Mono, MoneyText, useConfirmDelete, useToast } from '@/components/kit';
 import { PriceDialog } from './price-dialog';
 import { intervalLabel, trialLabel } from './price-utils';
 
@@ -32,7 +32,7 @@ export function PricingTab({ variant, currency, onChanged }: { variant: Variant;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-subtle">{t('products.pricing.hint')}</p>
+        <p className="text-xs text-muted-foreground">{t('products.pricing.hint')}</p>
         {can.write && (
           <Button size="sm" icon={<Plus className="size-3.5" />} onClick={() => setDialog({})}>
             {t('products.price.add')}
@@ -41,7 +41,7 @@ export function PricingTab({ variant, currency, onChanged }: { variant: Variant;
       </div>
 
       {variant.prices.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-line-strong">
+        <div className="rounded-lg border border-dashed border-input">
           <EmptyState
             className="py-8"
             title={t('products.pricing.empty')}
@@ -56,7 +56,7 @@ export function PricingTab({ variant, currency, onChanged }: { variant: Variant;
           />
         </div>
       ) : (
-        <ul className="divide-y divide-line rounded-lg border border-line">
+        <ul className="divide-y divide-border rounded-lg border border-border">
           {variant.prices.map((p) => {
             const trial = trialLabel(p, i18n);
             return (
@@ -69,9 +69,9 @@ export function PricingTab({ variant, currency, onChanged }: { variant: Variant;
                     {p.category === 'pwyw' ? (
                       <span className="text-sm">
                         <MoneyText amount={p.min_price} currency={p.currency} className="font-medium" />
-                        <span className="text-subtle"> {t('products.price.minShort')}</span>
+                        <span className="text-muted-foreground"> {t('products.price.minShort')}</span>
                         {!!p.suggested_price && (
-                          <span className="text-subtle">
+                          <span className="text-muted-foreground">
                             {' · '}
                             <MoneyText amount={p.suggested_price} currency={p.currency} /> {t('products.price.suggestedShort')}
                           </span>
@@ -82,7 +82,7 @@ export function PricingTab({ variant, currency, onChanged }: { variant: Variant;
                     ) : (
                       <span className="text-sm">
                         <MoneyText amount={p.unit_price} currency={p.currency} className="font-medium" />
-                        {p.category === 'subscription' && <span className="text-subtle"> {intervalLabel(p, i18n)}</span>}
+                        {p.category === 'subscription' && <span className="text-muted-foreground"> {intervalLabel(p, i18n)}</span>}
                       </span>
                     )}
                     {trial && <Badge tone="success">{trial}</Badge>}
@@ -93,7 +93,7 @@ export function PricingTab({ variant, currency, onChanged }: { variant: Variant;
                     )}
                     {p.scheme !== 'standard' && <Badge>{p.scheme}</Badge>}
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 text-xs text-subtle">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span>{p.currency}</span>
                     {p.stripe_price_id ? <Mono>{p.stripe_price_id}</Mono> : <Badge tone="warning">{t('products.stripe.notLinked')}</Badge>}
                   </div>

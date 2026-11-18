@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { formatNumber } from '@/lib/format';
 import { useI18n } from '@/lib/i18n/provider';
 import type { ImportJob } from '@/lib/types';
-import { Card, CardBody, CardHeader, Progress } from '@/components/ui';
+import { Card, CardBody, CardHeader, Progress } from '@/components/kit';
 import { isActive, isLemonSqueezyKind, LS_STAGES, progressTone, useImportLabels } from './utils';
 
 type StepState = 'done' | 'current' | 'upcoming' | 'stopped';
@@ -38,8 +38,8 @@ const stateIcon: Record<StepState, React.ReactNode> = {
 
 const stateStyle: Record<StepState, string> = {
   done: 'border-success/30 bg-success-soft text-success-text',
-  current: 'border-accent/40 bg-accent-soft text-accent-text',
-  upcoming: 'border-line bg-surface text-subtle',
+  current: 'border-primary/40 bg-accent text-primary',
+  upcoming: 'border-border bg-card text-muted-foreground',
   stopped: 'border-danger/30 bg-danger-soft text-danger-text',
 };
 
@@ -58,21 +58,21 @@ export function JobProgress({ job }: { job: ImportJob }) {
     <Card>
       <CardHeader
         title={t('imports.progress.title')}
-        actions={isActive(job.status) && <span className="text-xs text-subtle">{t('imports.job.live')}</span>}
+        actions={isActive(job.status) && <span className="text-xs text-muted-foreground">{t('imports.job.live')}</span>}
       />
       <CardBody className="space-y-5">
         {!p ? (
-          <p className="text-sm text-muted">{t('imports.job.notStarted')}</p>
+          <p className="text-sm text-muted-foreground">{t('imports.job.notStarted')}</p>
         ) : (
           <>
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <div className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="text-muted">
-                    {t('imports.progress.stage')}: <span className="font-medium text-fg">{labels.stage(p.stage)}</span>
+                  <span className="text-muted-foreground">
+                    {t('imports.progress.stage')}: <span className="font-medium text-foreground">{labels.stage(p.stage)}</span>
                   </span>
                   {p.total > 0 && (
-                    <span className="tabular-nums text-muted">
+                    <span className="tabular-nums text-muted-foreground">
                       {t('imports.progress.items', { done: formatNumber(finished ? p.total : p.done, locale), total: formatNumber(p.total, locale) })}
                     </span>
                   )}
@@ -81,7 +81,7 @@ export function JobProgress({ job }: { job: ImportJob }) {
               </div>
               {stages.length > 1 && (
                 <div className="space-y-1.5">
-                  <div className="flex items-baseline justify-between text-xs text-subtle">
+                  <div className="flex items-baseline justify-between text-xs text-muted-foreground">
                     <span>{t('imports.progress.overall')}</span>
                     <span className="tabular-nums">{Math.round(overall * 100)}%</span>
                   </div>
@@ -110,20 +110,20 @@ export function JobProgress({ job }: { job: ImportJob }) {
             )}
 
             <div>
-              <h3 className="mb-2 text-xs font-medium text-subtle">{t('imports.counts.title')}</h3>
+              <h3 className="mb-2 text-xs font-medium text-muted-foreground">{t('imports.counts.title')}</h3>
               <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
                 {counts.map(([k, n]) => (
-                  <div key={k} className="rounded-lg border border-line bg-surface-2/50 px-3 py-2">
-                    <p className="truncate text-xs text-subtle">{labels.stage(k)}</p>
+                  <div key={k} className="rounded-lg border border-border bg-muted/50 px-3 py-2">
+                    <p className="truncate text-xs text-muted-foreground">{labels.stage(k)}</p>
                     <p className="text-lg font-semibold tabular-nums">{formatNumber(n, locale)}</p>
                   </div>
                 ))}
-                <div className={cn('rounded-lg border px-3 py-2', p.warnings > 0 ? 'border-warning/30 bg-warning-soft' : 'border-line bg-surface-2/50')}>
-                  <p className={cn('truncate text-xs', p.warnings > 0 ? 'text-warning-text' : 'text-subtle')}>{t('imports.warnings')}</p>
+                <div className={cn('rounded-lg border px-3 py-2', p.warnings > 0 ? 'border-warning/30 bg-warning-soft' : 'border-border bg-muted/50')}>
+                  <p className={cn('truncate text-xs', p.warnings > 0 ? 'text-warning-text' : 'text-muted-foreground')}>{t('imports.warnings')}</p>
                   <p className={cn('text-lg font-semibold tabular-nums', p.warnings > 0 && 'text-warning-text')}>{formatNumber(p.warnings, locale)}</p>
                 </div>
               </div>
-              {counts.length === 0 && <p className="mt-2 text-xs text-subtle">{t('imports.counts.empty')}</p>}
+              {counts.length === 0 && <p className="mt-2 text-xs text-muted-foreground">{t('imports.counts.empty')}</p>}
             </div>
           </>
         )}

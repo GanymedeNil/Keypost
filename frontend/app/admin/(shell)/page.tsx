@@ -1,14 +1,14 @@
 'use client';
 
 import { Boxes, CreditCard, DollarSign, Download, KeyRound, RefreshCcw, RotateCcw, ShoppingCart, Users } from 'lucide-react';
-import { Button, ErrorState, PageHeader, Tabs } from '@/components/ui';
+import { Button, ErrorState, PageHeader, Tabs } from '@/components/kit';
 import { HealthCard } from '@/components/admin/dashboard/health-card';
 import { KpiCard } from '@/components/admin/dashboard/kpi-card';
 import { RecentEvents, RecentOrders } from '@/components/admin/dashboard/recent';
 import { SalesChart } from '@/components/admin/dashboard/sales-chart';
 import { useI18n } from '@/lib/i18n/provider';
 import { formatNumber } from '@/lib/format';
-import { MoneyText } from '@/components/ui';
+import { MoneyText } from '@/components/kit';
 import type { Dashboard } from '@/lib/types';
 import { percentChange } from '@/lib/utils';
 import { useUrlState } from '@/lib/url-state';

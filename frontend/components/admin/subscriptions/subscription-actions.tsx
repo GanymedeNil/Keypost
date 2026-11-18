@@ -8,7 +8,7 @@ import type { SubscriptionDetail } from '@/lib/types';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useCan } from '@/components/admin/admin-context';
-import { ActionMenu, Button, useConfirm } from '@/components/ui';
+import { ActionMenu, Button, useConfirm } from '@/components/kit';
 import { LinkStripeDialog } from './link-stripe-dialog';
 
 export function SubscriptionActions({ sub, onChanged }: { sub: SubscriptionDetail; onChanged: () => Promise<unknown> }) {

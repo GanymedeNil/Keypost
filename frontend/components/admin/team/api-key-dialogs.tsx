@@ -7,7 +7,7 @@ import { fromLocalInput } from '@/lib/format';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import type { ApiKeyCreated } from '@/lib/types';
-import { Button, Callout, Field, Input, Modal, SwitchField, copyText, useConfirm, useToast } from '@/components/ui';
+import { Button, Callout, Field, Input, Modal, SwitchField, copyText, useConfirm, useToast } from '@/components/kit';
 import { useAdmin } from '@/components/admin/admin-context';
 import { useFieldErrors } from './use-field-errors';
 
@@ -120,7 +120,7 @@ export function TokenDialog({ apiKey, onClose }: { apiKey: ApiKeyCreated; onClos
           <p className="text-xs font-medium">{apiKey.name}</p>
           <div className="flex items-stretch gap-2">
             <code
-              className="min-w-0 flex-1 select-all break-all rounded-md border border-line-strong bg-surface-2 px-2.5 py-2 text-xs leading-relaxed"
+              className="min-w-0 flex-1 select-all break-all rounded-md border border-input bg-muted px-2.5 py-2 text-xs leading-relaxed"
               data-testid="new-api-token"
             >
               {apiKey.token}

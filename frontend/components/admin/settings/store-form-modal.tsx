@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import type { Store, StoreInput } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { slugify } from '@/lib/utils';
-import { Button, Field, Input, Modal, Textarea } from '@/components/ui';
+import { Button, Field, Input, Modal, Textarea } from '@/components/kit';
 
 interface Draft {
   name: string;
@@ -88,7 +88,7 @@ export function StoreFormModal({ store, onClose, onSaved }: { store: Store | nul
     >
       <form id="store-form" onSubmit={submit} className="space-y-6" noValidate>
         <fieldset className="space-y-4">
-          <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-subtle">{t('settings.stores.section.general')}</legend>
+          <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.stores.section.general')}</legend>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t('settings.stores.field.name')} error={fieldErrors.name} required>
               <Input
@@ -141,7 +141,7 @@ export function StoreFormModal({ store, onClose, onSaved }: { store: Store | nul
           </div>
         </fieldset>
         <fieldset className="space-y-4">
-          <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-subtle">{t('settings.stores.section.receipt')}</legend>
+          <legend className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('settings.stores.section.receipt')}</legend>
           <Field label={t('settings.stores.field.emailFromName')} hint={t('settings.stores.field.emailFromNameHint')} error={fieldErrors.email_from_name} optional>
             <Input value={draft.email_from_name} onChange={set('email_from_name')} />
           </Field>

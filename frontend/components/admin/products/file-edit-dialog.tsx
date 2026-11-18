@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import type { VariantFile } from '@/lib/types';
-import { Button, Field, Input, Modal, Select } from '@/components/ui';
+import { Button, Field, Input, Modal, Select } from '@/components/kit';
 
 interface Props {
   file: VariantFile | null;

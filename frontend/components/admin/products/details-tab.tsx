@@ -8,7 +8,7 @@ import { useAction } from '@/lib/use-action';
 import { errorText } from '@/lib/error-text';
 import { useCan } from '@/components/admin/admin-context';
 import type { Variant, VariantLink } from '@/lib/types';
-import { Button, Field, Input, Select, Textarea, useConfirmDelete, useToast } from '@/components/ui';
+import { Button, Field, Input, Select, Textarea, useConfirmDelete, useToast } from '@/components/kit';
 import { LinkEditor } from './link-editor';
 import { VARIANT_STATUSES } from './price-utils';
 
@@ -98,20 +98,20 @@ export function DetailsTab({ variant, onChanged, onDeleted }: { variant: Variant
           </Field>
         </div>
         <div className="space-y-1.5">
-          <p className="text-xs font-medium text-fg">{t('products.links.title')}</p>
+          <p className="text-xs font-medium text-foreground">{t('products.links.title')}</p>
           <LinkEditor links={draft.links} onChange={(links) => set('links', links)} />
           {fieldErrors.links ? (
             <p role="alert" className="text-xs text-danger-text">
               {fieldErrors.links}
             </p>
           ) : (
-            <p className="text-xs text-subtle">{t('products.links.hint')}</p>
+            <p className="text-xs text-muted-foreground">{t('products.links.hint')}</p>
           )}
         </div>
       </fieldset>
 
       {can.write && (
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-4">
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
           <Button variant="danger-outline" icon={<Trash2 className="size-3.5" />} loading={del.pending} onClick={remove}>
             {t('products.variant.delete')}
           </Button>

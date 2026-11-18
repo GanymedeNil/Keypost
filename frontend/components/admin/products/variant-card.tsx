@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
 import type { Variant } from '@/lib/types';
-import { Badge, Button, StatusBadge, Tabs, type TabItem } from '@/components/ui';
+import { Badge, Button, StatusBadge, Tabs, type TabItem } from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { DetailsTab } from './details-tab';
 import { FilesTab } from './files-tab';
@@ -62,16 +62,16 @@ export function VariantCard({
   const extra = variant.prices.length - shown.length;
 
   return (
-    <div className="rounded-xl border border-line bg-surface shadow-card">
+    <div className="rounded-xl border border-border bg-card shadow-card">
       <div className="flex items-start gap-1 p-2 sm:p-3">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((o) => !o)}
-          className="flex min-w-0 flex-1 items-start gap-2 rounded-lg p-1.5 text-left hover:bg-surface-2/70"
+          className="flex min-w-0 flex-1 items-start gap-2 rounded-lg p-1.5 text-left hover:bg-muted/70"
         >
-          <ChevronRight className={cn('mt-1 size-4 shrink-0 text-subtle transition-transform', open && 'rotate-90')} />
+          <ChevronRight className={cn('mt-1 size-4 shrink-0 text-muted-foreground transition-transform', open && 'rotate-90')} />
           <span className="min-w-0 flex-1 space-y-1.5">
             <span className="flex flex-wrap items-center gap-2">
               <span className="truncate text-sm font-semibold">{variant.name}</span>
@@ -88,25 +88,25 @@ export function VariantCard({
                 <Badge tone="warning">{t('products.stripe.notMapped')}</Badge>
               )}
             </span>
-            <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
+            <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               {variant.prices.length === 0 ? (
-                <span className="text-subtle">{t('products.pricing.empty')}</span>
+                <span className="text-muted-foreground">{t('products.pricing.empty')}</span>
               ) : (
                 <>
                   {shown.map((p) => (
-                    <span key={p.id} className="rounded-md bg-surface-3 px-1.5 py-0.5 tabular-nums">
+                    <span key={p.id} className="rounded-md bg-accent px-1.5 py-0.5 tabular-nums">
                       {priceLabel(p, i18n)}
                     </span>
                   ))}
-                  {extra > 0 && <span className="text-subtle">+{extra}</span>}
+                  {extra > 0 && <span className="text-muted-foreground">+{extra}</span>}
                 </>
               )}
-              <span className="inline-flex items-center gap-1 text-subtle">
+              <span className="inline-flex items-center gap-1 text-muted-foreground">
                 <Paperclip className="size-3" />
                 {variant.files_count}
               </span>
               {uploading > 0 && (
-                <span className="inline-flex items-center gap-1 text-accent-text">
+                <span className="inline-flex items-center gap-1 text-primary">
                   <Loader2 className="size-3 animate-spin-slow" />
                   {t('products.files.uploadingCount', { count: uploading })}
                 </span>
@@ -127,7 +127,7 @@ export function VariantCard({
       </div>
 
       {open && (
-        <div id={panelId} className="border-t border-line">
+        <div id={panelId} className="border-t border-border">
           <Tabs items={tabs} value={tab} onValueChange={(v) => setTab(v as TabName)} ariaLabel={variant.name} className="px-2 sm:px-3" />
           <div role="tabpanel" className="p-3 sm:p-4">
             {tab === 'details' && <DetailsTab key={variant.updated_at} variant={variant} onChanged={onChanged} onDeleted={onChanged} />}

@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { invalidate } from '@/lib/swr';
 import { useAction } from '@/lib/use-action';
 import type { Customer } from '@/lib/types';
-import { Button, Field, Input, Modal } from '@/components/ui';
+import { Button, Field, Input, Modal } from '@/components/kit';
 import { StoreSelect, useDefaultStoreId } from '../store-select';
 import { useAdmin } from '../admin-context';
 

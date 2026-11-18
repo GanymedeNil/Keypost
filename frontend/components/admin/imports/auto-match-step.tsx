@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import type { ImportJob } from '@/lib/types';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Button, Checkbox } from '@/components/ui';
+import { Button, Checkbox } from '@/components/kit';
 import { StepCard } from './step-card';
 import { useOpenJob } from './utils';
 
@@ -33,7 +33,7 @@ export function AutoMatchStep({ disabled }: { disabled: boolean }) {
       <form onSubmit={submit} className="space-y-5" noValidate>
         <div className="grid gap-3 sm:grid-cols-3">
           {KEYS.map((k) => (
-            <div key={k} className="rounded-lg border border-line bg-surface-2/50 p-3">
+            <div key={k} className="rounded-lg border border-border bg-muted/50 p-3">
               <Checkbox
                 label={t(`imports.match.${k}`)}
                 description={t(`imports.match.${k}Desc`)}

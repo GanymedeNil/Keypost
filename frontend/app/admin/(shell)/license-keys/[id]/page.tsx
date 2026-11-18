@@ -31,7 +31,7 @@ import {
   TestModeBadge,
   useConfirm,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 
 export default function LicenseKeyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -83,7 +83,7 @@ export default function LicenseKeyDetailPage() {
         </span>
       ),
     },
-    { key: 'created', header: t('licenses.instances.activated'), cell: (i) => <DateText value={i.created_at} className="text-muted" /> },
+    { key: 'created', header: t('licenses.instances.activated'), cell: (i) => <DateText value={i.created_at} className="text-muted-foreground" /> },
     ...(can.write
       ? [
           {
@@ -126,8 +126,8 @@ export default function LicenseKeyDetailPage() {
           <Card>
             <CardHeader title={t('licenses.key')} />
             <CardBody className="flex items-center gap-2">
-              <KeyRound aria-hidden className="size-4 shrink-0 text-subtle" />
-              <code className="min-w-0 flex-1 select-all break-all rounded-md bg-surface-2 px-2.5 py-1.5 font-mono text-sm text-fg">
+              <KeyRound aria-hidden className="size-4 shrink-0 text-muted-foreground" />
+              <code className="min-w-0 flex-1 select-all break-all rounded-md bg-muted px-2.5 py-1.5 font-mono text-sm text-foreground">
                 {revealed ? lk.key : lk.key_short}
               </code>
               <Button
@@ -164,30 +164,30 @@ export default function LicenseKeyDetailPage() {
               <DL cols={2}>
                 <DI label={t('licenses.field.customer')}>
                   {lk.customer_id ? (
-                    <Link href={`/admin/customers/${lk.customer_id}`} className="font-medium text-accent-text hover:underline">
+                    <Link href={`/admin/customers/${lk.customer_id}`} className="font-medium text-primary hover:underline">
                       {lk.user_name || lk.user_email}
                     </Link>
                   ) : (
                     lk.user_name || null
                   )}
-                  <span className="block text-xs text-subtle">{lk.user_email}</span>
+                  <span className="block text-xs text-muted-foreground">{lk.user_email}</span>
                 </DI>
                 <DI label={t('licenses.field.order')}>
                   {lk.order_id ? (
-                    <Link href={`/admin/orders/${lk.order_id}`} className="text-accent-text hover:underline">
+                    <Link href={`/admin/orders/${lk.order_id}`} className="text-primary hover:underline">
                       {t('licenses.orderLink', { id: lk.order_id })}
                     </Link>
                   ) : null}
                 </DI>
                 <DI label={t('licenses.field.subscription')}>
                   {lk.subscription_id ? (
-                    <Link href={`/admin/subscriptions/${lk.subscription_id}`} className="text-accent-text hover:underline">
+                    <Link href={`/admin/subscriptions/${lk.subscription_id}`} className="text-primary hover:underline">
                       {t('licenses.subscriptionLink', { id: lk.subscription_id })}
                     </Link>
                   ) : null}
                 </DI>
                 <DI label={t('licenses.field.product')}>
-                  <Link href={`/admin/products/${lk.product_id}`} className="hover:text-accent-text hover:underline">
+                  <Link href={`/admin/products/${lk.product_id}`} className="hover:text-primary hover:underline">
                     {lk.product_name}
                   </Link>
                 </DI>

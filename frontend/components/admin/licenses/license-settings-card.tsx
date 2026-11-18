@@ -8,7 +8,7 @@ import { invalidate } from '@/lib/swr';
 import type { LicenseKeyDetail } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { useCan } from '@/components/admin/admin-context';
-import { Button, Card, CardBody, CardFooter, CardHeader, Field, Input, Progress, Switch, SwitchField } from '@/components/ui';
+import { Button, Card, CardBody, CardFooter, CardHeader, Field, Input, Progress, Switch, SwitchField } from '@/components/kit';
 
 /** Remount with `key` (e.g. `updated_at`) after a save so the form re-reads the server values. */
 export function LicenseSettingsCard({ lk, onSaved }: { lk: LicenseKeyDetail; onSaved: () => Promise<unknown> }) {
@@ -43,7 +43,7 @@ export function LicenseSettingsCard({ lk, onSaved }: { lk: LicenseKeyDetail; onS
       <form onSubmit={submit} noValidate>
         <CardBody className="space-y-5">
           <div className="space-y-2">
-            <div className="flex items-baseline justify-between gap-2 text-xs text-muted">
+            <div className="flex items-baseline justify-between gap-2 text-xs text-muted-foreground">
               <span>
                 {usageLimit === null ? t('licenses.settings.usageUnlimited', { used }) : t('licenses.settings.usage', { used, limit: usageLimit })}
               </span>
@@ -87,8 +87,8 @@ export function LicenseSettingsCard({ lk, onSaved }: { lk: LicenseKeyDetail; onS
 
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-sm font-medium text-fg">{t('licenses.settings.disabled')}</p>
-              <p className="mt-0.5 text-xs text-subtle">{t('licenses.settings.disabledHint')}</p>
+              <p className="text-sm font-medium text-foreground">{t('licenses.settings.disabled')}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t('licenses.settings.disabledHint')}</p>
             </div>
             <Switch checked={disabled} onCheckedChange={setDisabled} disabled={!can.write} aria-label={t('licenses.settings.disabled')} />
           </div>

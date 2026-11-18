@@ -21,7 +21,7 @@ import {
   ErrorState,
   Skeleton,
   SkeletonText,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 
 interface WebhookEndpointResult {
@@ -133,16 +133,16 @@ export function StatusTab() {
           <CardHeader title={t('stripe.webhook.title')} description={t('stripe.webhook.description')} />
           <CardBody className="space-y-4">
             <div>
-              <p className="mb-1.5 text-xs font-medium text-fg">{t('stripe.webhook.url')}</p>
+              <p className="mb-1.5 text-xs font-medium text-foreground">{t('stripe.webhook.url')}</p>
               <CopyField value={data.webhook_url} label={t('stripe.webhook.url')} />
             </div>
             <div>
-              <p className="mb-1.5 text-xs font-medium text-fg">
-                {t('stripe.webhook.requiredEvents')} <span className="font-normal text-subtle">({data.required_events.length})</span>
+              <p className="mb-1.5 text-xs font-medium text-foreground">
+                {t('stripe.webhook.requiredEvents')} <span className="font-normal text-muted-foreground">({data.required_events.length})</span>
               </p>
               <ul className="flex flex-wrap gap-1.5">
                 {data.required_events.map((e) => (
-                  <li key={e} className="rounded-md bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-muted">
+                  <li key={e} className="rounded-md bg-accent px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
                     {e}
                   </li>
                 ))}

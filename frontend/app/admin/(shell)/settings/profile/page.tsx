@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/lib/i18n/provider';
 import { useUrlState } from '@/lib/url-state';
-import { Callout } from '@/components/ui';
+import { Callout } from '@/components/kit';
 import { PasswordCard, ProfileCard, StripeAccountCard } from '@/components/admin/settings/profile-cards';
 import { MfaCard } from '@/components/admin/settings/mfa-card';
 

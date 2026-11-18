@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n/provider';
 import type { Settings, SettingsUpdate } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { useApi } from '@/lib/use-api';
-import { Callout, Card, CardBody, EmptyState, ErrorState, Skeleton } from '@/components/ui';
+import { Callout, Card, CardBody, EmptyState, ErrorState, Skeleton } from '@/components/kit';
 import { useAdmin } from '../admin-context';
 
 export interface SettingsCtx {

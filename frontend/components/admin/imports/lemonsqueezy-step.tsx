@@ -6,7 +6,7 @@ import type { ImportJob } from '@/lib/types';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useAdmin } from '@/components/admin/admin-context';
-import { Button, Callout, Checkbox, Field, Input, Progress, SwitchField } from '@/components/ui';
+import { Button, Callout, Checkbox, Field, Input, Progress, SwitchField } from '@/components/kit';
 import { FileDropzone } from './file-dropzone';
 import { Segmented } from './segmented';
 import { StepCard } from './step-card';
@@ -117,7 +117,7 @@ function ApiForm({ disabled }: { disabled: boolean }) {
       </div>
 
       <fieldset className="min-w-0 border-0 p-0">
-        <legend className="mb-2 flex w-full flex-wrap items-center justify-between gap-2 p-0 text-xs font-medium text-fg">
+        <legend className="mb-2 flex w-full flex-wrap items-center justify-between gap-2 p-0 text-xs font-medium text-foreground">
           {t('imports.api.resources')}
           <span className="flex gap-1">
             <Button size="sm" variant="ghost" onClick={() => setResources([...LS_STAGES])}>
@@ -220,7 +220,7 @@ function ArchiveForm({ disabled }: { disabled: boolean }) {
       {percent !== null && (
         <div className="space-y-1.5" role="status">
           <Progress value={percent} label={t('imports.uploading', { percent })} />
-          <p className="text-xs text-muted">{percent >= 100 ? t('imports.processing') : t('imports.uploading', { percent })}</p>
+          <p className="text-xs text-muted-foreground">{percent >= 100 ? t('imports.processing') : t('imports.uploading', { percent })}</p>
         </div>
       )}
       <Button type="submit" variant="primary" loading={pending} disabled={disabled}>
@@ -245,7 +245,7 @@ export function LemonSqueezyStep({ disabled }: { disabled: boolean }) {
             { value: 'archive', label: t('imports.source.archive') },
           ]}
         />
-        {source === 'archive' && <p className="max-w-3xl text-sm text-muted">{t('imports.archive.desc')}</p>}
+        {source === 'archive' && <p className="max-w-3xl text-sm text-muted-foreground">{t('imports.archive.desc')}</p>}
       </div>
       {source === 'api' ? <ApiForm disabled={disabled} /> : <ArchiveForm disabled={disabled} />}
     </StepCard>

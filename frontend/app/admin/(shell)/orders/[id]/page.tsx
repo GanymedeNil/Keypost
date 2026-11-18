@@ -39,16 +39,16 @@ import {
   Table,
   TableWrap,
   TestModeBadge,
-} from '@/components/ui';
+} from '@/components/kit';
 
 function Empty({ children }: { children: ReactNode }) {
-  return <p className="px-4 py-8 text-center text-sm text-subtle">{children}</p>;
+  return <p className="px-4 py-8 text-center text-sm text-muted-foreground">{children}</p>;
 }
 
 function TotalRow({ label, children, strong, tone }: { label: ReactNode; children: ReactNode; strong?: boolean; tone?: 'danger' }) {
   return (
-    <div className={`flex items-baseline justify-between gap-4 py-1 ${strong ? 'border-t border-line pt-2 text-base font-semibold' : 'text-sm'} ${tone === 'danger' ? 'text-danger-text' : ''}`}>
-      <dt className={strong ? '' : 'text-muted'}>{label}</dt>
+    <div className={`flex items-baseline justify-between gap-4 py-1 ${strong ? 'border-t border-border pt-2 text-base font-semibold' : 'text-sm'} ${tone === 'danger' ? 'text-danger-text' : ''}`}>
+      <dt className={strong ? '' : 'text-muted-foreground'}>{label}</dt>
       <dd className="tabular-nums">{children}</dd>
     </div>
   );
@@ -58,7 +58,7 @@ function StripeRef({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div className="min-w-0">
-      <dt className="text-xs text-subtle">{label}</dt>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="mt-0.5 flex items-center gap-1">
         <code className="min-w-0 truncate text-xs" title={value}>
           {value}
@@ -131,7 +131,7 @@ export default function OrderDetailPage() {
             {order.receipt_url && (
               <ButtonAnchor href={order.receipt_url} target="_blank" rel="noreferrer" icon={<Receipt className="size-3.5" />}>
                 {t('orders.action.openReceipt')}
-                <ExternalLink className="size-3 text-subtle" />
+                <ExternalLink className="size-3 text-muted-foreground" />
               </ButtonAnchor>
             )}
             {order.customer_id ? (
@@ -165,7 +165,7 @@ export default function OrderDetailPage() {
                       <TR key={item.id}>
                         <TD>
                           <p className="font-medium">{item.product_name}</p>
-                          <p className="text-xs text-subtle">{item.variant_name}</p>
+                          <p className="text-xs text-muted-foreground">{item.variant_name}</p>
                         </TD>
                         <TD className="text-right tabular-nums">{item.quantity}</TD>
                         <TD className="hidden text-right sm:table-cell">
@@ -187,17 +187,17 @@ export default function OrderDetailPage() {
             {order.license_keys.length === 0 ? (
               <Empty>{t('orders.keys.empty')}</Empty>
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="divide-y divide-border">
                 {order.license_keys.map((k) => (
                   <li key={k.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
-                        <code className="min-w-0 truncate rounded bg-surface-3 px-1.5 py-0.5 text-xs" title={k.key}>
+                        <code className="min-w-0 truncate rounded bg-accent px-1.5 py-0.5 text-xs" title={k.key}>
                           {k.key}
                         </code>
                         <CopyButton value={k.key} label={t('orders.section.licenseKeys')} />
                       </div>
-                      <p className="mt-1 truncate text-xs text-subtle">
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
                         {k.product_name} — {k.variant_name}
                         {' · '}
                         {t('orders.keys.activations', { used: k.instances_count, limit: k.activation_limit ?? '∞' })}
@@ -221,7 +221,7 @@ export default function OrderDetailPage() {
             {order.files.length === 0 ? (
               <Empty>{t('orders.files.empty')}</Empty>
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="divide-y divide-border">
                 {order.files.map((f) => (
                   <li key={f.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
                     <div className="min-w-0">
@@ -229,7 +229,7 @@ export default function OrderDetailPage() {
                         {f.name}
                         {f.extension && !f.name.toLowerCase().endsWith(`.${f.extension.toLowerCase()}`) ? `.${f.extension}` : ''}
                       </p>
-                      <p className="text-xs text-subtle">
+                      <p className="text-xs text-muted-foreground">
                         {f.product_name} — {f.variant_name} · {f.size_formatted}
                         {f.version ? ` · v${f.version}` : ''}
                       </p>
@@ -248,14 +248,14 @@ export default function OrderDetailPage() {
             {order.subscriptions.length === 0 ? (
               <Empty>{t('orders.subs.empty')}</Empty>
             ) : (
-              <ul className="divide-y divide-line">
+              <ul className="divide-y divide-border">
                 {order.subscriptions.map((s) => (
                   <li key={s.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3">
                     <div className="min-w-0">
-                      <Link href={`/admin/subscriptions/${s.id}`} className="truncate text-sm font-medium hover:text-accent-text">
+                      <Link href={`/admin/subscriptions/${s.id}`} className="truncate text-sm font-medium hover:text-primary">
                         {s.product_name} — {s.variant_name}
                       </Link>
-                      <p className="text-xs text-subtle">
+                      <p className="text-xs text-muted-foreground">
                         {s.renews_at
                           ? t('orders.subs.renews', { date: formatDate(s.renews_at, locale, 'date') })
                           : s.ends_at
@@ -308,8 +308,8 @@ export default function OrderDetailPage() {
                 )}
               </dl>
               {(order.card_brand || order.card_last_four) && (
-                <p className="mt-3 border-t border-line pt-3 text-sm text-muted">
-                  <span className="text-xs text-subtle">{t('orders.field.card')}</span>
+                <p className="mt-3 border-t border-border pt-3 text-sm text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">{t('orders.field.card')}</span>
                   <br />
                   <span className="capitalize">{order.card_brand}</span> •••• {order.card_last_four}
                 </p>
@@ -323,13 +323,13 @@ export default function OrderDetailPage() {
               <DL>
                 <DI label={t('orders.field.customer')}>
                   {order.customer_id ? (
-                    <Link href={`/admin/customers/${order.customer_id}`} className="hover:text-accent-text">
+                    <Link href={`/admin/customers/${order.customer_id}`} className="hover:text-primary">
                       {order.user_name || order.user_email}
                     </Link>
                   ) : (
                     order.user_name
                   )}
-                  <p className="break-all text-xs text-subtle">{order.user_email}</p>
+                  <p className="break-all text-xs text-muted-foreground">{order.user_email}</p>
                 </DI>
                 <DI label={t('orders.field.identifier')}>
                   <span className="flex items-center gap-1">
@@ -384,7 +384,7 @@ export default function OrderDetailPage() {
                   {t('orders.section.customData')}
                   <Badge>{typeof order.custom_data === 'object' ? 'JSON' : String(order.custom_data).length}</Badge>
                 </summary>
-                <div className="border-t border-line p-3">
+                <div className="border-t border-border p-3">
                   <JsonViewer value={order.custom_data} maxHeight={280} />
                 </div>
               </details>

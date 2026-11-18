@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import type { ImportJob } from '@/lib/types';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Button, Field, Progress, Select } from '@/components/ui';
+import { Button, Field, Progress, Select } from '@/components/kit';
 import { FileDropzone } from './file-dropzone';
 import { StepCard } from './step-card';
 import { useOpenJob } from './utils';

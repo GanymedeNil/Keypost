@@ -31,8 +31,8 @@ export function Pagination({
   const from = meta.total === 0 ? 0 : (meta.page - 1) * meta.per_page + 1;
   const to = Math.min(meta.total, meta.page * meta.per_page);
   return (
-    <nav aria-label={t('common.pagination')} className={cn('flex flex-wrap items-center justify-between gap-3 border-t border-line px-4 py-2.5', className)}>
-      <p className="text-xs text-subtle" aria-live="polite">
+    <nav aria-label={t('common.pagination')} className={cn('flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-2.5', className)}>
+      <p className="text-xs text-muted-foreground" aria-live="polite">
         {t('common.showing', { from: formatNumber(from, locale), to: formatNumber(to, locale), total: formatNumber(meta.total, locale) })}
       </p>
       {meta.last_page > 1 && (
@@ -43,7 +43,7 @@ export function Pagination({
           <div className="hidden items-center gap-1 sm:flex">
             {pages(meta.page, meta.last_page).map((p, i) =>
               p === 'gap' ? (
-                <span key={`g${i}`} className="px-1 text-xs text-subtle">
+                <span key={`g${i}`} className="px-1 text-xs text-muted-foreground">
                   …
                 </span>
               ) : (
@@ -52,7 +52,7 @@ export function Pagination({
                   size="icon-sm"
                   variant={p === meta.page ? 'secondary' : 'ghost'}
                   aria-current={p === meta.page ? 'page' : undefined}
-                  className={cn('text-xs tabular-nums', p === meta.page && 'border-accent text-accent-text')}
+                  className={cn('text-xs tabular-nums', p === meta.page && 'border-primary text-primary')}
                   onClick={() => onPageChange(p)}
                 >
                   {p}
@@ -60,7 +60,7 @@ export function Pagination({
               ),
             )}
           </div>
-          <span className="px-2 text-xs text-muted sm:hidden">{t('common.pageOf', { page: meta.page, last: meta.last_page })}</span>
+          <span className="px-2 text-xs text-muted-foreground sm:hidden">{t('common.pageOf', { page: meta.page, last: meta.last_page })}</span>
           <Button size="icon-sm" variant="ghost" aria-label={t('common.next')} disabled={meta.page >= meta.last_page} onClick={() => onPageChange(meta.page + 1)}>
             <ChevronRight className="size-4" />
           </Button>

@@ -6,7 +6,7 @@ import { storefrontApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useCooldown } from '@/lib/storefront';
-import { Button, Card, CardBody, Field, Input, useToast } from '@/components/ui';
+import { Button, Card, CardBody, Field, Input, useToast } from '@/components/kit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -46,10 +46,10 @@ export function SignInCard() {
             <MailCheck className="size-6" aria-hidden />
           </span>
           <h1 className="text-lg font-semibold tracking-tight">{t('storefront.sent.title')}</h1>
-          <p className="text-sm text-muted" role="status">
+          <p className="text-sm text-muted-foreground" role="status">
             {t('storefront.sent.desc', { email: sentTo })}
           </p>
-          <p className="text-xs text-subtle">{t('storefront.sent.spamHint')}</p>
+          <p className="text-xs text-muted-foreground">{t('storefront.sent.spamHint')}</p>
           <div className="mt-2 flex w-full flex-col gap-2 sm:flex-row sm:justify-center">
             <Button
               size="lg"
@@ -81,11 +81,11 @@ export function SignInCard() {
     <Card className="mx-auto max-w-md">
       <CardBody className="px-6 py-8 sm:px-8">
         <div className="mb-6 flex flex-col items-center gap-3 text-center">
-          <span className="grid size-12 place-items-center rounded-full bg-accent-soft text-accent-text">
+          <span className="grid size-12 place-items-center rounded-full bg-accent text-primary">
             <Mail className="size-6" aria-hidden />
           </span>
           <h1 className="text-lg font-semibold tracking-tight">{t('storefront.signIn.title')}</h1>
-          <p className="text-sm text-muted">{t('storefront.signIn.desc')}</p>
+          <p className="text-sm text-muted-foreground">{t('storefront.signIn.desc')}</p>
         </div>
         <form onSubmit={onSubmit} className="space-y-4" noValidate>
           <Field label={t('storefront.signIn.email')} error={invalid ? t('storefront.signIn.invalidEmail') : fieldErrors.email}>

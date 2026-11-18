@@ -3,7 +3,7 @@
 import { Download } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useT } from '@/lib/i18n/provider';
-import { ButtonAnchor } from '@/components/ui';
+import { ButtonAnchor } from '@/components/kit';
 import { StepCard } from './step-card';
 
 export function ReportStep() {

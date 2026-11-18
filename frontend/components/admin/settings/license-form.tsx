@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import { Card, CardBody, CardHeader, Field, Input, SwitchField } from '@/components/ui';
+import { Card, CardBody, CardHeader, Field, Input, SwitchField } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import type { Settings, SettingsUpdate } from '@/lib/types';
 import { humanDuration } from './duration';

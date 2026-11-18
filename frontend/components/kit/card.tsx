@@ -1,8 +1,18 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
+import {
+  Card as UiCard,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter as UiCardFooter,
+  CardHeader as UiCardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
+/* shadcn Card, with the paddings tightened for an admin UI (header / body / footer sections). */
 export function Card({ className, ...props }: ComponentProps<'section'>) {
-  return <section className={cn('min-w-0 rounded-xl border border-line bg-surface shadow-card', className)} {...props} />;
+  return <UiCard className={cn('min-w-0 gap-0 py-0', className)} {...(props as ComponentProps<'div'>)} />;
 }
 
 export function CardHeader({
@@ -17,20 +27,18 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <div className={cn('flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3', className)}>
-      <div className="min-w-0">
-        <h2 className="text-sm font-semibold text-fg">{title}</h2>
-        {description && <p className="mt-0.5 text-xs text-subtle">{description}</p>}
-      </div>
-      {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
-    </div>
+    <UiCardHeader className={cn('grid-rows-[auto] gap-1 border-b px-5 py-4 has-data-[slot=card-description]:grid-rows-[auto_auto]', className)}>
+      <CardTitle className="text-sm leading-snug">{title}</CardTitle>
+      {description && <CardDescription className="text-xs">{description}</CardDescription>}
+      {actions && <CardAction className="flex items-center gap-2 self-center">{actions}</CardAction>}
+    </UiCardHeader>
   );
 }
 
 export function CardBody({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('p-4', className)} {...props} />;
+  return <CardContent className={cn('px-5 py-4', className)} {...props} />;
 }
 
 export function CardFooter({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('flex items-center justify-end gap-2 border-t border-line px-4 py-3', className)} {...props} />;
+  return <UiCardFooter className={cn('justify-end gap-2 border-t px-5 py-3 [.border-t]:pt-3', className)} {...props} />;
 }

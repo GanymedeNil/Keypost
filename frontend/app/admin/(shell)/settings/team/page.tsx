@@ -25,7 +25,7 @@ import {
   usePageTitle,
   type Column,
   type Tone,
-} from '@/components/ui';
+} from '@/components/kit';
 import { useAdmin } from '@/components/admin/admin-context';
 import { UserDialog } from '@/components/admin/team/user-dialog';
 
@@ -75,7 +75,7 @@ function TeamContent() {
             <span className="truncate">{u.name || u.email}</span>
             {u.id === me.id && <Badge tone="accent">{t('team.users.you')}</Badge>}
           </p>
-          <p className="truncate text-xs text-subtle">{u.email}</p>
+          <p className="truncate text-xs text-muted-foreground">{u.email}</p>
           <div className="mt-1.5 flex flex-wrap gap-1 sm:hidden">
             <Badge tone={roleTone[u.role]}>{te(`role.${u.role}`, u.role)}</Badge>
             <StatusBadge status={u.disabled ? 'disabled' : 'active'} />
@@ -104,7 +104,7 @@ function TeamContent() {
               </span>
             </Badge>
           )}
-          {!u.has_password && !u.stripe_account_id && <span className="text-subtle">—</span>}
+          {!u.has_password && !u.stripe_account_id && <span className="text-muted-foreground">—</span>}
         </div>
       ),
     },
@@ -118,9 +118,9 @@ function TeamContent() {
       key: 'last_login',
       header: t('team.users.col.lastLogin'),
       hideBelow: 'lg',
-      cell: (u) => (u.last_login_at ? <DateText value={u.last_login_at} relative /> : <span className="text-subtle">{t('common.never')}</span>),
+      cell: (u) => (u.last_login_at ? <DateText value={u.last_login_at} relative /> : <span className="text-muted-foreground">{t('common.never')}</span>),
     },
-    { key: 'created', header: t('common.created'), hideBelow: 'xl', cell: (u) => <DateText value={u.created_at} style="date" className="text-muted" /> },
+    { key: 'created', header: t('common.created'), hideBelow: 'xl', cell: (u) => <DateText value={u.created_at} style="date" className="text-muted-foreground" /> },
     {
       key: 'actions',
       header: <span className="sr-only">{t('common.actions')}</span>,

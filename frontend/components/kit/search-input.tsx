@@ -40,7 +40,7 @@ export function SearchInput({
 
   return (
     <div className={cn('relative w-full sm:w-64', className)}>
-      <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-subtle" />
+      <Search aria-hidden className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
       <input
         type="search"
         value={draft}
@@ -59,7 +59,7 @@ export function SearchInput({
             commit('');
           }
         }}
-        className="h-8 w-full rounded-md border border-line-strong bg-surface pl-8 pr-7 text-sm placeholder:text-subtle [appearance:none] hover:border-subtle focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 [&::-webkit-search-cancel-button]:hidden"
+        className="h-8 w-full rounded-md border border-input bg-card pl-8 pr-7 text-sm placeholder:text-muted-foreground [appearance:none] hover:border-muted-foreground focus-visible:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [&::-webkit-search-cancel-button]:hidden"
       />
       {draft && (
         <button
@@ -69,7 +69,7 @@ export function SearchInput({
             setDraft('');
             commit('');
           }}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-subtle hover:bg-surface-3 hover:text-fg"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-foreground"
         >
           <X className="size-3.5" />
         </button>

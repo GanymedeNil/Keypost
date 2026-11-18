@@ -5,7 +5,7 @@ import { adminApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import type { Role, User } from '@/lib/types';
-import { Button, Field, Input, Modal, Select, SwitchField } from '@/components/ui';
+import { Button, Field, Input, Modal, Select, SwitchField } from '@/components/kit';
 import { useFieldErrors } from './use-field-errors';
 
 const ROLES: Role[] = ['owner', 'admin', 'viewer'];

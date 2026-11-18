@@ -7,8 +7,8 @@ import { useI18n } from '@/lib/i18n/provider';
 import { formatMoney } from '@/lib/format';
 import { useList } from '@/lib/use-api';
 import type { Product } from '@/lib/types';
-import { Badge, Button, Card, DateText, FilterSelect, PageHeader, SearchInput, StatusBadge, TestModeBadge, Toolbar, type Column } from '@/components/ui';
-import { DataTable } from '@/components/ui';
+import { Badge, Button, Card, DateText, FilterSelect, PageHeader, SearchInput, StatusBadge, TestModeBadge, Toolbar, type Column } from '@/components/kit';
+import { DataTable } from '@/components/kit';
 import { useAdmin, useCan } from '@/components/admin/admin-context';
 import { NewProductDialog } from '@/components/admin/products/new-product-dialog';
 import { Thumb } from '@/components/admin/products/thumb';
@@ -31,10 +31,10 @@ export default function ProductsPage() {
         <div className="flex min-w-0 items-center gap-3">
           <Thumb url={p.thumb_url} label={p.name} />
           <div className="min-w-0">
-            <Link href={`/admin/products/${p.id}`} className="block truncate font-medium text-fg hover:text-accent-text">
+            <Link href={`/admin/products/${p.id}`} className="block truncate font-medium text-foreground hover:text-primary">
               {p.name}
             </Link>
-            <p className="truncate text-xs text-subtle">{p.slug}</p>
+            <p className="truncate text-xs text-muted-foreground">{p.slug}</p>
           </div>
         </div>
       ),
@@ -47,7 +47,7 @@ export default function ProductsPage() {
       hideBelow: 'md',
       cell: (p) => {
         const cur = currencyOf(p);
-        if (p.from_price === null || p.from_price === undefined) return <span className="text-subtle">—</span>;
+        if (p.from_price === null || p.from_price === undefined) return <span className="text-muted-foreground">—</span>;
         const from = formatMoney(p.from_price, cur, locale);
         const to = formatMoney(p.to_price ?? p.from_price, cur, locale);
         return <span className="whitespace-nowrap tabular-nums">{from === to ? from : `${from} – ${to}`}</span>;

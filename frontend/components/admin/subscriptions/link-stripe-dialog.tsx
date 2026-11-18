@@ -4,7 +4,7 @@ import { useState, type FormEvent } from 'react';
 import { adminApi } from '@/lib/api';
 import { useT } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Button, Field, Input, Modal } from '@/components/ui';
+import { Button, Field, Input, Modal } from '@/components/kit';
 
 /** Mount only while open so the input resets every time. */
 export function LinkStripeDialog({

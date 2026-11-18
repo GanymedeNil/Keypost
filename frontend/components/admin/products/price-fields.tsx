@@ -1,7 +1,7 @@
 'use client';
 
 import { useT, useI18n } from '@/lib/i18n/provider';
-import { Field, Input, InputGroup, Select, SwitchField } from '@/components/ui';
+import { Field, Input, InputGroup, Select, SwitchField } from '@/components/kit';
 import { CATEGORIES, INTERVALS, type DraftErrors, type PriceDraft } from './price-utils';
 
 /** The price form shared by the "add price" dialog and the "add variant" dialog. */
@@ -66,7 +66,7 @@ export function PriceFields({
         </Field>
       )}
 
-      {draft.category === 'lead_magnet' && <p className="rounded-md bg-surface-2 px-3 py-2 text-xs text-muted">{t('products.price.leadMagnetHint')}</p>}
+      {draft.category === 'lead_magnet' && <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">{t('products.price.leadMagnetHint')}</p>}
 
       {draft.category === 'pwyw' && (
         <div className="grid gap-4 sm:grid-cols-2">

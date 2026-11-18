@@ -7,7 +7,7 @@ import { formatMoney } from '@/lib/format';
 import type { StripeCatalogPrice, StripeCatalogProduct } from '@/lib/types';
 import { useApi } from '@/lib/use-api';
 import { cn } from '@/lib/utils';
-import { Badge, Button, ButtonLink, Card, Checkbox, DataTable, ErrorState, Toolbar, type Column } from '@/components/ui';
+import { Badge, Button, ButtonLink, Card, Checkbox, DataTable, ErrorState, Toolbar, type Column } from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { ImportModal } from './import-modal';
 
@@ -82,8 +82,8 @@ export function CatalogTab() {
       cell: (p) => (
         <div className="min-w-0 max-w-md">
           <p className="truncate font-medium">{p.name}</p>
-          <p className="font-mono text-[11px] text-subtle">{p.id}</p>
-          {p.description && <p className="mt-0.5 line-clamp-2 text-xs text-muted">{p.description}</p>}
+          <p className="font-mono text-[11px] text-muted-foreground">{p.id}</p>
+          {p.description && <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{p.description}</p>}
           <div className="mt-1.5 sm:hidden">
             <MappingBadge variantId={p.mapped_variant_id} />
           </div>
@@ -95,11 +95,11 @@ export function CatalogTab() {
       header: t('stripe.catalog.col.prices'),
       cell: (p) =>
         p.prices.length === 0 ? (
-          <span className="text-xs text-subtle">{t('stripe.catalog.noPrices')}</span>
+          <span className="text-xs text-muted-foreground">{t('stripe.catalog.noPrices')}</span>
         ) : (
           <ul className="space-y-0.5">
             {p.prices.map((pr) => (
-              <li key={pr.id} className={cn('whitespace-nowrap text-xs tabular-nums', pr.active ? 'text-fg' : 'text-subtle')} title={pr.id}>
+              <li key={pr.id} className={cn('whitespace-nowrap text-xs tabular-nums', pr.active ? 'text-foreground' : 'text-muted-foreground')} title={pr.id}>
                 <span className={cn(!pr.active && 'line-through')}>{priceLabel(pr)}</span>
                 {!pr.active && <span className="ml-1.5">({t('stripe.catalog.inactivePrice')})</span>}
               </li>
@@ -160,7 +160,7 @@ export function CatalogTab() {
             </div>
           }
         >
-          <p className="text-xs text-muted">{t('stripe.catalog.description')}</p>
+          <p className="text-xs text-muted-foreground">{t('stripe.catalog.description')}</p>
         </Toolbar>
         <DataTable
           columns={columns}
@@ -171,7 +171,7 @@ export function CatalogTab() {
           onRetry={() => mutate()}
           empty={{ title: t('stripe.catalog.empty'), description: t('stripe.catalog.emptyDesc') }}
         />
-        {data && data.length > 0 && unmapped.length === 0 && <p className="border-t border-line px-4 py-2.5 text-xs text-subtle">{t('stripe.catalog.allImported')}</p>}
+        {data && data.length > 0 && unmapped.length === 0 && <p className="border-t border-border px-4 py-2.5 text-xs text-muted-foreground">{t('stripe.catalog.allImported')}</p>}
       </Card>
       {importing && (
         <ImportModal

@@ -76,8 +76,8 @@ export function CopyButton({
 /** Read-only value box with a copy button (URLs, tokens, ids). */
 export function CopyField({ value, label, mono = true, className }: { value: string; label?: string; mono?: boolean; className?: string }) {
   return (
-    <div className={cn('flex min-w-0 items-center gap-1 rounded-md border border-line-strong bg-surface-2 py-0.5 pl-2.5 pr-0.5', className)}>
-      <code className={cn('min-w-0 flex-1 select-all truncate text-xs text-fg', !mono && 'font-sans')} title={value}>
+    <div className={cn('flex min-w-0 items-center gap-1 rounded-md border border-input bg-muted py-0.5 pl-2.5 pr-0.5', className)}>
+      <code className={cn('min-w-0 flex-1 select-all truncate text-xs text-foreground', !mono && 'font-sans')} title={value}>
         {value}
       </code>
       <CopyButton value={value} label={label} />

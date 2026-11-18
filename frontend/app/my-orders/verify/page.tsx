@@ -8,7 +8,7 @@ import { ApiError, storefrontApi } from '@/lib/api';
 import { errorText } from '@/lib/error-text';
 import { useI18n } from '@/lib/i18n/provider';
 import { ME_KEY } from '@/lib/storefront';
-import { ButtonLink, Card, CardBody, Spinner, usePageTitle } from '@/components/ui';
+import { ButtonLink, Card, CardBody, Spinner, usePageTitle } from '@/components/kit';
 
 function Notice({ icon, tone, title, body, children }: { icon: React.ReactNode; tone: 'success' | 'danger'; title: string; body?: string; children?: React.ReactNode }) {
   return (
@@ -18,7 +18,7 @@ function Notice({ icon, tone, title, body, children }: { icon: React.ReactNode; 
           {icon}
         </span>
         <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
-        {body && <p className="text-sm text-muted">{body}</p>}
+        {body && <p className="text-sm text-muted-foreground">{body}</p>}
         {children}
       </CardBody>
     </Card>
@@ -85,9 +85,9 @@ function VerifyInner() {
   return (
     <Card className="mx-auto max-w-md">
       <CardBody className="flex flex-col items-center gap-3 px-6 py-12 text-center" role="status">
-        <Spinner className="size-7 text-accent" />
+        <Spinner className="size-7 text-primary" />
         <h1 className="text-lg font-semibold tracking-tight">{t('storefront.verify.signingIn')}</h1>
-        <p className="text-sm text-muted">{t('storefront.verify.signingInHint')}</p>
+        <p className="text-sm text-muted-foreground">{t('storefront.verify.signingInHint')}</p>
       </CardBody>
     </Card>
   );

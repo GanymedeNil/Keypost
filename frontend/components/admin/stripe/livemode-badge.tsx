@@ -1,7 +1,7 @@
 'use client';
 
 import { useT } from '@/lib/i18n/provider';
-import { Badge } from '@/components/ui';
+import { Badge } from '@/components/kit';
 
 export function LivemodeBadge({ livemode }: { livemode: boolean }) {
   const t = useT();

@@ -18,7 +18,7 @@ import {
   Toolbar,
   type Column,
   StatusBadge,
-} from '@/components/ui';
+} from '@/components/kit';
 import { FilterChip } from '@/components/admin/licenses/filter-chip';
 
 const STATUSES: SubscriptionStatus[] = ['on_trial', 'active', 'paused', 'past_due', 'unpaid', 'cancelled', 'expired'];
@@ -36,10 +36,10 @@ export default function SubscriptionsPage() {
       header: t('subscriptions.col.customer'),
       cell: (s) => (
         <div className="min-w-0">
-          <Link href={`/admin/subscriptions/${s.id}`} className="block truncate font-medium text-fg hover:text-accent-text">
+          <Link href={`/admin/subscriptions/${s.id}`} className="block truncate font-medium text-foreground hover:text-primary">
             {s.user_name || s.user_email}
           </Link>
-          <span className="block truncate text-xs text-subtle">{s.user_email}</span>
+          <span className="block truncate text-xs text-muted-foreground">{s.user_email}</span>
         </div>
       ),
     },
@@ -50,7 +50,7 @@ export default function SubscriptionsPage() {
       cell: (s) => (
         <div className="min-w-0">
           <span className="block truncate">{s.product_name}</span>
-          <span className="block truncate text-xs text-subtle">{s.variant_name}</span>
+          <span className="block truncate text-xs text-muted-foreground">{s.variant_name}</span>
         </div>
       ),
     },
@@ -61,10 +61,10 @@ export default function SubscriptionsPage() {
         <div className="flex flex-col items-start gap-1">
           <StatusBadge status={s.status} label={te(`status.${s.status}`, s.status_formatted)} />
           {s.status === 'on_trial' && s.trial_ends_at && (
-            <span className="whitespace-nowrap text-xs text-subtle">{t('subscriptions.trialEnds', { date: formatDate(s.trial_ends_at, locale, 'date') })}</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">{t('subscriptions.trialEnds', { date: formatDate(s.trial_ends_at, locale, 'date') })}</span>
           )}
           {s.cancelled && s.status !== 'cancelled' && s.ends_at && (
-            <span className="whitespace-nowrap text-xs text-subtle">{t('subscriptions.endsOn', { date: formatDate(s.ends_at, locale, 'date') })}</span>
+            <span className="whitespace-nowrap text-xs text-muted-foreground">{t('subscriptions.endsOn', { date: formatDate(s.ends_at, locale, 'date') })}</span>
           )}
         </div>
       ),
@@ -81,11 +81,11 @@ export default function SubscriptionsPage() {
       hideBelow: 'lg',
       cell: (s) =>
         s.card_last_four ? (
-          <span className="whitespace-nowrap text-muted">
+          <span className="whitespace-nowrap text-muted-foreground">
             <span className="capitalize">{s.card_brand ?? ''}</span> ··{s.card_last_four}
           </span>
         ) : (
-          <span className="text-subtle">—</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
     {
@@ -111,7 +111,7 @@ export default function SubscriptionsPage() {
       header: t('subscriptions.col.created'),
       sortKey: 'created_at',
       hideBelow: 'xl',
-      cell: (s) => <DateText value={s.created_at} style="date" className="text-muted" />,
+      cell: (s) => <DateText value={s.created_at} style="date" className="text-muted-foreground" />,
     },
   ];
 

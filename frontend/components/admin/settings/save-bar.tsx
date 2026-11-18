@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/components/ui';
+import { Button } from '@/components/kit';
 import { useT } from '@/lib/i18n/provider';
 
 /** Sticky "unsaved changes" bar. Must be rendered inside the `<form>` it submits. */
@@ -11,9 +11,9 @@ export function SaveBar({ dirty, pending, onReset, disabled }: { dirty: boolean;
     <div
       role="region"
       aria-label={t('settings.unsaved')}
-      className="sticky bottom-4 z-20 flex animate-toast-in flex-wrap items-center justify-between gap-3 rounded-xl border border-line bg-surface px-4 py-3 shadow-[var(--shadow-pop)]"
+      className="sticky bottom-4 z-20 flex animate-toast-in flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-[var(--shadow-pop)]"
     >
-      <p className="text-sm text-muted">{t('settings.unsaved')}</p>
+      <p className="text-sm text-muted-foreground">{t('settings.unsaved')}</p>
       <div className="flex items-center gap-2">
         <Button type="button" onClick={onReset} disabled={pending}>
           {t('common.reset')}

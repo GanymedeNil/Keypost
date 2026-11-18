@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { slugify } from '@/lib/utils';
 import type { Product } from '@/lib/types';
-import { Button, Field, Input, Modal, Select, SwitchField, Textarea } from '@/components/ui';
+import { Button, Field, Input, Modal, Select, SwitchField, Textarea } from '@/components/kit';
 import { useAdmin } from '@/components/admin/admin-context';
 import { StoreSelect, useDefaultStoreId } from '@/components/admin/store-select';
 

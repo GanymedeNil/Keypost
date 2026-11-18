@@ -6,7 +6,7 @@ import { adminApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import type { Settings, SettingsUpdate } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
-import { Button, Card, CardBody, CardHeader, Callout, Field, Input, Select } from '@/components/ui';
+import { Button, Card, CardBody, CardHeader, Callout, Field, Input, Select } from '@/components/kit';
 import { useAdmin } from '../admin-context';
 import { SaveBar } from './save-bar';
 import { emptySecret, SecretField, secretUpdate, type SecretDraft } from './secret-field';

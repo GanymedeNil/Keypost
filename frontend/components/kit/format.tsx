@@ -33,7 +33,7 @@ export function DateText({
   className?: string;
 }) {
   const { locale } = useI18n();
-  if (!value) return <span className={cn('text-subtle', className)}>—</span>;
+  if (!value) return <span className={cn('text-muted-foreground', className)}>—</span>;
   const abs = formatDate(value, locale, 'datetime');
   return (
     <time dateTime={value} title={abs} suppressHydrationWarning className={cn('whitespace-nowrap tabular-nums', className)}>

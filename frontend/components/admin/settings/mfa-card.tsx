@@ -5,7 +5,7 @@ import { KeyRound, ShieldCheck } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
-import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Modal } from '@/components/ui';
+import { Badge, Button, Card, CardBody, CardHeader, Field, Input, Modal } from '@/components/kit';
 import { useAdmin } from '../admin-context';
 import { RecoveryCodes } from '../mfa/recovery-codes';
 
@@ -46,12 +46,12 @@ export function MfaCard() {
         />
         <CardBody className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm text-muted">{t('mfa.card.codesLeft', { count: user.mfa?.recovery_codes_left ?? 0 })}</p>
+            <p className="text-sm text-muted-foreground">{t('mfa.card.codesLeft', { count: user.mfa?.recovery_codes_left ?? 0 })}</p>
             <Button icon={<KeyRound className="size-3.5" />} onClick={() => setOpen(true)}>
               {t('mfa.card.regenerate')}
             </Button>
           </div>
-          <p className="text-xs text-subtle">{t('mfa.card.lost')}</p>
+          <p className="text-xs text-muted-foreground">{t('mfa.card.lost')}</p>
         </CardBody>
       </Card>
       <Modal

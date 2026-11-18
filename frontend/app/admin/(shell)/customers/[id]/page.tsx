@@ -32,7 +32,7 @@ import {
   Tabs,
   TestModeBadge,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 
 type TabKey = 'orders' | 'subscriptions' | 'keys';
 const TABS: TabKey[] = ['orders', 'subscriptions', 'keys'];
@@ -40,7 +40,7 @@ const TABS: TabKey[] = ['orders', 'subscriptions', 'keys'];
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs text-subtle">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-0.5 truncate text-lg font-semibold tabular-nums">{children}</p>
     </div>
   );
@@ -98,7 +98,7 @@ export default function CustomerDetailPage() {
       key: 'order',
       header: t('customers.col.order'),
       cell: (o) => (
-        <Link href={`/admin/orders/${o.id}`} className="font-medium hover:text-accent-text">
+        <Link href={`/admin/orders/${o.id}`} className="font-medium hover:text-primary">
           #{o.order_number}
         </Link>
       ),
@@ -111,7 +111,7 @@ export default function CustomerDetailPage() {
     },
     { key: 'total', header: t('common.total'), align: 'right', cell: (o) => <MoneyText amount={o.total} currency={o.currency} className="font-medium" /> },
     { key: 'status', header: t('common.status'), cell: (o) => <StatusBadge status={o.status} /> },
-    { key: 'created', header: t('common.created'), hideBelow: 'md', cell: (o) => <DateText value={o.created_at} className="text-muted" /> },
+    { key: 'created', header: t('common.created'), hideBelow: 'md', cell: (o) => <DateText value={o.created_at} className="text-muted-foreground" /> },
   ];
 
   const subColumns: Column<Subscription>[] = [
@@ -119,14 +119,14 @@ export default function CustomerDetailPage() {
       key: 'product',
       header: t('customers.col.product'),
       cell: (s) => (
-        <Link href={`/admin/subscriptions/${s.id}`} className="font-medium hover:text-accent-text">
+        <Link href={`/admin/subscriptions/${s.id}`} className="font-medium hover:text-primary">
           {s.product_name} — {s.variant_name}
         </Link>
       ),
     },
     { key: 'status', header: t('common.status'), cell: (s) => <StatusBadge status={s.status} /> },
-    { key: 'renews', header: t('customers.col.renews'), hideBelow: 'sm', cell: (s) => <DateText value={s.renews_at} style="date" className="text-muted" /> },
-    { key: 'ends', header: t('customers.col.ends'), hideBelow: 'md', cell: (s) => <DateText value={s.ends_at} style="date" className="text-muted" /> },
+    { key: 'renews', header: t('customers.col.renews'), hideBelow: 'sm', cell: (s) => <DateText value={s.renews_at} style="date" className="text-muted-foreground" /> },
+    { key: 'ends', header: t('customers.col.ends'), hideBelow: 'md', cell: (s) => <DateText value={s.ends_at} style="date" className="text-muted-foreground" /> },
   ];
 
   const keyColumns: Column<LicenseKey>[] = [
@@ -135,7 +135,7 @@ export default function CustomerDetailPage() {
       header: t('customers.col.key'),
       cell: (k) => (
         <div className="flex items-center gap-1">
-          <Link href={`/admin/license-keys/${k.id}`} className="font-mono text-xs font-medium hover:text-accent-text" title={k.key}>
+          <Link href={`/admin/license-keys/${k.id}`} className="font-mono text-xs font-medium hover:text-primary" title={k.key}>
             {k.key_short || k.key}
           </Link>
           <CopyButton value={k.key} label={t('customers.col.key')} />
@@ -151,7 +151,7 @@ export default function CustomerDetailPage() {
       hideBelow: 'sm',
       cell: (k) => <span className="tabular-nums">{k.instances_count} / {k.activation_limit ?? '∞'}</span>,
     },
-    { key: 'expires', header: t('customers.col.expires'), hideBelow: 'lg', cell: (k) => <DateText value={k.expires_at} style="date" className="text-muted" /> },
+    { key: 'expires', header: t('customers.col.expires'), hideBelow: 'lg', cell: (k) => <DateText value={k.expires_at} style="date" className="text-muted-foreground" /> },
   ];
 
   const orders = customer.orders ?? [];
@@ -182,14 +182,14 @@ export default function CustomerDetailPage() {
                 onClick={openPortal}
               >
                 {t('customers.portal.open')}
-                <ExternalLink className="size-3 text-subtle" />
+                <ExternalLink className="size-3 text-muted-foreground" />
               </Button>
             )}
           </>
         }
       />
 
-      {can.write && !customer.stripe_customer_id && <p className="-mt-2 mb-4 text-xs text-subtle">{t('customers.portal.noStripe')}</p>}
+      {can.write && !customer.stripe_customer_id && <p className="-mt-2 mb-4 text-xs text-muted-foreground">{t('customers.portal.noStripe')}</p>}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="min-w-0 space-y-4 lg:col-span-2">
@@ -278,7 +278,7 @@ export default function CustomerDetailPage() {
                         rel="noreferrer"
                         aria-label={t('customers.stripeDashboard')}
                         title={t('customers.stripeDashboard')}
-                        className="rounded p-1 text-subtle hover:bg-surface-2 hover:text-fg"
+                        className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
                       >
                         <ExternalLink className="size-3.5" />
                       </a>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Download, Webhook, CreditCard } from 'lucide-react';
-import { Card, CardHeader, DateText, EmptyState, MoneyText, Skeleton, StatusBadge, TestModeBadge } from '@/components/ui';
+import { Card, CardHeader, DateText, EmptyState, MoneyText, Skeleton, StatusBadge, TestModeBadge } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import type { DashboardEvent, Order } from '@/lib/types';
 
@@ -13,7 +13,7 @@ export function RecentOrders({ orders, loading }: { orders: Order[] | undefined;
       <CardHeader
         title={t('dashboard.recentOrders')}
         actions={
-          <Link href="/admin/orders" className="text-xs font-medium text-accent-text hover:underline">
+          <Link href="/admin/orders" className="text-xs font-medium text-primary hover:underline">
             {t('dashboard.viewAll')}
           </Link>
         }
@@ -27,23 +27,23 @@ export function RecentOrders({ orders, loading }: { orders: Order[] | undefined;
       ) : !orders || orders.length === 0 ? (
         <EmptyState title={t('dashboard.recentOrdersEmpty')} description={t('dashboard.recentOrdersEmptyHint')} />
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-border">
           {orders.map((o) => (
             <li key={o.id}>
-              <Link href={`/admin/orders/${o.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2/70">
+              <Link href={`/admin/orders/${o.id}`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/70">
                 <div className="min-w-0 flex-1">
                   <p className="flex items-center gap-2 truncate text-sm font-medium">
                     #{o.order_number}
-                    <span className="truncate font-normal text-muted">{o.user_name || o.user_email}</span>
+                    <span className="truncate font-normal text-muted-foreground">{o.user_name || o.user_email}</span>
                     {o.test_mode && <TestModeBadge />}
                   </p>
-                  <p className="truncate text-xs text-subtle">
+                  <p className="truncate text-xs text-muted-foreground">
                     {o.first_item ? `${o.first_item.product_name} — ${o.first_item.variant_name}` : o.user_email}
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
                   <MoneyText amount={o.total} currency={o.currency} className="text-sm font-medium" />
-                  <p className="text-xs text-subtle">
+                  <p className="text-xs text-muted-foreground">
                     <DateText value={o.created_at} relative />
                   </p>
                 </div>
@@ -87,17 +87,17 @@ export function RecentEvents({ events, loading }: { events: DashboardEvent[] | u
       ) : !events || events.length === 0 ? (
         <EmptyState title={t('dashboard.recentEventsEmpty')} />
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="divide-y divide-border">
           {events.map((e, i) => {
             const href = eventHref(e.kind);
             const body = (
               <>
-                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-surface-3 text-muted">
+                <span className="grid size-7 shrink-0 place-items-center rounded-full bg-accent text-muted-foreground">
                   <EventIcon kind={e.kind} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-mono text-xs text-fg">{e.title}</p>
-                  <p className="text-xs text-subtle">
+                  <p className="truncate font-mono text-xs text-foreground">{e.title}</p>
+                  <p className="text-xs text-muted-foreground">
                     {te(`dashboard.event.${e.kind}`, e.kind)} · <DateText value={e.at} relative />
                   </p>
                 </div>
@@ -107,7 +107,7 @@ export function RecentEvents({ events, loading }: { events: DashboardEvent[] | u
             return (
               <li key={`${e.at}-${i}`}>
                 {href ? (
-                  <Link href={href} className="flex items-center gap-3 px-4 py-2.5 hover:bg-surface-2/70">
+                  <Link href={href} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/70">
                     {body}
                   </Link>
                 ) : (

@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useCan } from '@/components/admin/admin-context';
 import type { LicenseLengthUnit, Variant } from '@/lib/types';
-import { Button, Field, Input, Select, SwitchField } from '@/components/ui';
+import { Button, Field, Input, Select, SwitchField } from '@/components/kit';
 
 const UNITS: LicenseLengthUnit[] = ['days', 'months', 'years'];
 
@@ -71,7 +71,7 @@ export function LicenseTab({ variant, onChanged }: { variant: Variant; onChanged
         />
         {draft.enabled && (
           <>
-            <div className="space-y-3 rounded-lg border border-line p-3">
+            <div className="space-y-3 rounded-lg border border-border p-3">
               <h3 className="text-sm font-medium">{t('products.license.activations')}</h3>
               <SwitchField
                 label={t('products.license.unlimitedActivations')}
@@ -90,7 +90,7 @@ export function LicenseTab({ variant, onChanged }: { variant: Variant; onChanged
                 />
               </Field>
             </div>
-            <div className="space-y-3 rounded-lg border border-line p-3">
+            <div className="space-y-3 rounded-lg border border-border p-3">
               <h3 className="text-sm font-medium">{t('products.license.validity')}</h3>
               <SwitchField
                 label={t('products.license.unlimitedLength')}
@@ -128,7 +128,7 @@ export function LicenseTab({ variant, onChanged }: { variant: Variant; onChanged
         )}
       </fieldset>
       {can.write && (
-        <div className="mt-5 flex justify-end border-t border-line pt-4">
+        <div className="mt-5 flex justify-end border-t border-border pt-4">
           <Button type="submit" variant="primary" loading={pending} disabled={!dirty}>
             {t('common.saveChanges')}
           </Button>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { AlertTriangle, CheckCircle2, Clock, HardDrive } from 'lucide-react';
-import { Badge, Card, CardHeader, Skeleton } from '@/components/ui';
+import { Badge, Card, CardHeader, Skeleton } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import type { DashboardHealth } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -69,7 +69,7 @@ function buildChecks(h: DashboardHealth, t: ReturnType<typeof useI18n>['t']): Ch
     key: 'storage',
     level: 'info',
     title: t('dashboard.health.storage', { driver: h.storage_driver }),
-    icon: <HardDrive className="size-4 text-subtle" />,
+    icon: <HardDrive className="size-4 text-muted-foreground" />,
   });
   return checks;
 }
@@ -95,7 +95,7 @@ export function HealthCard({ health, loading }: { health: DashboardHealth | unde
           ))
         }
       />
-      <ul className="divide-y divide-line">
+      <ul className="divide-y divide-border">
         {loading && !health
           ? Array.from({ length: 4 }, (_, i) => (
               <li key={i} className="px-4 py-3">
@@ -109,15 +109,15 @@ export function HealthCard({ health, loading }: { health: DashboardHealth | unde
                     (c.level === 'ok' ? <CheckCircle2 className="size-4 text-success" /> : <AlertTriangle className="size-4 text-warning" />)}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className={cn('text-sm', c.level === 'warn' ? 'font-medium text-fg' : 'text-muted')}>{c.title}</p>
-                  {c.hint && <p className="mt-0.5 text-xs text-subtle">{c.hint}</p>}
+                  <p className={cn('text-sm', c.level === 'warn' ? 'font-medium text-foreground' : 'text-muted-foreground')}>{c.title}</p>
+                  {c.hint && <p className="mt-0.5 text-xs text-muted-foreground">{c.hint}</p>}
                 </div>
                 {c.href && (
                   <Link
                     href={c.href}
                     className={cn(
                       'shrink-0 rounded-md px-2 py-1 text-xs font-medium',
-                      c.level === 'warn' ? 'bg-surface text-fg ring-1 ring-line-strong hover:bg-surface-2' : 'text-accent-text hover:underline',
+                      c.level === 'warn' ? 'bg-card text-foreground ring-1 ring-input hover:bg-muted' : 'text-primary hover:underline',
                     )}
                   >
                     {c.cta}

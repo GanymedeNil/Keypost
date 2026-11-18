@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge, Button, Field, Input, useConfirm } from '@/components/ui';
+import { Badge, Button, Field, Input, useConfirm } from '@/components/kit';
 import { useI18n } from '@/lib/i18n/provider';
 import type { SecretSetting } from '@/lib/types';
 
@@ -54,7 +54,7 @@ export function SecretField({
           <>
             <Badge tone="success">{t('settings.secret.set')}</Badge>
             {current.source && <Badge>{te(`settings.secret.source.${current.source}`, current.source)}</Badge>}
-            {current.hint && <code className="rounded bg-surface-3 px-1.5 py-0.5 text-xs">{current.hint}</code>}
+            {current.hint && <code className="rounded bg-accent px-1.5 py-0.5 text-xs">{current.hint}</code>}
           </>
         ) : (
           <Badge>{t('settings.secret.notSet')}</Badge>

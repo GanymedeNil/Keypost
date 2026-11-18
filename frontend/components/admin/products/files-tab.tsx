@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useCan } from '@/components/admin/admin-context';
 import type { VariantFile } from '@/lib/types';
-import { Badge, Button, CopyButton, DataTable, Mono, StatusBadge, useConfirmDelete, type Column } from '@/components/ui';
+import { Badge, Button, CopyButton, DataTable, Mono, StatusBadge, useConfirmDelete, type Column } from '@/components/kit';
 import { FileEditDialog } from './file-edit-dialog';
 import { FileUploader } from './file-uploader';
 import type { UploadItem, UploadQueue } from './upload-queue';
@@ -53,7 +53,7 @@ export function FilesTab({
         type="button"
         onClick={() => toggleStatus(f)}
         title={t('products.files.toggleStatus')}
-        className="rounded-full focus-visible:outline-2 focus-visible:outline-accent"
+        className="rounded-full focus-visible:outline-2 focus-visible:outline-ring"
       >
         <StatusBadge status={f.status} />
       </button>
@@ -69,14 +69,14 @@ export function FilesTab({
         <div className="min-w-0">
           <p className="truncate font-medium">
             {f.name}
-            {f.extension && <span className="font-normal text-subtle">.{f.extension}</span>}
+            {f.extension && <span className="font-normal text-muted-foreground">.{f.extension}</span>}
           </p>
-          <p className="text-xs text-subtle">{f.size_formatted}</p>
+          <p className="text-xs text-muted-foreground">{f.size_formatted}</p>
           <div className="mt-1 sm:hidden">{statusCell(f)}</div>
         </div>
       ),
     },
-    { key: 'version', header: t('common.version'), hideBelow: 'sm', cell: (f) => f.version || <span className="text-subtle">—</span> },
+    { key: 'version', header: t('common.version'), hideBelow: 'sm', cell: (f) => f.version || <span className="text-muted-foreground">—</span> },
     { key: 'status', header: t('common.status'), hideBelow: 'sm', cell: statusCell },
     { key: 'downloads', header: t('products.files.downloads'), align: 'right', hideBelow: 'md', cell: (f) => <span className="tabular-nums">{f.downloads_count}</span> },
     {
@@ -92,7 +92,7 @@ export function FilesTab({
             <CopyButton value={f.sha256} label="SHA-256" />
           </span>
         ) : (
-          <span className="text-subtle">—</span>
+          <span className="text-muted-foreground">—</span>
         ),
     },
     { key: 'sort', header: t('common.sort'), align: 'right', hideBelow: 'lg', cell: (f) => <span className="tabular-nums">{f.sort}</span> },
@@ -106,7 +106,7 @@ export function FilesTab({
             href={adminApi.url(`/files/${f.id}/download`)}
             aria-label={t('common.download')}
             title={t('common.download')}
-            className="inline-flex size-7 items-center justify-center rounded-md text-muted hover:bg-surface-2 hover:text-fg"
+            className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Download className="size-3.5" />
           </a>
@@ -128,9 +128,9 @@ export function FilesTab({
   return (
     <div className="space-y-4">
       {can.write && <FileUploader queue={queue} items={items} onUploaded={() => void onChanged()} />}
-      <div className="overflow-hidden rounded-lg border border-line">
-        <div className="flex items-center justify-between border-b border-line bg-surface-2/60 px-3 py-2">
-          <h3 className="text-xs font-medium text-muted">{t('products.files.title')}</h3>
+      <div className="overflow-hidden rounded-lg border border-border">
+        <div className="flex items-center justify-between border-b border-border bg-muted/60 px-3 py-2">
+          <h3 className="text-xs font-medium text-muted-foreground">{t('products.files.title')}</h3>
           {files && <Badge>{files.length}</Badge>}
         </div>
         <DataTable

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { X } from 'lucide-react';
-import { Input } from '@/components/ui';
+import { Input } from '@/components/kit';
 import { useT } from '@/lib/i18n/provider';
 
 /** Free-text tag editor: Enter / comma / space / blur add entries, Backspace on empty removes the last. */
@@ -77,14 +77,14 @@ export function ChipInput({
       {values.length > 0 && (
         <ul className="flex flex-wrap gap-1.5">
           {values.map((v) => (
-            <li key={v} className="inline-flex items-center gap-1 rounded-md bg-surface-3 py-0.5 pl-2 pr-1 font-mono text-xs text-fg">
+            <li key={v} className="inline-flex items-center gap-1 rounded-md bg-accent py-0.5 pl-2 pr-1 font-mono text-xs text-foreground">
               {v}
               {!disabled && (
                 <button
                   type="button"
                   aria-label={t('settings.stripe.login.accountRemove', { account: v })}
                   onClick={() => onChange(values.filter((x) => x !== v))}
-                  className="rounded p-0.5 text-subtle hover:bg-line-strong hover:text-fg"
+                  className="rounded p-0.5 text-muted-foreground hover:bg-input hover:text-foreground"
                 >
                   <X className="size-3" />
                 </button>

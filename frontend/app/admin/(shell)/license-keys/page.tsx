@@ -21,7 +21,7 @@ import {
   StatusBadge,
   Toolbar,
   type Column,
-} from '@/components/ui';
+} from '@/components/kit';
 
 const STATUSES: LicenseStatus[] = ['active', 'inactive', 'expired', 'disabled'];
 const ID_FILTERS = ['order_id', 'customer_id', 'variant_id', 'product_id'] as const;
@@ -41,7 +41,7 @@ export default function LicenseKeysPage() {
       header: t('licenses.col.key'),
       cell: (k) => (
         <div className="flex items-center gap-1">
-          <Link href={`/admin/license-keys/${k.id}`} className="whitespace-nowrap font-mono text-[13px] font-medium text-fg hover:text-accent-text">
+          <Link href={`/admin/license-keys/${k.id}`} className="whitespace-nowrap font-mono text-[13px] font-medium text-foreground hover:text-primary">
             {k.key_short}
           </Link>
           <CopyButton value={k.key} label={t('licenses.copyKey')} />
@@ -55,7 +55,7 @@ export default function LicenseKeysPage() {
       cell: (k) => (
         <div className="min-w-0">
           <span className="block truncate">{k.product_name}</span>
-          <span className="block truncate text-xs text-subtle">{k.variant_name}</span>
+          <span className="block truncate text-xs text-muted-foreground">{k.variant_name}</span>
         </div>
       ),
     },
@@ -66,7 +66,7 @@ export default function LicenseKeysPage() {
       cell: (k) => (
         <div className="min-w-0">
           <span className="block max-w-56 truncate">{k.user_email}</span>
-          {k.user_name && <span className="block max-w-56 truncate text-xs text-subtle">{k.user_name}</span>}
+          {k.user_name && <span className="block max-w-56 truncate text-xs text-muted-foreground">{k.user_name}</span>}
         </div>
       ),
     },
@@ -77,7 +77,7 @@ export default function LicenseKeysPage() {
       align: 'right',
       cell: (k) => (
         <span className="whitespace-nowrap tabular-nums">
-          {k.instances_count} <span className="text-subtle">/ {k.activation_limit ?? '∞'}</span>
+          {k.instances_count} <span className="text-muted-foreground">/ {k.activation_limit ?? '∞'}</span>
         </span>
       ),
     },
@@ -85,14 +85,14 @@ export default function LicenseKeysPage() {
       key: 'expires',
       header: t('licenses.col.expires'),
       hideBelow: 'lg',
-      cell: (k) => (k.expires_at ? <DateText value={k.expires_at} style="date" /> : <span className="whitespace-nowrap text-subtle">{t('licenses.noExpiry')}</span>),
+      cell: (k) => (k.expires_at ? <DateText value={k.expires_at} style="date" /> : <span className="whitespace-nowrap text-muted-foreground">{t('licenses.noExpiry')}</span>),
     },
     {
       key: 'created',
       header: t('licenses.col.created'),
       sortKey: 'created_at',
       hideBelow: 'xl',
-      cell: (k) => <DateText value={k.created_at} style="date" className="text-muted" />,
+      cell: (k) => <DateText value={k.created_at} style="date" className="text-muted-foreground" />,
     },
   ];
 

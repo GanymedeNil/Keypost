@@ -7,14 +7,14 @@ import { invalidate } from '@/lib/swr';
 import type { DeliveryDetail } from '@/lib/types';
 import { useAction } from '@/lib/use-action';
 import { useApi } from '@/lib/use-api';
-import { Button, Callout, DateText, DI, DL, Drawer, ErrorState, JsonViewer, SkeletonText, StatusBadge } from '@/components/ui';
+import { Button, Callout, DateText, DI, DL, Drawer, ErrorState, JsonViewer, SkeletonText, StatusBadge } from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 import { CodeBlock } from './code-block';
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section>
-      <h3 className="mb-1.5 text-xs font-medium text-fg">{title}</h3>
+      <h3 className="mb-1.5 text-xs font-medium text-foreground">{title}</h3>
       {children}
     </section>
   );
@@ -90,10 +90,10 @@ export function DeliveryDrawer({ id, onClose }: { id: number | null; onClose: ()
             </Callout>
           )}
           <Section title={t('webhooks.drawer.payload')}>
-            {data.payload ? <JsonViewer value={data.payload} maxHeight={360} /> : <p className="text-xs text-subtle">{t('webhooks.drawer.noPayload')}</p>}
+            {data.payload ? <JsonViewer value={data.payload} maxHeight={360} /> : <p className="text-xs text-muted-foreground">{t('webhooks.drawer.noPayload')}</p>}
           </Section>
           <Section title={t('webhooks.drawer.response')}>
-            {data.last_response?.trim() ? <CodeBlock value={data.last_response} /> : <p className="text-xs text-subtle">{t('webhooks.test.noResponse')}</p>}
+            {data.last_response?.trim() ? <CodeBlock value={data.last_response} /> : <p className="text-xs text-muted-foreground">{t('webhooks.test.noResponse')}</p>}
           </Section>
         </div>
       )}

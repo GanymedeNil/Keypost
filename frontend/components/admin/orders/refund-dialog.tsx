@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { invalidate } from '@/lib/swr';
 import { useAction } from '@/lib/use-action';
 import type { OrderDetail } from '@/lib/types';
-import { Button, Callout, Field, InputGroup, Modal, Select } from '@/components/ui';
+import { Button, Callout, Field, InputGroup, Modal, Select } from '@/components/kit';
 
 const REASONS = ['requested_by_customer', 'duplicate', 'fraudulent'] as const;
 
@@ -77,11 +77,11 @@ export function RefundDialog({ order, onClose, onDone }: Props) {
         <fieldset className="space-y-2">
           <legend className="sr-only">{t('orders.refund.title', { number: order.order_number })}</legend>
           <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input type="radio" name="refund-mode" className="size-4 accent-accent" checked={mode === 'full'} onChange={() => setMode('full')} />
+            <input type="radio" name="refund-mode" className="size-4 accent-primary" checked={mode === 'full'} onChange={() => setMode('full')} />
             {t('orders.refund.full', { amount: money(remaining) })}
           </label>
           <label className="flex cursor-pointer items-center gap-2 text-sm">
-            <input type="radio" name="refund-mode" className="size-4 accent-accent" checked={mode === 'partial'} onChange={() => setMode('partial')} />
+            <input type="radio" name="refund-mode" className="size-4 accent-primary" checked={mode === 'partial'} onChange={() => setMode('partial')} />
             {t('orders.refund.partial')}
           </label>
         </fieldset>

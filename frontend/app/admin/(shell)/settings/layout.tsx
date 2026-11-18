@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { Lock } from 'lucide-react';
 import type { MessageKey } from '@/lib/i18n';
 import { useT } from '@/lib/i18n/provider';
-import { EmptyState, PageHeader, TabLinks } from '@/components/ui';
+import { EmptyState, PageHeader, TabLinks } from '@/components/kit';
 import { useCan } from '@/components/admin/admin-context';
 
 type Access = 'all' | 'write' | 'owner';

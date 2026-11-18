@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n/provider';
 import { useAction } from '@/lib/use-action';
 import { useCan } from '@/components/admin/admin-context';
 import type { Variant } from '@/lib/types';
-import { Badge, Button, Callout, CopyField, Field, Input, Mono, useConfirm } from '@/components/ui';
+import { Badge, Button, Callout, CopyField, Field, Input, Mono, useConfirm } from '@/components/kit';
 
 export function StripeTab({ variant, onChanged }: { variant: Variant; onChanged: () => Promise<unknown> }) {
   const { t, te } = useI18n();
@@ -80,11 +80,11 @@ export function StripeTab({ variant, onChanged }: { variant: Variant; onChanged:
 
       {variant.prices.length > 0 && (
         <div>
-          <h3 className="mb-2 text-xs font-medium text-subtle">{t('products.stripe.priceMapping')}</h3>
-          <ul className="divide-y divide-line rounded-lg border border-line text-sm">
+          <h3 className="mb-2 text-xs font-medium text-muted-foreground">{t('products.stripe.priceMapping')}</h3>
+          <ul className="divide-y divide-border rounded-lg border border-border text-sm">
             {variant.prices.map((p) => (
               <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                <span className="text-muted">
+                <span className="text-muted-foreground">
                   #{p.id} · {te(`products.category.${p.category}`, p.category)} · {p.currency}
                 </span>
                 {p.stripe_price_id ? <Mono>{p.stripe_price_id}</Mono> : <Badge tone="warning">{t('products.stripe.notLinked')}</Badge>}
@@ -95,13 +95,13 @@ export function StripeTab({ variant, onChanged }: { variant: Variant; onChanged:
       )}
 
       <div>
-        <h3 className="mb-2 text-xs font-medium text-subtle">{t('products.stripe.buyUrl')}</h3>
+        <h3 className="mb-2 text-xs font-medium text-muted-foreground">{t('products.stripe.buyUrl')}</h3>
         {variant.buy_now_url ? (
           <CopyField value={variant.buy_now_url} label={t('products.stripe.buyUrl')} />
         ) : (
-          <p className="text-xs text-subtle">{t('products.stripe.buyUrlMissing')}</p>
+          <p className="text-xs text-muted-foreground">{t('products.stripe.buyUrlMissing')}</p>
         )}
-        <p className="mt-1.5 text-xs text-subtle">{t('products.stripe.buyUrlHint')}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{t('products.stripe.buyUrlHint')}</p>
       </div>
 
       <Callout tone="info">

@@ -6,8 +6,8 @@ import { I18nProvider } from '@/lib/i18n/provider';
 import type { Lang } from '@/lib/i18n';
 import { ThemeProvider } from '@/lib/theme';
 import { fetcher } from '@/lib/api';
-import { ToastProvider } from '@/components/ui/toast';
-import { ConfirmProvider } from '@/components/ui/confirm';
+import { ToastProvider } from '@/components/kit/toast';
+import { ConfirmProvider } from '@/components/kit/confirm';
 
 export function Providers({ initialLang, children }: { initialLang: Lang; children: ReactNode }) {
   return (
