@@ -1,5 +1,6 @@
 'use client';
 
+import { BRAND } from '@/lib/brand';
 import Link from 'next/link';
 import { useEffect, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
@@ -7,7 +8,7 @@ import { cn } from '@/lib/utils';
 
 export function usePageTitle(title: string | undefined) {
   useEffect(() => {
-    if (title) document.title = `${title} · Digital Fulfillment`;
+    if (title) document.title = `${title} · ${BRAND.name}`;
   }, [title]);
 }
 

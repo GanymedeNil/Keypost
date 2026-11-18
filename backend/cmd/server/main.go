@@ -1,4 +1,4 @@
-// Command server runs the Digital Fulfillment API, webhooks and storefront.
+// Command server runs the Keypost API, webhooks and storefront.
 package main
 
 import (

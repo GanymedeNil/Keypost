@@ -1,6 +1,8 @@
-# Digital Fulfillment
+<p align="center"><img src="docs/logo.svg" width="72" height="72" alt="Keypost"></p>
 
-**Lemon Squeezy 数字交付（Digital Fulfillment）的自托管替代品，数据来自 Stripe，接口与 Lemon Squeezy 保持一致。**
+# Keypost
+
+**Keypost：基于 Stripe 的 License Key 与文件交付服务，自托管。接口与 Lemon Squeezy 数字交付（Digital Fulfillment）保持一致，可直接替代它并导入历史数据。**
 
 Lemon Squeezy 将于 **2027-03-31** 停止处理交易。官方推荐迁移到 Stripe Managed Payments，但它**不提供** License Key、文件和下载链接的交付，
 历史订单、Key、文件也不会自动迁移。本项目补上这一层：
@@ -13,7 +15,7 @@ Lemon Squeezy 将于 **2027-03-31** 停止处理交易。官方推荐迁移到 S
 | **Stripe 履约** | 验签 Webhook → 幂等处理 `checkout.session.completed`、`invoice.paid`、`customer.subscription.*`、`charge.refunded`…，生成订单、订阅、License Key、发收据邮件 |
 | **客户页面** | 魔法链接登录 My Orders、订单详情（License Key、文件下载、链接）、签名下载（1 小时有效、每文件每 IP 每天 10 次）、一键进入 Stripe 账单门户 |
 | **数据迁移** | 从 LS API 或离线归档导入全部历史（**保留原 ID、License Key 字符串、实例 UUID、文件本体**），导入 LS→Stripe 客户映射表，自动匹配，缺口报告 |
-| **管理后台** | Next.js：仪表盘、订单（退款/补发收据/导出 CSV）、客户、订阅、License Key、商品/变体/价格/文件、Webhook 投递日志、Stripe 事件重放、迁移中心、API Key、成员、审计日志、设置；中英双语；**支持「使用 Stripe 登录」** |
+| **管理后台** | Next.js：仪表盘、订单（退款/补发收据/导出 CSV）、客户、订阅、License Key、商品/变体/价格/文件、Webhook 投递日志、Stripe 事件重放、迁移中心、API Key、成员、审计日志、设置；中英双语；**支持「使用 Stripe 登录」**；**所有成员强制两步验证（TOTP）** |
 
 ## 架构
 
@@ -51,7 +53,7 @@ docker compose logs backend | grep setup_token   # 首次启动：打开 /admin 
 make dev-backend     # Go API :8080（SQLite ./backend/data）
 make dev-frontend    # Next.js :3000（代理到 :8080）
 make test            # 后端测试（SQLite 内存库 + -race）
-make test-pg         # 同一套测试跑在真实 PostgreSQL 16 上
+make test-pg         # 同一套测试跑在真实 PostgreSQL 18 上
 ```
 
 ## 接入 Stripe（5 步）
@@ -73,6 +75,12 @@ make test-pg         # 同一套测试跑在真实 PostgreSQL 16 上
 4. 在 LS 停止服务（2027-03-31）前完成切换。
 
 完整步骤、归档格式与回滚建议见 [docs/MIGRATION.md](docs/MIGRATION.md)。
+
+## 两步验证（管理后台）
+
+**所有成员强制开启**，没有关闭开关：邮箱密码登录和「使用 Stripe 登录」之后都要再过一次 TOTP（1Password、Google Authenticator、Authy 等都支持）。
+首次登录会引导扫码绑定并给出 10 个一次性恢复码；之后每次登录输入 6 位验证码，丢了手机可用恢复码。成员丢设备时，owner 在 *设置 → 团队* 里「重置两步验证」，
+唯一的 owner 丢设备则在服务器上执行 `dfctl admin reset-mfa --email you@example.com`。`MFA_REQUIRED=false` 仅用于本地开发。
 
 ## 使用 Stripe 登录（管理后台）
 

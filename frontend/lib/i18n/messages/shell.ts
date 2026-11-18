@@ -1,8 +1,9 @@
+import { BRAND } from '../../brand';
 import { defineMessages } from '../define';
 
 export default defineMessages({
   en: {
-    'shell.brand': 'Digital Fulfillment',
+    'shell.brand': BRAND.name,
     'shell.skipToContent': 'Skip to content',
     'shell.openMenu': 'Open navigation',
     'shell.closeMenu': 'Close navigation',
@@ -44,7 +45,7 @@ export default defineMessages({
     'shell.readOnlyBadge': 'Read-only access',
   },
   zh: {
-    'shell.brand': '数字商品履约',
+    'shell.brand': BRAND.name,
     'shell.skipToContent': '跳到主要内容',
     'shell.openMenu': '打开导航',
     'shell.closeMenu': '关闭导航',

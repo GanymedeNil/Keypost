@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"fulfillment/internal/brand"
 )
 
 // Client talks to the Stripe REST API with a secret key.
@@ -110,7 +112,7 @@ func (c *Client) do(ctx context.Context, method, path string, p *Params, idem st
 	if idem != "" {
 		req.Header.Set("Idempotency-Key", idem)
 	}
-	req.Header.Set("User-Agent", "digital-fulfillment/1.0")
+	req.Header.Set("User-Agent", "keypost/1.0")
 	var resp *http.Response
 	for attempt := 0; ; attempt++ {
 		resp, err = c.HTTP.Do(req)
@@ -335,7 +337,7 @@ func (c *Client) ListWebhookEndpoints(ctx context.Context) ([]WebhookEndpoint, e
 }
 
 func (c *Client) CreateWebhookEndpoint(ctx context.Context, endpointURL string, events []string) (*WebhookEndpoint, error) {
-	p := P().Set("url", endpointURL).Set("description", "Digital Fulfillment")
+	p := P().Set("url", endpointURL).Set("description", brand.Name)
 	for i, e := range events {
 		p.Set(fmt.Sprintf("enabled_events[%d]", i), e)
 	}

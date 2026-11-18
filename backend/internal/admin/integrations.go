@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 
 	"fulfillment/internal/auth"
+	"fulfillment/internal/brand"
 	"fulfillment/internal/db"
 	"fulfillment/internal/mail"
 	"fulfillment/internal/service"
@@ -653,8 +654,8 @@ func (h *Handler) testEmail(w http.ResponseWriter, r *http.Request, u *db.User) 
 		h.fail(w, http.StatusUnprocessableEntity, "validation_failed", "SMTP is not configured (Settings → Email).", nil)
 		return
 	}
-	html, text, _ := mail.RenderMagicLink(mail.MagicLinkData{StoreName: "Digital Fulfillment", Link: h.S.URLs.Base + "/admin"})
-	if err := h.S.Mail.Send(r.Context(), mail.Message{To: in.To, Subject: "Test email from Digital Fulfillment", HTML: html, Text: text, Template: "test"}); err != nil {
+	html, text, _ := mail.RenderMagicLink(mail.MagicLinkData{StoreName: brand.Name, Link: h.S.URLs.Base + "/admin"})
+	if err := h.S.Mail.Send(r.Context(), mail.Message{To: in.To, Subject: "Test email from " + brand.Name, HTML: html, Text: text, Template: "test"}); err != nil {
 		h.fail(w, http.StatusBadGateway, "internal", "SMTP error: "+err.Error(), nil)
 		return
 	}

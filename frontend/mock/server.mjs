@@ -1,4 +1,4 @@
-// Mock backend for the Digital Fulfillment admin + storefront frontend.
+// Mock backend for the Keypost admin + storefront frontend.
 // Implements docs/ADMIN_API.md with in-memory fixtures. Zero dependencies: `node mock/server.mjs`.
 import http from 'node:http';
 import { buildDb, WEBHOOK_EVENTS, STRIPE_REQUIRED_EVENTS } from './fixtures.mjs';
@@ -989,7 +989,7 @@ function sendTestEmail(ctx, template) {
   const smtp = db.settings.smtp;
   if (!smtp.host) throw E.conflict('SMTP is not configured. Set a host in Settings → Email first.');
   const ok = !/fail/i.test(smtp.host);
-  db.emailLogs.push({ id: db.nextId('emailLogs'), order_id: null, to, subject: 'Digital Fulfillment test email', template, status: ok ? 'sent' : 'failed', error: ok ? '' : 'smtp: connection refused', created_at: iso(now()) });
+  db.emailLogs.push({ id: db.nextId('emailLogs'), order_id: null, to, subject: 'Keypost test email', template, status: ok ? 'sent' : 'failed', error: ok ? '' : 'smtp: connection refused', created_at: iso(now()) });
   if (!ok) throw new ApiError(502, 'internal', `SMTP delivery failed: connection to ${smtp.host}:${smtp.port} refused`);
   return noContent();
 }

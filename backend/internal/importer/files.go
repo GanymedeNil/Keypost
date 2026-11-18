@@ -55,7 +55,7 @@ func httpFile(ctx context.Context, c *http.Client, rawURL string) (io.ReadCloser
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", "digital-fulfillment-importer/1.0")
+	req.Header.Set("User-Agent", "keypost-importer/1.0")
 	if c == nil {
 		c = defaultHTTP
 	}

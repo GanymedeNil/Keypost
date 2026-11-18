@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { PackageCheck } from 'lucide-react';
+import { BrandMark } from '@/components/brand-mark';
 import { cn } from '@/lib/utils';
 import { useT } from '@/lib/i18n/provider';
 import { NAV, SETTINGS_ITEM, type NavItem } from './nav';
@@ -37,7 +37,7 @@ export function Brand() {
   return (
     <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-1">
       <span className="grid size-7 place-items-center rounded-lg bg-accent text-accent-fg">
-        <PackageCheck className="size-4" />
+        <BrandMark className="size-4.5" />
       </span>
       <span className="text-sm font-semibold tracking-tight text-fg">{t('shell.brand')}</span>
     </Link>

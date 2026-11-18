@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---------------------------------------------------------------------------
-# Digital Fulfillment frontend (Next.js 16, standalone output, non-root).
+# Keypost frontend (Next.js 16, standalone output, non-root).
 #
 #   docker build --build-arg BACKEND_URL=http://backend:8080 -t df-frontend .
 #   docker run -p 3000:3000 df-frontend

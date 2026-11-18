@@ -3,7 +3,7 @@
 import { Suspense, useState, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import useSWR, { mutate } from 'swr';
-import { PackageCheck } from 'lucide-react';
+import { BrandMark } from '@/components/brand-mark';
 import { adminApi, ApiError, ADMIN_BASE } from '@/lib/api';
 import type { AuthConfig, User } from '@/lib/types';
 import { useI18n } from '@/lib/i18n/provider';
@@ -133,7 +133,7 @@ function LoginInner() {
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
           <span className="mb-3 grid size-11 place-items-center rounded-xl bg-accent text-accent-fg shadow-card">
-            <PackageCheck className="size-6" />
+            <BrandMark className="size-7" />
           </span>
           <h1 className="text-xl font-semibold tracking-tight">{setup ? t('auth.setupTitle') : t('auth.title')}</h1>
           <p className="mt-1 text-sm text-muted">{setup ? t('auth.setupDesc') : t('auth.subtitle')}</p>

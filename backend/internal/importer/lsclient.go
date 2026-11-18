@@ -148,7 +148,7 @@ func (c *lsClient) get(ctx context.Context, rel string) ([]byte, error) {
 		req.Header.Set("Accept", "application/vnd.api+json")
 		req.Header.Set("Content-Type", "application/vnd.api+json")
 		req.Header.Set("Authorization", "Bearer "+c.key)
-		req.Header.Set("User-Agent", "digital-fulfillment-importer/1.0")
+		req.Header.Set("User-Agent", "keypost-importer/1.0")
 		resp, err := c.httpc.Do(req)
 		var body []byte
 		if err == nil {
