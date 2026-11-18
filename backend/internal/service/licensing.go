@@ -40,10 +40,10 @@ type LicenseOutcome struct {
 
 const (
 	errKeyNotFound      = "license_key not found."
-	errInstanceNotFound = "license_key_instance not found."
+	errInstanceNotFound = "instance_id not found."
 	errLimitReached     = "This license key has reached the activation limit."
 	errDisabled         = "This license key is disabled."
-	errExpired          = "This license key has expired."
+	errExpired          = "This license key is expired."
 )
 
 func NewLicenseKeyString() string { return uuid.NewString() }
@@ -171,8 +171,7 @@ func (s *Svc) ValidateLicense(ctx context.Context, key, instanceID string) Licen
 		var inst db.LicenseKeyInstance
 		err := s.DB.WithContext(ctx).Where("license_key_id = ? AND identifier = ?", k.ID, instanceID).First(&inst).Error
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			out.HTTP, out.Err = http.StatusNotFound, errInstanceNotFound
-			return out
+			return notFoundOutcome(errInstanceNotFound)
 		}
 		if err != nil {
 			return LicenseOutcome{HTTP: http.StatusInternalServerError, Err: "internal error"}
@@ -202,15 +201,15 @@ func (s *Svc) DeactivateLicense(ctx context.Context, key, instanceID string) Lic
 		if err != nil {
 			return err
 		}
-		out.Key = k
 		res := tx.Where("license_key_id = ? AND identifier = ?", k.ID, instanceID).Delete(&db.LicenseKeyInstance{})
 		if res.Error != nil {
 			return res.Error
 		}
 		if res.RowsAffected == 0 {
-			out.HTTP, out.Err = http.StatusNotFound, errInstanceNotFound
+			out = notFoundOutcome(errInstanceNotFound)
 			return nil
 		}
+		out.Key = k
 		var n int64
 		tx.Model(&db.LicenseKeyInstance{}).Where("license_key_id = ?", k.ID).Count(&n)
 		k.InstancesCount = int(n)

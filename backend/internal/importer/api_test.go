@@ -360,7 +360,7 @@ func TestLicenseSemanticsAfterImport(t *testing.T) {
 	if r := svc.ActivateLicense(ctx, keyDisabled, "x"); r.OK || r.Err != "This license key is disabled." {
 		t.Errorf("disabled key: %+v", r)
 	}
-	if r := svc.ActivateLicense(ctx, keyExpired, "x"); r.OK || r.Err != "This license key has expired." {
+	if r := svc.ActivateLicense(ctx, keyExpired, "x"); r.OK || r.Err != "This license key is expired." {
 		t.Errorf("expired key: %+v", r)
 	}
 	if r := svc.ValidateLicense(ctx, keyExpired, ""); r.OK {

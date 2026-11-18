@@ -12,6 +12,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -529,7 +531,7 @@ func TestSubscriptionLifecycle(t *testing.T) {
 	if _, v := e.form("/v1/licenses/validate", map[string]string{"license_key": key.Key}); v["valid"] != false || sub(v, "license_key", "status") != "expired" {
 		t.Fatalf("expired validate: %v", v)
 	}
-	if rr, a := e.form("/v1/licenses/activate", map[string]string{"license_key": key.Key, "instance_name": "x"}); rr.Code != 400 || a["activated"] != false {
+	if rr, a := e.form("/v1/licenses/activate", map[string]string{"license_key": key.Key, "instance_name": "desktop"}); rr.Code != 400 || a["activated"] != false {
 		t.Fatalf("expired activate: %d %v", rr.Code, a)
 	}
 	evs := strings.Join(e.hook.events(), ",")
@@ -746,6 +748,175 @@ func TestAdminAPI(t *testing.T) {
 	}
 	if rr := authed("GET", "/admin-api/me", nil); rr.Code != 401 {
 		t.Fatalf("session should be revoked: %d", rr.Code)
+	}
+}
+
+// The License API answers like the real Lemon Squeezy one (verified against
+// it with a test-mode key): Laravel-style 422 validation errors, 404s that carry
+// nothing but the flag and the error, "instance_id not found.", "is expired."
+func TestLicenseAPIErrorShapesMatchLemonSqueezy(t *testing.T) {
+	e := newEnv(t)
+	oneTime, _ := e.seedCatalog()
+	g := e.app.DB
+	var st db.Store
+	g.First(&st)
+	limit := 2
+	key := db.LicenseKey{StoreID: st.ID, ProductID: oneTime.ProductID, VariantID: oneTime.ID, Key: "11111111-2222-3333-4444-555555555555", ActivationLimit: &limit, TestMode: true, CreatedAt: db.Now(), UpdatedAt: db.Now()}
+	g.Create(&key)
+	post := func(path string, kv map[string]string) (int, map[string]any) {
+		rr, v := e.form("/v1/licenses/"+path, kv)
+		return rr.Code, v
+	}
+	keys := func(v map[string]any) string {
+		var ks []string
+		for k := range v {
+			ks = append(ks, k)
+		}
+		sort.Strings(ks)
+		return strings.Join(ks, ",")
+	}
+
+	// validation: 422, {"message","errors"}, nothing else; the message names the first failing field and counts the rest
+	for _, c := range []struct {
+		path string
+		form map[string]string
+		msg  string
+	}{
+		{"activate", map[string]string{}, "The license key field is required. (and 1 more error)"},
+		{"activate", map[string]string{"license_key": key.Key}, "The instance name field is required."},
+		{"activate", map[string]string{"license_key": key.Key, "instance_name": "ab"}, "The instance name field must be at least 3 characters."},
+		{"activate", map[string]string{"license_key": key.Key, "instance_name": strings.Repeat("a", 256)}, "The instance name field must not be greater than 255 characters."},
+		{"deactivate", map[string]string{"license_key": key.Key}, "The instance id field is required."},
+		{"deactivate", map[string]string{}, "The license key field is required. (and 1 more error)"},
+		{"validate", map[string]string{}, "The license key field is required."},
+		{"validate", map[string]string{"license_key": "  "}, "The license key field is required."},
+	} {
+		code, v := post(c.path, c.form)
+		if code != 422 || v["message"] != c.msg || keys(v) != "errors,message" {
+			t.Errorf("%s %v: %d %v", c.path, c.form, code, v)
+		}
+	}
+	if _, v := post("activate", map[string]string{"license_key": "no-such-key", "instance_name": "ab"}); v["errors"] == nil {
+		t.Errorf("validation comes before the key lookup: %v", v)
+	}
+
+	// unknown key / unknown instance: 404 with the flag and the error only
+	unknown := "99999999-9999-9999-9999-999999999999"
+	for _, c := range []struct {
+		path, flag string
+		form       map[string]string
+		err        string
+	}{
+		{"activate", "activated", map[string]string{"license_key": "nope", "instance_name": "abc"}, "license_key not found."},
+		{"validate", "valid", map[string]string{"license_key": "nope"}, "license_key not found."},
+		{"deactivate", "deactivated", map[string]string{"license_key": "nope", "instance_id": unknown}, "license_key not found."},
+		{"validate", "valid", map[string]string{"license_key": key.Key, "instance_id": unknown}, "instance_id not found."},
+		{"deactivate", "deactivated", map[string]string{"license_key": key.Key, "instance_id": unknown}, "instance_id not found."},
+	} {
+		code, v := post(c.path, c.form)
+		if code != 404 || v[c.flag] != false || v["error"] != c.err || keys(v) != keys(map[string]any{c.flag: 0, "error": 0}) {
+			t.Errorf("%s %v: %d %v", c.path, c.form, code, v)
+		}
+	}
+
+	// an empty instance_id means "no instance"; test_mode is part of the license_key object
+	code, v := post("validate", map[string]string{"license_key": key.Key, "instance_id": ""})
+	if code != 200 || v["valid"] != true || v["instance"] != nil || sub(v, "license_key", "test_mode") != true || keys(v) != "error,instance,license_key,meta,valid" {
+		t.Errorf("validate: %d %v", code, v)
+	}
+	_, a := post("activate", map[string]string{"license_key": key.Key, "instance_name": "laptop"})
+	inst, _ := sub(a, "instance", "id").(string)
+	if a["activated"] != true || inst == "" || keys(a) != "activated,error,instance,license_key,meta" {
+		t.Fatalf("activate: %v", a)
+	}
+	// limit reached: license_key and meta, but no instance
+	post("activate", map[string]string{"license_key": key.Key, "instance_name": "phone"})
+	code, v = post("activate", map[string]string{"license_key": key.Key, "instance_name": "tablet"})
+	if code != 400 || v["error"] != "This license key has reached the activation limit." || keys(v) != "activated,error,license_key,meta" {
+		t.Errorf("limit: %d %v", code, v)
+	}
+
+	// disabled / expired: the instance is looked up first, then the state is reported with the instance
+	g.Model(&key).Update("disabled", true)
+	if code, v := post("validate", map[string]string{"license_key": key.Key, "instance_id": unknown}); code != 404 || v["error"] != "instance_id not found." {
+		t.Errorf("disabled + unknown instance: %d %v", code, v)
+	}
+	code, v = post("validate", map[string]string{"license_key": key.Key, "instance_id": inst})
+	if code != 400 || v["valid"] != false || v["error"] != "This license key is disabled." || sub(v, "instance", "id") != inst || sub(v, "license_key", "status") != "disabled" {
+		t.Errorf("disabled: %d %v", code, v)
+	}
+	g.Model(&key).Updates(map[string]any{"disabled": false, "expires_at": time.Now().Add(-time.Hour)})
+	for _, c := range []struct{ path, flag string }{{"validate", "valid"}, {"activate", "activated"}} {
+		form := map[string]string{"license_key": key.Key, "instance_id": inst, "instance_name": "desk"}
+		if code, v := post(c.path, form); code != 400 || v[c.flag] != false || v["error"] != "This license key is expired." {
+			t.Errorf("expired %s: %d %v", c.path, code, v)
+		}
+	}
+}
+
+// Shapes that only showed up when a real Lemon Squeezy account was imported and
+// compared field by field with its API.
+func TestJSONAPIShapesMatchRealLemonSqueezyData(t *testing.T) {
+	e := newEnv(t)
+	oneTime, _ := e.seedCatalog()
+	g := e.app.DB
+	var st db.Store
+	g.First(&st)
+	now := db.Now()
+
+	// price history: editing a variant's price adds a record, and the variant follows the latest one
+	// (here a one-time price that still carries a renewal interval from an earlier subscription setup)
+	year, one := "year", 1
+	latest := db.Price{VariantID: oneTime.ID, Category: "one_time", Scheme: "standard", UnitPrice: 1999, PackageSize: 1, TaxCode: "eservice", Currency: "USD", RenewalIntervalUnit: &year, RenewalIntervalQuantity: &one, CreatedAt: now, UpdatedAt: now}
+	g.Create(&latest)
+	v := decode(t, e.api("GET", "/v1/variants/"+strconv.FormatInt(oneTime.ID, 10), nil))
+	if sub(v, "data", "attributes", "price") != float64(1999) || sub(v, "data", "attributes", "is_subscription") != false ||
+		sub(v, "data", "attributes", "interval") != "year" || sub(v, "data", "attributes", "interval_count") != float64(1) {
+		t.Errorf("variant attributes: %v", sub(v, "data", "attributes"))
+	}
+	pr := decode(t, e.api("GET", "/v1/products/"+strconv.FormatInt(oneTime.ProductID, 10), nil))
+	if sub(pr, "data", "attributes", "price") != float64(500) { // the cheaper subscription variant is still the "from" price
+		t.Errorf("product price: %v", sub(pr, "data", "attributes", "price"))
+	}
+
+	// one-time prices: tiers and setup_fee_enabled are null, not [] / false
+	p := decode(t, e.api("GET", "/v1/prices/"+strconv.FormatInt(latest.ID, 10), nil))
+	attrs, _ := sub(p, "data", "attributes").(map[string]any)
+	if v, present := attrs["tiers"]; !present || v != nil {
+		t.Errorf("tiers = %v (present %v)", v, present)
+	}
+	if v, present := attrs["setup_fee_enabled"]; !present || v != nil {
+		t.Errorf("setup_fee_enabled = %v (present %v)", v, present)
+	}
+
+	// test-mode orders never count towards store or customer totals
+	cust := db.Customer{StoreID: st.ID, Email: "buyer@example.com", Name: "Buyer", TestMode: true, CreatedAt: now, UpdatedAt: now}
+	g.Create(&cust)
+	g.Create(&db.Order{StoreID: st.ID, CustomerID: cust.ID, Identifier: "test-order", OrderNumber: 1, Status: "paid", Total: 1999, TotalUSD: 1999, Currency: "USD", TestMode: true, Source: "stripe", CreatedAt: now, UpdatedAt: now})
+	s := decode(t, e.api("GET", "/v1/stores/"+strconv.FormatInt(st.ID, 10), nil))
+	if sub(s, "data", "attributes", "total_sales") != float64(0) || sub(s, "data", "attributes", "total_revenue") != float64(0) {
+		t.Errorf("store totals: %v", sub(s, "data", "attributes"))
+	}
+	c := decode(t, e.api("GET", "/v1/customers/"+strconv.FormatInt(cust.ID, 10), nil))
+	if sub(c, "data", "attributes", "total_revenue_currency") != float64(0) {
+		t.Errorf("customer revenue: %v", sub(c, "data", "attributes", "total_revenue_currency"))
+	}
+	g.Create(&db.Order{StoreID: st.ID, CustomerID: cust.ID, Identifier: "live-order", OrderNumber: 2, Status: "paid", Total: 500, TotalUSD: 500, Currency: "USD", Source: "stripe", CreatedAt: now, UpdatedAt: now})
+	s = decode(t, e.api("GET", "/v1/stores/"+strconv.FormatInt(st.ID, 10), nil))
+	c = decode(t, e.api("GET", "/v1/customers/"+strconv.FormatInt(cust.ID, 10), nil))
+	if sub(s, "data", "attributes", "total_sales") != float64(1) || sub(s, "data", "attributes", "total_revenue") != float64(500) ||
+		sub(c, "data", "attributes", "total_revenue_currency") != float64(500) {
+		t.Errorf("live totals: store %v customer %v", sub(s, "data", "attributes"), sub(c, "data", "attributes", "total_revenue_currency"))
+	}
+
+	// first_order_item carries price_id and no deleted_at
+	priceID := latest.ID
+	it := db.OrderItem{OrderID: 1, ProductID: oneTime.ProductID, VariantID: oneTime.ID, PriceID: &priceID, ProductName: "Pro App", VariantName: "Lifetime", Price: 1999, Quantity: 1, TestMode: true, CreatedAt: now, UpdatedAt: now}
+	g.Create(&it)
+	o := decode(t, e.api("GET", "/v1/orders/1", nil))
+	foi, _ := sub(o, "data", "attributes", "first_order_item").(map[string]any)
+	if _, has := foi["deleted_at"]; has || foi["price_id"] != float64(priceID) {
+		t.Errorf("first_order_item = %v", foi)
 	}
 }
 

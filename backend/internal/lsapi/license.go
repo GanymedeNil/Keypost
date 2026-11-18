@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"fulfillment/internal/httpx"
 	"fulfillment/internal/resource"
@@ -22,6 +23,7 @@ type licenseKeyOut struct {
 	ActivationUsage int     `json:"activation_usage"`
 	CreatedAt       string  `json:"created_at"`
 	ExpiresAt       *string `json:"expires_at"`
+	TestMode        bool    `json:"test_mode"`
 }
 
 type instanceOut struct {
@@ -69,7 +71,7 @@ func (a *API) keyOut(o service.LicenseOutcome) any {
 	k := o.Key
 	return licenseKeyOut{
 		ID: k.ID, Status: resource.LicenseStatus(k, a.S.Res.Clock()), Key: k.Key, ActivationLimit: k.ActivationLimit,
-		ActivationUsage: k.InstancesCount, CreatedAt: resource.TS(k.CreatedAt), ExpiresAt: resource.TSP(k.ExpiresAt),
+		ActivationUsage: k.InstancesCount, CreatedAt: resource.TS(k.CreatedAt), ExpiresAt: resource.TSP(k.ExpiresAt), TestMode: k.TestMode,
 	}
 }
 
@@ -80,71 +82,99 @@ func instOut(o service.LicenseOutcome) any {
 	return instanceOut{ID: o.Instance.Identifier, Name: o.Instance.Name, CreatedAt: resource.TS(o.Instance.CreatedAt)}
 }
 
-func required(w http.ResponseWriter, okKey, field string) {
-	httpx.JSON(w, http.StatusUnprocessableEntity, map[string]any{
-		okKey: false, "error": "The " + field + " field is required.",
-		"license_key": nil, "instance": nil, "meta": nil,
-	})
+// fieldRule is one validation rule of a License API parameter. Lemon Squeezy
+// is built on Laravel, so failures come back as 422 {"message", "errors"} with
+// Laravel's wording ("The instance name field is required.").
+type fieldRule struct {
+	field    string
+	required bool
+	min, max int // in characters, 0 = no limit
+}
+
+func (f fieldRule) check(v string) string {
+	label := strings.ReplaceAll(f.field, "_", " ")
+	n := utf8.RuneCountInString(v)
+	switch {
+	case v == "":
+		if f.required {
+			return "The " + label + " field is required."
+		}
+	case f.min > 0 && n < f.min:
+		return "The " + label + " field must be at least " + strconv.Itoa(f.min) + " characters."
+	case f.max > 0 && n > f.max:
+		return "The " + label + " field must not be greater than " + strconv.Itoa(f.max) + " characters."
+	}
+	return ""
+}
+
+// validateParams answers 422 and reports false when a parameter is invalid.
+func validateParams(w http.ResponseWriter, vals map[string]string, rules ...fieldRule) bool {
+	errs := map[string][]string{}
+	var first string
+	count := 0
+	for _, r := range rules {
+		if msg := r.check(vals[r.field]); msg != "" {
+			errs[r.field] = []string{msg}
+			if count == 0 {
+				first = msg
+			}
+			count++
+		}
+	}
+	if count == 0 {
+		return true
+	}
+	message := first
+	switch {
+	case count == 2:
+		message += " (and 1 more error)"
+	case count > 2:
+		message += " (and " + strconv.Itoa(count-1) + " more errors)"
+	}
+	httpx.JSON(w, http.StatusUnprocessableEntity, map[string]any{"message": message, "errors": errs})
+	return false
 }
 
 func (a *API) licenseActivate(w http.ResponseWriter, r *http.Request) {
 	p, ok := a.licenseParams(w, r, "activated")
-	if !ok {
+	if !ok || !validateParams(w, p, fieldRule{field: "license_key", required: true}, fieldRule{field: "instance_name", required: true, min: 3, max: 255}) {
 		return
 	}
-	key, name := p["license_key"], p["instance_name"]
-	if key == "" {
-		required(w, "activated", "license_key")
-		return
-	}
-	if name == "" {
-		required(w, "activated", "instance_name")
-		return
-	}
-	o := a.S.ActivateLicense(r.Context(), key, name)
-	body := map[string]any{"activated": o.OK, "error": nilIfEmpty(o.Err), "license_key": a.keyOut(o), "meta": o.Meta}
-	if o.Key == nil {
-		body["instance"] = nil
-	} else if o.OK {
-		body["instance"] = instOut(o)
+	o := a.S.ActivateLicense(r.Context(), p["license_key"], p["instance_name"])
+	body := map[string]any{"activated": o.OK, "error": nilIfEmpty(o.Err)}
+	if o.Key != nil {
+		body["license_key"], body["meta"] = a.keyOut(o), o.Meta
+		if o.OK {
+			body["instance"] = instOut(o)
+		}
 	}
 	httpx.JSON(w, o.HTTP, body)
 }
 
 func (a *API) licenseValidate(w http.ResponseWriter, r *http.Request) {
 	p, ok := a.licenseParams(w, r, "valid")
-	if !ok {
+	if !ok || !validateParams(w, p, fieldRule{field: "license_key", required: true}) {
 		return
 	}
-	key, instanceID := p["license_key"], p["instance_id"]
-	if key == "" {
-		required(w, "valid", "license_key")
-		return
+	o := a.S.ValidateLicense(r.Context(), p["license_key"], p["instance_id"])
+	body := map[string]any{"valid": o.OK, "error": nilIfEmpty(o.Err)}
+	if o.Key != nil {
+		body["license_key"], body["instance"], body["meta"] = a.keyOut(o), instOut(o), o.Meta
 	}
-	o := a.S.ValidateLicense(r.Context(), key, instanceID)
-	httpx.JSON(w, o.HTTP, map[string]any{
-		"valid": o.OK, "error": nilIfEmpty(o.Err), "license_key": a.keyOut(o), "instance": instOut(o), "meta": o.Meta,
-	})
+	httpx.JSON(w, o.HTTP, body)
 }
 
 func (a *API) licenseDeactivate(w http.ResponseWriter, r *http.Request) {
 	p, ok := a.licenseParams(w, r, "deactivated")
-	if !ok {
+	if !ok || !validateParams(w, p, fieldRule{field: "license_key", required: true}, fieldRule{field: "instance_id", required: true}) {
 		return
 	}
-	key, instanceID := p["license_key"], p["instance_id"]
-	if key == "" {
-		required(w, "deactivated", "license_key")
-		return
+	o := a.S.DeactivateLicense(r.Context(), p["license_key"], p["instance_id"])
+	body := map[string]any{"deactivated": o.OK, "error": nilIfEmpty(o.Err)}
+	if o.Key != nil {
+		body["license_key"], body["meta"] = a.keyOut(o), o.Meta
 	}
-	if instanceID == "" {
-		required(w, "deactivated", "instance_id")
-		return
-	}
-	o := a.S.DeactivateLicense(r.Context(), key, instanceID)
-	httpx.JSON(w, o.HTTP, map[string]any{
-		"deactivated": o.OK, "error": nilIfEmpty(o.Err), "license_key": a.keyOut(o), "meta": o.Meta,
-	})
+	httpx.JSON(w, o.HTTP, body)
 }
 
 func nilIfEmpty(s string) any {

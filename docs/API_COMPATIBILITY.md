@@ -6,9 +6,11 @@
 
 | 端点 | 状态 | 说明 |
 | --- | --- | --- |
-| `POST /v1/licenses/activate` | ✅ | 字段、`meta`、错误文案（`This license key has reached the activation limit.` 等）一致；超限返回 400 且不含 `instance` |
-| `POST /v1/licenses/validate` | ✅ | 无 `instance_id` 时 `instance: null`；key/实例不存在 404（`license_key not found.` / `license_key_instance not found.`） |
+| `POST /v1/licenses/activate` | ✅ | 字段、`meta`、错误文案（`This license key has reached the activation limit.` 等）一致；超限/停用/过期返回 400，带 `license_key` 与 `meta`，不含 `instance` |
+| `POST /v1/licenses/validate` | ✅ | 无（或空）`instance_id` 时 `instance: null`；先查实例再看停用/过期；`license_key` 含 `test_mode` |
 | `POST /v1/licenses/deactivate` | ✅ | 释放一个激活位，`license_key.activation_usage` 即时更新 |
+| 参数校验 | ✅ | Laravel 风格 422：`{"message":"The instance name field must be at least 3 characters.","errors":{"instance_name":[…]}}`（`license_key` 必填；`instance_name` 必填、3–255 字符；`deactivate` 的 `instance_id` 必填；多个错误时 message 末尾带 ` (and N more error(s))`）。校验先于 key 查询 |
+| 404 | ✅ | key 不存在 `license_key not found.`，实例不存在 `instance_id not found.`；响应体**只有** `activated`/`valid`/`deactivated` 与 `error` 两个字段（没有 `license_key`、`meta`、`instance`）。过期文案为 `This license key is expired.` |
 | 限流 | ✅ | 每 IP 60 次/分钟（`LICENSE_RATE_LIMIT`），响应带 `X-Ratelimit-*`，超限 429 |
 
 ## JSON:API（`Authorization: Bearer <key>`，`Accept: application/vnd.api+json`）
@@ -16,9 +18,9 @@
 | 资源 | 读 | 写 | 备注 |
 | --- | --- | --- | --- |
 | `GET /v1/users/me` | ✅ | | |
-| stores | ✅ | ❌ | 创建/修改请在后台；`total_sales` 等统计实时计算 |
+| stores | ✅ | ❌ | 创建/修改请在后台；`total_sales` 等统计实时计算，**只计正式订单**（与 LS 一样，测试订单不计入，customers 的 `total_revenue_currency` 同理） |
 | customers | ✅ | ✅ create / update | `urls.customer_portal` = 24h 签名链接，访问时动态创建 Stripe Billing Portal |
-| products / variants / prices | ✅ | ❌ | 与 LS 一样，目录通过后台维护；`buy_now_url` 指向本服务的结账入口 |
+| products / variants / prices | ✅ | ❌ | 与 LS 一样，目录通过后台维护；`buy_now_url` 指向本服务的结账入口。一个变体可有多条价格记录（LS 改价会新增记录），变体/商品的 `price`、`interval` 取**最新**一条；一次性价格的 `tiers`、`setup_fee_enabled` 为 `null` |
 | files | ✅ | ❌ | `download_url` 签名 1 小时、每 IP 每天 10 次（可配）；文件对象同时含 `createdAt` 与 `created_at` |
 | orders | ✅ | ✅ refund、generate-invoice | refund 调 Stripe Refund；invoice 返回 Stripe 收据/发票链接，否则本服务收据页 |
 | order-items | ✅ | | |
@@ -52,3 +54,9 @@
 4. **下载链接域名**：由 `app.lemonsqueezy.com` 变为你自己的域名；链接内含订单信息，退款/订阅失效后立即失效。
 5. **客户门户**：`urls.customer_portal` 不再是 LS Portal，而是跳转到 Stripe Billing Portal（订阅、支付方式、发票）。
 6. **ID 与 Key**：导入数据 ID 不变；新生成的 License Key 仍是 UUID v4。
+
+## 与真实 Lemon Squeezy 对拍过的部分
+
+License API 的响应形状、状态码和错误文案，以及 JSON:API 里 stores / customers / products / variants / prices / orders / order-items / license-keys / license-key-instances 的全部属性，
+都用一个真实的 test-mode LS 账号逐字段比对过：用导入器把账号数据导入本服务，再对两边的 `/v1/*` 取数做 diff，并对同一个 Key 在两边依次执行 activate / 超限 / validate / deactivate / 停用 / 过期等操作比对。
+差异只剩按设计不同的 URL（`buy_now_url`、`urls.receipt`、`customer_portal` 指向你自己的域名）。**没有真实样本的资源**——订阅、订阅发票、文件——仍按官方文档实现，没有对拍过。
