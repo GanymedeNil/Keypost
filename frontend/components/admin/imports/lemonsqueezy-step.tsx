@@ -20,6 +20,21 @@ function parseStoreIds(raw: string): number[] | null {
   return ids.some((n) => !Number.isSafeInteger(n) || n <= 0) ? null : ids;
 }
 
+/** "Overwrite id conflicts" switch + the warning that explains what it does (default: stop at a conflict). */
+function ConflictSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  const t = useT();
+  return (
+    <div className="space-y-3">
+      <SwitchField label={t('imports.overwriteConflicts')} description={t('imports.overwriteConflictsDesc')} checked={checked} onCheckedChange={onChange} />
+      {checked && (
+        <Callout tone="warning" className="text-xs">
+          {t('imports.overwriteConflictsWarn')}
+        </Callout>
+      )}
+    </div>
+  );
+}
+
 function ApiForm({ disabled }: { disabled: boolean }) {
   const t = useT();
   const labels = useImportLabels();
@@ -33,6 +48,7 @@ function ApiForm({ disabled }: { disabled: boolean }) {
   const [resources, setResources] = useState<LsResource[]>([...LS_STAGES]);
   const [downloadFiles, setDownloadFiles] = useState(true);
   const [dryRun, setDryRun] = useState(false);
+  const [overwrite, setOverwrite] = useState(false);
   const [errors, setErrors] = useState<{ apiKey?: string; storeIds?: string; resources?: string }>({});
 
   const toggle = (r: LsResource, on: boolean) => setResources((cur) => (on ? LS_STAGES.filter((x) => x === r || cur.includes(x)) : cur.filter((x) => x !== r)));
@@ -59,6 +75,7 @@ function ApiForm({ disabled }: { disabled: boolean }) {
       ...(resources.length < LS_STAGES.length ? { resources } : {}),
       download_files: downloadFiles,
       dry_run: dryRun,
+      ...(overwrite ? { on_conflict: 'overwrite' } : {}),
     };
     const res = await run(() => adminApi.post<ImportJob>('/imports/lemonsqueezy', body), { success: t('imports.toast.started') });
     if (res.ok) {
@@ -143,6 +160,7 @@ function ApiForm({ disabled }: { disabled: boolean }) {
         />
         <SwitchField label={t('imports.dryRun')} description={t('imports.dryRunDesc')} checked={dryRun} onCheckedChange={setDryRun} />
       </div>
+      <ConflictSwitch checked={overwrite} onChange={setOverwrite} />
 
       <Button type="submit" variant="primary" loading={pending} disabled={disabled}>
         {dryRun ? t('imports.api.startDry') : t('imports.api.start')}
@@ -157,6 +175,7 @@ function ArchiveForm({ disabled }: { disabled: boolean }) {
   const { run, pending, fieldErrors } = useAction();
   const [file, setFile] = useState<File | null>(null);
   const [downloadFiles, setDownloadFiles] = useState(true);
+  const [overwrite, setOverwrite] = useState(false);
   const [percent, setPercent] = useState<number | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
 
@@ -167,6 +186,7 @@ function ArchiveForm({ disabled }: { disabled: boolean }) {
     const form = new FormData();
     form.append('file', file);
     form.append('download_files', String(downloadFiles));
+    if (overwrite) form.append('on_conflict', 'overwrite');
     setPercent(0);
     const res = await run(
       () => adminApi.upload<ImportJob>('/imports/lemonsqueezy/archive', form, { onProgress: (loaded, total) => setPercent(Math.round((loaded / total) * 100)) }),
@@ -196,6 +216,7 @@ function ArchiveForm({ disabled }: { disabled: boolean }) {
         checked={downloadFiles}
         onCheckedChange={setDownloadFiles}
       />
+      <ConflictSwitch checked={overwrite} onChange={setOverwrite} />
       {percent !== null && (
         <div className="space-y-1.5" role="status">
           <Progress value={percent} label={t('imports.uploading', { percent })} />

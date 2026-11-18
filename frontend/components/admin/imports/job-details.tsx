@@ -16,7 +16,11 @@ function OptionValue({ name, value }: { name: string; value: unknown }): ReactNo
   if (SECRET_KEYS.has(name.toLowerCase())) return <span className="text-subtle">{t('imports.options.masked')}</span>;
   if (typeof value === 'boolean') return t(value ? 'common.yesNo.true' : 'common.yesNo.false');
   if (typeof value === 'number') return name === 'size' ? formatBytes(value, locale) : formatNumber(value, locale);
-  if (typeof value === 'string') return name === 'kind' ? te(`imports.mapKind.${value}`, value) : value;
+  if (typeof value === 'string') {
+    if (name === 'kind') return te(`imports.mapKind.${value}`, value);
+    if (name === 'on_conflict') return te(`imports.conflict.${value}`, value);
+    return value;
+  }
   if (Array.isArray(value)) {
     if (value.length === 0) return t('imports.options.all');
     return (
