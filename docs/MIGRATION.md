@@ -1,106 +1,106 @@
-# 从 Lemon Squeezy 迁移
+# Migrating from Lemon Squeezy
 
-> 时间线（官方）：2026-11-16 停止新用户；2026-12-02 迁移工具上线；建议最晚 2027-01 中旬开始迁；**2027-03-31 停止处理交易（含订阅续费），不会延期**。
-> LS 官方的迁移工具只带走客户、商品和卡类订阅；**订单历史、License Key、文件、下载权限都要自己带走**——这正是本服务的导入器做的事。
+> Timeline (official): 2026-11-16 new signups stop; 2026-12-02 migration tool goes live; start migrating by mid-January 2027 at the latest; **2027-03-31 transaction processing stops (including subscription renewals), with no extension**.
+> LS's official migration tool only carries over customers, products, and card subscriptions; **you must carry over order history, license keys, files, and download access yourself**—which is exactly what this service's importer does.
 
-## 0. 先理解一个原则：保留原 ID
+## 0. One principle first: keep the original IDs
 
-导入时 **Lemon Squeezy 的 ID 全部保留**（`license_keys.id`、`orders.id`、`customers.id`、订单 `identifier`/`order_number`、License 实例 `identifier` = `instance_id` …），
-老客户端和你自己的业务系统里存的任何 ID、Key、实例 ID 在新服务上继续有效。因此：
+On import, **all Lemon Squeezy IDs are kept** (`license_keys.id`, `orders.id`, `customers.id`, order `identifier`/`order_number`, license instance `identifier` = `instance_id` …),
+so any ID, key, or instance ID stored in old clients and your own business systems stays valid on the new service. Therefore:
 
-- **请在空库（或只有导入数据的库）上做导入。** 新数据的自增 ID 会接在最大 ID 之后（PostgreSQL 导入后自动重置序列）。LS 的 ID 是全平台共享的大数，与新服务自增的小 ID 通常不冲突，仍建议先导入、后收款。
-- **ID 冲突保护。** 写入每一批数据前，导入器会检查这些 ID 在本库里是否已被**另一条不同的数据**占用（例如 Stripe 结账产生的订单、手工建的产品）。有冲突就**停止导入**——既不覆盖，也不会让后续的变体/订单项/License Key 悄悄挂到那条本地数据上。
-  - "同一条数据"的判断：`created_at` 与来源一致（重复导入时必然成立；本地编辑不会改 `created_at`），或自然键相同——客户（店铺 + 邮箱）、订单（`identifier`）、License Key（Key 字符串）、实例与文件（`identifier`）、店铺（`slug`，所以全新安装的占位店铺会被同 slug 的 LS 店铺接管）。其余表只比 `created_at`。因此来源对象必须带 `created_at`（LS API 与官方导出都有；手写归档请补上）。`orders.csv` 按邮箱和订单号归并，不参与此检查。
-  - 日志逐条列出冲突：表、ID、本地数据与来源数据的摘要。已写入的前面几批属于有效的 LS 数据，保留；排除冲突后可直接重跑。
-  - **试运行同样会检查**，并列出**全部**冲突后以失败结束（真正导入会在第一批冲突处停下），所以上线前的 Dry run 就是冲突检查。
-  - 解决办法：①在空库导入（推荐）；②冲突的本地数据只是可丢弃的测试数据——在导入表单打开"覆盖冲突的 ID"（API 参数 `on_conflict: "overwrite"`，压缩包上传表单字段同名），冲突数据会被替换并逐条记入警告日志。
-- 重复导入是安全的：按主键幂等 upsert；本地已有的 Stripe 关联（`stripe_*`）、激活实例、下载计数不会被覆盖；本地更新时间更新的行不会被 LS 旧数据回退。
+- **Import into an empty database (or one that contains only imported data).** New auto-increment IDs continue after the maximum ID (PostgreSQL sequences are reset automatically after import). LS IDs are large numbers shared across the whole platform and usually do not collide with the new service's small auto-increment IDs, but we still recommend importing first and taking payments afterward.
+- **ID conflict guard.** Before writing each batch, the importer checks whether any of these IDs is already taken in this database by a **different record** (for example an order created by Stripe checkout, or a hand-created product). On a conflict it **stops the import**—it neither overwrites nor lets later variants/order items/license keys quietly attach to that local record.
+  - How "the same record" is determined: `created_at` matches the source (always true on re-import; local edits do not change `created_at`), or the natural key matches—customer (store + email), order (`identifier`), license key (key string), instance and file (`identifier`), store (`slug`, so a fresh install's placeholder store is taken over by the LS store with the same slug). Other tables compare `created_at` only. Source objects must therefore carry `created_at` (both the LS API and official exports do; add it to hand-written archives). `orders.csv` is merged by email and order number and is not part of this check.
+  - The log lists each conflict: table, ID, and a summary of the local and source data. Earlier batches already written are valid LS data and are kept; once the conflicts are resolved, rerun directly.
+  - **A dry run performs the same check**, lists **all** conflicts, then ends in failure (a real import stops at the first conflicting batch), so the pre-launch dry run is the conflict check.
+  - Fixes: (1) import into an empty database (recommended); (2) if the conflicting local data is disposable test data, turn on "Overwrite conflicting ids" in the import form (API parameter `on_conflict: "overwrite"`; the archive upload form field has the same name). The conflicting data is replaced and each replacement is recorded in the warning log.
+- Re-importing is safe: idempotent upsert by primary key; local Stripe links (`stripe_*`), activated instances, and download counts are not overwritten; rows whose local update time is newer are not rolled back by older LS data.
 
-## 1. 准备
+## 1. Preparation
 
-1. 部署本服务（见 README），在后台 *设置 → Stripe* 填好密钥，配置 Webhook。**先不要把线上结账切过来。**
-2. 在 LS 后台创建一个 **API Key**（只读用途即可；分别在 Live / Test 模式各建一个，如需导入测试数据）。
-3. 想先试一遍？用 `dfctl demo-data` 或 `docker compose` 起一个临时实例，导入时选 **Dry run**。
+1. Deploy this service (see README), enter the keys under *Settings → Stripe & login* in the admin, and configure the webhook. **Do not switch live checkout over yet.**
+2. In the LS dashboard, create an **API key** (read-only use is enough; create one each in Live and Test mode if you need to import test data).
+3. Want to try it first? Spin up a temporary instance with `dfctl demo-data` or `docker compose`, and choose **Dry run** when importing.
 
-## 2. 导入 Lemon Squeezy 数据
+## 2. Importing Lemon Squeezy data
 
-后台 **迁移（Migration）** 页，三种入口：
+On the admin **Migration** page there are three entry points:
 
-### A. 直接从 LS API 拉取（推荐）
-填 API Key → 选择资源（默认全部）→ 勾选「下载文件」→ 建议**先 Dry run**：只拉取、校验、统计，不写库、不下载。
-导入器按依赖顺序处理：`stores → customers → products → variants → prices → files → orders → order-items → subscriptions → subscription-items → subscription-invoices → license-keys → license-key-instances`。
+### A. Pull directly from the LS API (recommended)
+Enter the API key → choose resources (all by default) → check "Download files" → we recommend a **dry run first**: it only fetches, validates, and counts; nothing is written or downloaded.
+The importer processes in dependency order: `stores → customers → products → variants → prices → files → orders → order-items → subscriptions → subscription-items → subscription-invoices → license-keys → license-key-instances`.
 
-- 遵守 LS 限流（300 次/分钟），遇 429/5xx 自动退避重试；`links.next` 只会跟随到你配置的 LS 域名，API Key 不会被发往其他主机。
-- **文件**：LS 的 `download_url` 只有 1 小时有效，所以导入时**立即下载**到本服务的存储（本地磁盘或 S3），保留 `identifier`、版本、排序、状态。下载失败会记警告，重跑即可补上。
-- API Key **只在内存中使用**，任务记录里只保留末 4 位（`****abcd`）。
+- Respects LS rate limits (300 requests/minute) and automatically backs off and retries on 429/5xx; `links.next` is only followed within your configured LS domain, so the API key is never sent to any other host.
+- **Files**: LS's `download_url` is valid for only 1 hour, so files are **downloaded immediately** during import into this service's storage (local disk or S3), keeping `identifier`, version, sort order, and status. A failed download logs a warning; rerun to fill it in.
+- The API key is **used in memory only**; the job record keeps just the last 4 characters (`****abcd`).
 
-### B. 离线 ZIP（API Key 不离开你的电脑）
+### B. Offline ZIP (the API key never leaves your computer)
 ```bash
 LEMONSQUEEZY_API_KEY=xxxxx python3 scripts/export-lemonsqueezy.py ls-export.zip --files
 ```
-然后在后台「上传归档」。归档格式（导入器都接受）：
+Then choose "Upload archive (ZIP)" in the admin. Archive format (the importer accepts all of these):
 
-| 内容 | 说明 |
+| Content | Description |
 | --- | --- |
-| `<resource>.json`（可多个，如 `orders-1.json`、`orders-2.json`，也可放在子目录） | 文件名以资源名开头：`stores customers products variants prices files orders order-items subscriptions subscription-items subscription-invoices license-keys license-key-instances`。内容可以是 JSON:API 文档（`{"data":[…]}`）、资源对象数组、或 NDJSON |
-| `files/<identifier>` | 文件本体（也认 `<id>.zip`、`<id>/文件名`、`<id>-文件名`）。没有本体且勾选「下载文件」时尝试 `download_url` |
-| `orders.csv` | **兜底**：LS「导出订单」的 CSV（列见 LS 帮助文档）。仅当没有 `orders.json` 时使用，按名称匹配已有变体，匹配不上的订单项记警告 |
+| `<resource>.json` (may be several, e.g. `orders-1.json`, `orders-2.json`, or in subdirectories) | File names start with the resource name: `stores customers products variants prices files orders order-items subscriptions subscription-items subscription-invoices license-keys license-key-instances`. Content may be a JSON:API document (`{"data":[…]}`), an array of resource objects, or NDJSON |
+| `files/<identifier>` | The file itself (`<id>.zip`, `<id>/filename` and `<id>-filename` are also recognized). With no file and "Download files" checked, `download_url` is tried |
+| `orders.csv` | **Fallback**: the CSV from LS "Export orders" (see the LS help docs for columns). Used only when there is no `orders.json`; matches existing variants by name, and order items that cannot be matched log a warning |
 
-安全限制：拒绝 zip-slip 路径，单个条目 ≤ 4 GiB，条目数 ≤ 20 万，不解压到磁盘。
+Security limits: zip-slip paths are rejected, each entry ≤ 4 GiB, entry count ≤ 200,000, nothing is extracted to disk.
 
-### C. 只有订单 CSV
-只放一个 `orders.csv` 进 ZIP 即可得到客户 + 订单 + 订单项（没有 License Key/文件——这些数据 CSV 里没有）。
+### C. Orders CSV only
+Put just an `orders.csv` in the ZIP to get customers + orders + order items (no license keys/files—the CSV does not contain them).
 
-**任务页**会实时显示阶段、计数、警告，并有增量日志，可随时取消。常见警告：
-- `PayPal subscription(s) were imported for history only` — LS 官方也不支持把 PayPal 订阅迁到别处，这些客户需要用新支付方式重新订阅。
-- `stored N bytes but Lemon Squeezy reported M` — 文件大小与 LS 记录不一致，请人工确认。
-- 客户邮箱重复：合并到最小 ID，并重映射订单/订阅/Key 的客户 ID（日志有记录）。
+The **job page** shows the stage, counts, and warnings live, with an incremental log, and you can cancel at any time. Common warnings:
+- `PayPal subscription(s) were imported for history only` — LS officially does not support moving PayPal subscriptions elsewhere either; these customers need to resubscribe with a new payment method.
+- `stored N bytes but Lemon Squeezy reported M` — file size differs from LS's record; please verify manually.
+- Duplicate customer emails: merged into the smallest ID, and the customer IDs of orders/subscriptions/keys are remapped (recorded in the log).
 
-导入**不会**触发出站 Webhook，也**不会**发邮件。
+Import **does not** trigger outgoing webhooks and **does not** send email.
 
-## 3. 关联 Stripe
+## 3. Linking Stripe
 
-LS 的迁移工具（Migration Hub，2026-12-02 起）会把每个 **variant 变成一个 Stripe product**，并给出「LS 客户 ID → Stripe 客户 ID」的映射报告。本服务需要这些关联，Stripe 的 Webhook 才能对上历史数据：
+LS's migration tool (Migration Hub, from 2026-12-02) turns each **variant into a Stripe product** and provides an "LS customer ID → Stripe customer ID" mapping report. This service needs these links so that Stripe webhooks can match historical data:
 
-| 对象 | 关联字段 | 作用 |
+| Object | Link field | Purpose |
 | --- | --- | --- |
-| 客户 | `customers.stripe_customer_id` | 客户门户、续费/退款事件归属到老客户 |
-| 变体 / 价格 | `variants.stripe_product_id`、`prices.stripe_price_id` | 新订单按 Stripe 价格识别到变体，从而发 Key/文件 |
-| 订阅 | `subscriptions.stripe_subscription_id` | 续费、取消、过期事件作用到历史订阅及其 License Key |
+| Customer | `customers.stripe_customer_id` | Customer portal; renewal/refund events are attributed to the existing customer |
+| Variant / price | `variants.stripe_product_id`, `prices.stripe_price_id` | New orders are matched to a variant by Stripe price, so keys/files are issued |
+| Subscription | `subscriptions.stripe_subscription_id` | Renewal, cancellation, and expiry events apply to the historical subscription and its license keys |
 
-三种方式（可组合）：
+Three methods (can be combined):
 
-1. **上传映射 CSV**（后台 → 迁移 → 步骤 2，选类型：客户 / 商品 / 订阅）。表头自动识别：按关键词（`lemon`、`ls`、`customer`、`stripe`、`product`、`price`、`subscription`…）**和**取值形态（`cus_…` `prod_…` `price_…` `sub_…`）；逗号 / 分号 / Tab 分隔、BOM、无表头都可以；客户可退回到按邮箱匹配。结果统计：matched / unchanged / unknown_ls_id / invalid_rows / conflicts，前 50 个问题写入日志。
-2. **自动匹配**（步骤 3）：客户按邮箱在 Stripe 里查（多个取最早创建的并警告）；商品按 metadata（`variant_id`/`ls_variant_id`）→ 名称（`变体名`、`商品 - 变体`、`商品 (变体)`、`商品 — 变体`，忽略大小写）→ 价格（金额 + 周期 + 币种）；订阅按「客户 + 价格/商品」匹配后立即从 Stripe 同步一次状态。
-3. **手工**：变体页「关联 Stripe」、订阅页「关联 Stripe 订阅」、客户页改 `stripe_customer_id`。
+1. **Upload a mapping CSV** (admin → Migration → Step 2, choose type: Customers / Products / Subscriptions). Headers are detected automatically: by keywords (`lemon`, `ls`, `customer`, `stripe`, `product`, `price`, `subscription`…) **and** by value shape (`cus_…` `prod_…` `price_…` `sub_…`); comma / semicolon / tab separators, BOM, and headerless files all work; customers can fall back to matching by email. Result stats: matched / unchanged / unknown_ls_id / invalid_rows / conflicts; the first 50 problems are written to the log.
+2. **Auto-match** (Step 3): customers are looked up in Stripe by email (if several, the earliest created is taken, with a warning); products by metadata (`variant_id`/`ls_variant_id`) → name (`variant name`, `product - variant`, `product (variant)`, `product — variant`, case-insensitive) → price (amount + interval + currency); subscriptions are matched by "customer + price/product", then status is synced from Stripe immediately.
+3. **Manual**: "Link to Stripe" on the variant page, "Link Stripe subscription" on the subscription page, or edit `stripe_customer_id` on the customer page.
 
-剩下没对上的，用 **下载缺口报告**（`GET /admin-api/imports/mapping-report.csv`）逐项处理：列出缺 Stripe ID 的客户/变体/价格/未过期订阅（PayPal 订阅会标注「cannot migrate to Stripe」）。
+Handle whatever is still unmatched item by item with **Download mapping report** (`GET /admin-api/imports/mapping-report.csv`): it lists customers/variants/prices/unexpired subscriptions missing a Stripe ID (PayPal subscriptions are marked "cannot migrate to Stripe").
 
-> 注意：自动匹配不区分测试/正式模式——不要把 LS 的测试数据与 Stripe 的正式客户混配（导入时请按 Live/Test 分别进行）。
+> Note: auto-match does not distinguish test/live mode—do not mix LS test data with Stripe live customers (import Live and Test separately).
 
-## 4. 切换
+## 4. Cutover
 
-1. **License API**：把客户端/服务端里的 `https://api.lemonsqueezy.com` 换成 `https://<你的域名>`。路径、参数、响应、错误文案不变；Key 与实例 ID 沿用。
-2. **JSON:API 与 SDK**：同样只换 base URL，API Key 换成后台「API 密钥」里新建的（`dfk_live_…`）。
-3. **Webhook**：在后台 *Webhook* 新建端点（事件、签名密钥自己定，6–40 位）。签名算法、头和 payload 与 LS 一致，**验签代码无需改**。用「发送测试」和投递日志确认。
-4. **下单入口**：用商品的 `buy_now_url`，或把 `POST /v1/checkouts` 的调用指向新域名（`checkout_data.custom`、`product_options.redirect_url`、`custom_price` 等沿用）。LS 的结账链接/覆盖层不会自动跳转，需要你自己替换；旧链接请统一改掉。
-5. **客户入口**：`/my-orders`（邮箱魔法链接登录）。把旧的 LS My Orders 链接通知客户更新；收据邮件里已带新链接。
-6. **Stripe**：订阅迁移走 LS 迁移工具（至少提前 14 天通知客户）；之后在 Stripe 里订阅的续费事件会自动更新本服务里的订阅与 License Key。
+1. **License API**: replace `https://api.lemonsqueezy.com` in your clients/servers with `https://<your-domain>`. Paths, parameters, responses, and error messages are unchanged; keys and instance IDs carry over.
+2. **JSON:API and SDKs**: again change only the base URL, and replace the API key with one newly created under "API keys" in the admin (`dfk_live_…`).
+3. **Webhook**: create an endpoint under *Webhooks* in the admin (you choose the events and the signing secret, 6–40 characters). The signing algorithm, headers, and payload match LS, so **no changes to signature verification code are needed**. Confirm with "Send test" and the delivery log.
+4. **Checkout entry**: use the product's `buy_now_url`, or point your `POST /v1/checkouts` calls at the new domain (`checkout_data.custom`, `product_options.redirect_url`, `custom_price`, etc. carry over). LS checkout links/overlays do not redirect automatically—you must replace them yourself; change all old links everywhere.
+5. **Customer entry**: `/my-orders` (email magic-link sign-in). Tell customers to update their old LS My Orders links; receipt emails already carry the new link.
+6. **Stripe**: subscription migration goes through the LS migration tool (notify customers at least 14 days ahead); after that, renewal events for subscriptions in Stripe automatically update the subscriptions and license keys in this service.
 
-## 5. 验收清单
+## 5. Acceptance checklist
 
-- [ ] 抽查老客户的 Key：`POST /v1/licenses/validate`（带 `instance_id`）→ `valid:true`，`activation_usage` 与 LS 一致。
-- [ ] 新激活、超限、停用行为与 LS 一致（`This license key has reached the activation limit.`）。
-- [ ] 订单页（`/my-orders/<identifier>?signature=…`）能看到 Key、文件下载（点开能下到正确字节）、链接。
-- [ ] 试运行（Dry run）无 ID 冲突，真正导入的任务页「ID 冲突」计数为 0。
-- [ ] 后台「缺口报告」为空，或剩余项都已知悉（PayPal 订阅等）。
-- [ ] Stripe 测试环境下：新购 → 订单/Key/收据邮件/出站 Webhook；续费；取消 → Key 到期；退款 → Key 禁用。
-- [ ] Stripe → 设置 → Webhook 密钥已配置，后台「Stripe 事件」无 `failed`。
-- [ ] 存储已备份（本地 `DATA_DIR/files` 或 S3 桶）+ 数据库备份。
+- [ ] Spot-check old customers' keys: `POST /v1/licenses/validate` (with `instance_id`) → `valid:true`, and `activation_usage` matches LS.
+- [ ] New activation, limit exceeded, and deactivation behave the same as LS (`This license key has reached the activation limit.`).
+- [ ] The order page (`/my-orders/<identifier>?signature=…`) shows the keys, file downloads (opening one yields the correct bytes), and links.
+- [ ] The dry run shows no ID conflicts, and the real import's job page shows an "Id conflicts" count of 0.
+- [ ] The admin mapping report is empty, or all remaining items are known (PayPal subscriptions, etc.).
+- [ ] In the Stripe test environment: new purchase → order/key/receipt email/outgoing webhook; renewal; cancellation → key expires; refund → key disabled.
+- [ ] The webhook signing secret is configured (Stripe page), and the Events tab on the Stripe page shows no `failed`.
+- [ ] Storage is backed up (local `DATA_DIR/files` or S3 bucket) + database backup.
 
-## 6. 回滚与保险
+## 6. Rollback and safeguards
 
-- LS 在 2027-03-31 前仍可继续使用；导入是只读拉取，不会修改 LS 数据。
-- 在正式切流前，可反复 Dry run / 重跑导入；有问题可在空库重来。
-- 保留 LS 的订单导出 CSV 与税务文件（2027-03-31 后无法再访问）。
-- 出站 Webhook 失败会保留投递记录，可在后台逐条重投；Stripe 事件处理失败可在 Stripe 页「重放」。
+- LS remains usable until 2027-03-31; import is a read-only pull and never modifies LS data.
+- Before the real cutover, you can repeat dry runs / rerun imports as often as needed; if something goes wrong, start over on an empty database.
+- Keep LS's order export CSV and tax documents (inaccessible after 2027-03-31).
+- Failed outgoing webhooks keep their delivery records and can be redelivered one by one in the admin; failed Stripe event processing can be retried with "Replay" on the Stripe page.

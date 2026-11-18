@@ -1,14 +1,14 @@
 <p align="center"><img src="docs/logo.svg" width="320" alt="Keypost"></p>
 
-<p align="center"><b>基于 Stripe 的 License Key 与文件交付服务，自托管。</b></p>
-<p align="center">接口与 Lemon Squeezy 数字交付保持一致：改一个 base URL，老客户端照常工作；一键导入全部历史订单、License Key 和文件。</p>
+<p align="center"><b>Self-hosted license keys and file delivery on top of Stripe.</b></p>
+<p align="center">Same API as Lemon Squeezy Digital Fulfillment: change one base URL and your existing clients keep working. Import every historical order, license key and file in one go.</p>
 
 <p align="center">
-  <a href="#快速开始">快速开始</a> ·
-  <a href="#从-lemon-squeezy-迁出">从 Lemon Squeezy 迁出</a> ·
-  <a href="#接入-stripe5-步">接入 Stripe</a> ·
-  <a href="docs/API_COMPATIBILITY.md">API 兼容性</a> ·
-  <a href="docs/ARCHITECTURE.md">架构</a>
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#migrate-from-lemon-squeezy">Migrate from Lemon Squeezy</a> ·
+  <a href="#connect-stripe-in-5-steps">Connect Stripe</a> ·
+  <a href="docs/API_COMPATIBILITY.md">API compatibility</a> ·
+  <a href="docs/ARCHITECTURE.md">Architecture</a>
 </p>
 
 <p align="center">
@@ -21,219 +21,221 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/dashboard-dark.webp">
-  <img alt="Keypost 管理后台：仪表盘" src="docs/screenshots/dashboard.webp" width="100%">
+  <img alt="Keypost back office: dashboard" src="docs/screenshots/dashboard.webp" width="100%">
 </picture>
 
-## 为什么需要 Keypost
+## Why Keypost
 
-Lemon Squeezy 将于 **2027-03-31** 停止处理交易。官方建议迁到 Stripe Managed Payments，但它只负责收款：
-**不交付 License Key、文件和下载链接，历史订单、Key、文件也不会自动迁移。** Keypost 补上这一层。
+Lemon Squeezy stops processing transactions on **March 31, 2027**. Its official advice is to move to Stripe Managed Payments, but that only collects payments:
+**it does not deliver license keys, files or download links, and your historical orders, keys and files are not migrated.** Keypost fills in that layer.
 
-| 你在 Lemon Squeezy 上用到的 | 只用 Stripe | 加上 Keypost |
+| What you use on Lemon Squeezy | Stripe alone | With Keypost |
 | --- | :---: | --- |
-| License Key 与激活 / 验证 / 停用 API | ❌ | ✅ 请求、响应、错误文案、限流与 LS 一致，客户端只改 base URL |
-| 订单、订阅、客户、JSON:API | 部分 | ✅ `/v1/*` 与 LS 同形状，官方 SDK 可通过自定义 base URL 使用 |
-| 出站 Webhook（`order_created` 等 16 种） | ❌ | ✅ 同名事件、同 payload、同签名（HMAC-SHA256），验签代码不用改 |
-| 文件交付与下载链接 | ❌ | ✅ 签名链接、过期时间、每文件每 IP 次数限制 |
-| 客户自助页（My Orders） | ❌ | ✅ 魔法链接登录、License Key、下载、Stripe 账单门户 |
-| 历史订单、Key、实例、文件 | ❌ | ✅ 一键导入，**保留原 ID、Key 字符串、实例 UUID 和文件本体** |
+| License keys and the activate / validate / deactivate API | ❌ | ✅ Requests, responses, error messages and rate limits match LS; clients only change the base URL |
+| Orders, subscriptions, customers, JSON:API | Partial | ✅ `/v1/*` has the same shapes as LS; the official SDKs work through a custom base URL |
+| Outgoing webhooks (16 events such as `order_created`) | ❌ | ✅ Same event names, same payloads, same signature (HMAC-SHA256); your verification code stays as is |
+| File delivery and download links | ❌ | ✅ Signed links, expiry, per-file per-IP download limits |
+| Customer self-service (My Orders) | ❌ | ✅ Magic-link sign-in, license keys, downloads, Stripe billing portal |
+| Historical orders, keys, instances, files | ❌ | ✅ One-click import that **keeps the original IDs, key strings, instance UUIDs and the files themselves** |
 
-> **已和真实账号对拍过。** License API 和 JSON:API 用一个真实的 Lemon Squeezy 测试账号逐字段、逐场景比对过（激活、超限、验证、停用、过期……响应完全一致）；
-> Stripe 侧在沙盒里跑通了付款、发货、退款、取消订阅。没有真实样本的资源（订阅、订阅发票、文件）按官方文档实现。详见 [API 兼容性](docs/API_COMPATIBILITY.md)。
+> **Checked against a real account.** The License API and the JSON:API were compared field by field and scenario by scenario with a real Lemon Squeezy test-mode account (activate, over the limit, validate, deactivate, expire… identical responses).
+> On the Stripe side, payment, delivery, refund and subscription cancellation were run end to end in a sandbox. Resources without a real sample (subscriptions, subscription invoices, files) follow the official docs. See [API compatibility](docs/API_COMPATIBILITY.md).
 
-## 特性一览
+## Features
 
 <table>
 <tr>
-<td width="33%" valign="top"><b>即插即用的兼容层</b><br>License API、JSON:API、出站 Webhook 与 Lemon Squeezy 一致，包含错误文案和事件顺序。把 <code>api.lemonsqueezy.com</code> 换成你的域名即可。</td>
-<td width="33%" valign="top"><b>Stripe 履约</b><br>验签、幂等处理 Checkout、续费、失败、取消、退款，自动生成订单、订阅和 License Key，发收据邮件。</td>
-<td width="33%" valign="top"><b>完整的数据迁移</b><br>从 LS API 或离线归档导入，Dry run、ID 冲突保护、LS→Stripe 客户映射、自动匹配、缺口报告。</td>
+<td width="33%" valign="top"><b>Drop-in compatibility layer</b><br>The License API, JSON:API and outgoing webhooks match Lemon Squeezy, including error messages and event order. Replace <code>api.lemonsqueezy.com</code> with your own domain and you are done.</td>
+<td width="33%" valign="top"><b>Stripe fulfillment</b><br>Verified, idempotent handling of Checkout, renewals, failures, cancellations and refunds. Orders, subscriptions and license keys are created automatically and receipt e-mails go out.</td>
+<td width="33%" valign="top"><b>Complete data migration</b><br>Import from the LS API or an offline archive. Dry run, ID-conflict guard, LS-to-Stripe customer mapping, auto-match and a mapping report.</td>
 </tr>
 <tr>
-<td valign="top"><b>管理后台</b><br>订单（退款、补发收据、导出）、客户、订阅、License Key、商品与文件、Webhook 投递日志、Stripe 事件重放、API Key、成员、审计日志。中英双语，亮暗两套主题。</td>
-<td valign="top"><b>安全默认值</b><br>所有成员强制两步验证（TOTP），支持「使用 Stripe 登录」；密钥 AES-GCM 加密落库；会话、下载、魔法链接均有签名与限流。</td>
-<td valign="top"><b>好部署</b><br>Go 单二进制 + Next.js，PostgreSQL 18（也支持 SQLite），本地磁盘或 S3 存文件，<code>docker compose up</code> 即可跑起来。</td>
+<td valign="top"><b>Back office</b><br>Orders (refund, resend receipt, export), customers, subscriptions, license keys, products and files, webhook delivery log, Stripe event replay, API keys, members and an audit log. English and Chinese, light and dark themes.</td>
+<td valign="top"><b>Secure by default</b><br>Two-factor authentication (TOTP) is mandatory for every member, with "Sign in with Stripe" supported. Secrets are stored AES-GCM encrypted; sessions, downloads and magic links are signed and rate limited.</td>
+<td valign="top"><b>Easy to deploy</b><br>A Go binary plus Next.js, PostgreSQL 18 (SQLite also works), local disk or S3 for files. <code>docker compose up</code> and you are running.</td>
 </tr>
 </table>
 
-## 产品预览
+## Product tour
 
-### 订单与退款
+### Orders and refunds
 
-按订单号、邮箱、状态、日期筛选，一键退款（调用 Stripe Refund）、补发收据、导出 CSV。
+Filter by order number, e-mail, status or date. Refund in one click (it calls the Stripe Refund API), resend a receipt, export CSV.
 
-<img src="docs/screenshots/orders.webp" alt="订单列表" width="100%">
+<img src="docs/screenshots/orders.webp" alt="Orders list" width="100%">
 
-订单详情里能看到 License Key、文件、订阅和 Stripe 关联，所有操作都记入审计日志。
+The order page shows the license key, files, subscription and the Stripe links. Every action is written to the audit log.
 
-<img src="docs/screenshots/order-detail.webp" alt="订单详情" width="100%">
+<img src="docs/screenshots/order-detail.webp" alt="Order detail" width="100%">
 
-### License Key 与发货规则
+### License keys and delivery rules
 
-订单支付后自动发货，退款或订阅失效后自动停用；激活数、有效期、停用状态一目了然。
+Keys are issued automatically when an order is paid and disabled when it is refunded or the subscription lapses. Activation count, expiry and status are visible at a glance.
 
-<img src="docs/screenshots/license-keys.webp" alt="License Key 列表" width="100%">
+<img src="docs/screenshots/license-keys.webp" alt="License keys list" width="100%">
 
-在变体上勾选「生成 License Key」，设置激活上限和有效期，上传文件，加外部链接（支持 `[license_key]`、`[order_id]`、`[email]` 等变量），并关联 Stripe 价格。
+On a variant, turn on "Generate license keys", set the activation limit and validity, upload files, add external links (with variables such as `[license_key]`, `[order_id]` and `[email]`) and link the variant to its Stripe price.
 
-<img src="docs/screenshots/product.webp" alt="商品、变体与发货规则" width="100%">
+<img src="docs/screenshots/product.webp" alt="Product, variants and delivery rules" width="100%">
 
-### 订阅
+### Subscriptions
 
-续费、失败、取消、暂停、过期都跟随 Stripe 事件自动同步，License Key 的有效期随订阅走。支持取消、恢复、暂停，或从 Stripe 重新对账。
+Renewals, failures, cancellations, pauses and expiry follow Stripe events automatically, and a license key's validity follows the subscription. Cancel, resume and pause from the admin, or reconcile again with Stripe.
 
-<img src="docs/screenshots/subscriptions.webp" alt="订阅列表" width="100%">
+<img src="docs/screenshots/subscriptions.webp" alt="Subscriptions list" width="100%">
 
-### 迁移中心
+### Migration center
 
-从 Lemon Squeezy 导入全部历史，导入前先 Dry run；遇到 ID 冲突默认停止，不会覆盖你已有的数据。导入后用映射表或「自动匹配」把客户、商品、订阅关联到 Stripe。
+Import your whole Lemon Squeezy history, with a dry run first. An ID conflict stops the import by default, so nothing you already have is overwritten. Afterwards, use a mapping CSV or auto-match to connect customers, products and subscriptions to Stripe.
 
-<img src="docs/screenshots/migration.webp" alt="迁移中心" width="100%">
+<img src="docs/screenshots/migration.webp" alt="Migration center" width="100%">
 
-### 团队与安全
+### Team and security
 
-<img src="docs/screenshots/team.webp" alt="团队成员与两步验证状态" width="100%">
+<img src="docs/screenshots/team.webp" alt="Team members and their two-factor status" width="100%">
 
 <table>
 <tr>
 <td valign="middle" width="56%">
-<b>每位成员都必须开启两步验证</b>，没有关闭开关。
+<b>Every member must turn on two-factor authentication.</b> There is no switch to turn it off.
 <ul>
-<li>首次登录引导扫码，并发放 10 个一次性恢复码</li>
-<li>邮箱密码和「使用 Stripe 登录」都要再过一步</li>
-<li>验证码只能用一次，连续输错会锁定账号</li>
-<li>owner 可以重置成员；唯一的 owner 丢设备，用 <code>dfctl admin reset-mfa</code></li>
-<li>绑定、验证、重置都有审计记录</li>
+<li>The first sign-in walks through scanning a QR code and issues 10 one-time recovery codes</li>
+<li>E-mail and password, and "Sign in with Stripe", both need the second step</li>
+<li>A code can be used once; repeated wrong codes lock the account</li>
+<li>An owner can reset a member; if the only owner loses their device, run <code>dfctl admin reset-mfa</code></li>
+<li>Enrolling, verifying and resetting are all audit-logged</li>
 </ul>
 </td>
-<td valign="middle" width="44%"><img src="docs/screenshots/mfa-setup.webp" alt="两步验证绑定"></td>
+<td valign="middle" width="44%"><img src="docs/screenshots/mfa-setup.webp" alt="Two-factor setup"></td>
 </tr>
 </table>
 
-### 客户看到的
+### What your customers see
 
-付款后直接跳到订单页；之后用邮箱魔法链接登录，随时找回 License Key、下载文件、进入 Stripe 账单门户。收据邮件有完整的 HTML 与纯文本版本，深色模式和手机屏幕都适配。
+After paying, the buyer lands directly on their order page. Later they sign in with an e-mail magic link to find their license keys, download files and open the Stripe billing portal. The receipt e-mail ships as full HTML plus a plain-text part, and adapts to dark mode and small screens.
 
 <table>
 <tr>
-<td width="44%" valign="top"><img src="docs/screenshots/customer-order.webp" alt="客户订单页"></td>
-<td width="20%" valign="top"><img src="docs/screenshots/customer-order-mobile.webp" alt="手机上的订单页"></td>
-<td width="36%" valign="top"><img src="docs/screenshots/email-receipt.webp" alt="收据邮件"></td>
+<td width="44%" valign="top"><img src="docs/screenshots/customer-order.webp" alt="Customer order page"></td>
+<td width="20%" valign="top"><img src="docs/screenshots/customer-order-mobile.webp" alt="Order page on a phone"></td>
+<td width="36%" valign="top"><img src="docs/screenshots/email-receipt.webp" alt="Receipt e-mail"></td>
 </tr>
 </table>
 
-## 工作原理
+## How it works
 
 ```
- 购买者 ──► Stripe Checkout ──► Stripe ──webhook──► /webhooks/stripe ─┐
- 你的应用 ─► /v1/licenses/*  (License API, 无需鉴权)                   │
- 你的服务端 ─► /v1/*  (JSON:API, Bearer Key)                           ▼
-                                                            ┌──────────────────┐   出站 Webhook
- 浏览器 ─► Next.js (:3000) ──rewrites──────────────────────►│  Go API (:8080)  │──► 你的业务系统
-            /admin  管理后台                                 │  履约 · 授权 · 导入 │
-            /my-orders  客户页面                             └───────┬──────────┘
-                                                              PostgreSQL / SQLite   本地磁盘 / S3
+ Buyer ───► Stripe Checkout ──► Stripe ──webhook──► /webhooks/stripe ──┐
+ Your app ─► /v1/licenses/*  (License API, no auth)                    │
+ Your server ─► /v1/*  (JSON:API, Bearer key)                          ▼
+                                                            ┌──────────────────┐   Outgoing webhooks
+ Browser ─► Next.js (:3000) ──rewrites─────────────────────►│  Go API (:8080)  │──► Your systems
+            /admin  back office                             │  fulfillment     │
+            /my-orders  customer pages                      │  licensing       │
+                                                            │  import          │
+                                                            └───────┬──────────┘
+                                                                    PostgreSQL / SQLite · local disk / S3
 ```
 
-- **后端**：Go（标准库 `net/http` + GORM），PostgreSQL 18（推荐）或 SQLite；没有第三方 Stripe SDK，内置轻量客户端并**同时兼容 basil 前后的响应形状**。
-- **前端**：Next.js App Router + Tailwind v4 + shadcn/ui。同源反代，浏览器只访问 `:3000`。
+- **Backend**: Go (standard-library `net/http` + GORM), PostgreSQL 18 (recommended) or SQLite. There is no third-party Stripe SDK; a small built-in client **handles response shapes from before and after the basil API version**.
+- **Frontend**: Next.js App Router, Tailwind v4 and shadcn/ui. It proxies same-origin, so the browser only talks to `:3000`.
 
-## 快速开始
+## Quick start
 
-### Docker Compose（生产形态）
+### Docker Compose (production shape)
 
 ```bash
-cp .env.example .env          # 填 PUBLIC_URL / APP_SECRET / POSTGRES_PASSWORD / STRIPE_* …
+cp .env.example .env          # fill in PUBLIC_URL / APP_SECRET / POSTGRES_PASSWORD / STRIPE_* …
 docker compose up -d --build
-docker compose logs backend | grep setup_token   # 首次启动：打开 /admin 用该令牌创建 owner
+docker compose logs backend | grep setup_token   # first start: open /admin and create the owner with this token
 ```
 
-或在 `.env` 设置 `ADMIN_EMAIL` / `ADMIN_PASSWORD` 直接创建 owner。把 TLS 反向代理指到 `:3000`（API 路径 `/v1`、`/download`、`/webhooks` 可直连后端 `:8080` 以减少一跳）。
-首次登录会引导绑定两步验证。
+Or set `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `.env` to create the owner directly. Point your TLS reverse proxy at `:3000` (the API paths `/v1`, `/download` and `/webhooks` can go straight to the backend on `:8080` to save a hop).
+The first sign-in walks you through setting up two-factor authentication.
 
-### 本地开发
+### Local development
 
 ```bash
-make dev-backend     # Go API :8080（SQLite ./backend/data）
-make dev-frontend    # Next.js :3000（代理到 :8080）
-make test            # 后端测试（SQLite 内存库 + -race）
-make test-pg         # 同一套测试跑在真实 PostgreSQL 18 上
+make dev-backend     # Go API :8080 (SQLite in ./backend/data)
+make dev-frontend    # Next.js :3000 (proxies to :8080)
+make test            # backend tests (in-memory SQLite, with -race)
+make test-pg         # the same suite on a real PostgreSQL 18
 ```
 
-想先看看效果：`dfctl demo-data` 会往空库里灌入商品、客户、订单、订阅和 License Key 的演示数据，不需要 Stripe 账号。
+To just look around: `dfctl demo-data` fills an empty database with demo products, customers, orders, subscriptions and license keys. No Stripe account needed.
 
-### 关键配置
+### Key settings
 
-| 变量 | 说明 |
+| Variable | Description |
 | --- | --- |
-| `PUBLIC_URL` | 对外地址（邮件、Webhook 回调、签名链接都用它） |
-| `APP_SECRET` | 加密密钥和签名密钥的根，**一旦设定不要更换** |
-| `DATABASE_URL` | `postgres://…`（推荐）或 `sqlite:./data/fulfillment.db` |
-| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | 也可以在后台 *设置 → Stripe* 里填 |
-| `SMTP_*` | 收据和登录链接邮件 |
-| `STORAGE_DRIVER` | `local` 或 S3（`S3_*`） |
-| `MFA_REQUIRED` | 默认 `true`，强制所有成员两步验证；`false` 仅用于本地开发 |
+| `PUBLIC_URL` | Public address (used in e-mails, webhook callbacks and signed links) |
+| `APP_SECRET` | Root of the encryption and signing keys. **Do not change it once set** |
+| `DATABASE_URL` | `postgres://…` (recommended) or `sqlite:./data/fulfillment.db` |
+| `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` | Can also be entered in the back office under *Settings → Stripe & login* |
+| `SMTP_*` | Receipt and sign-in link e-mails |
+| `STORAGE_DRIVER` | `local` or S3 (`S3_*`) |
+| `MFA_REQUIRED` | `true` by default, which enforces two-factor for every member; `false` is for local development only |
 
-完整列表见 [.env.example](.env.example)。
+The full list is in [.env.example](.env.example).
 
-## 接入 Stripe（5 步）
+## Connect Stripe in 5 steps
 
-1. **密钥**：后台 *设置 → Stripe* 填 `Secret key`（建议 Restricted Key：Checkout Sessions、Customers、Subscriptions、Invoices、Charges、Refunds、Billing Portal、Products/Prices 读写，Webhook Endpoints 写）。
-2. **Webhook**：*Stripe* 页点「创建 / 更新 Webhook Endpoint」，自动在 Stripe 建好 `PUBLIC_URL/webhooks/stripe` 并保存签名密钥（也可手动配置，事件见 `docs/ADMIN_API.md` §4）。
-3. **目录**：*Stripe → 目录* 一键把 Stripe Products/Prices 导入为商品/变体/价格（或在变体上手动「关联 Stripe」）。迁移场景下 LS 的每个 variant 对应一个 Stripe product。
-4. **发货规则**：在变体上勾选「生成 License Key」、设置激活上限/有效期，上传文件，加外部链接（支持 `[license_key] [order_id] [email] …` 变量）。
-5. **下单入口**：商品的 `buy_now_url`（`/checkout/buy/{variant_slug}`）或 `POST /v1/checkouts`（与 LS 同参：`checkout_data.email/custom`、`custom_price`、`product_options.redirect_url`），自动创建 Stripe Checkout Session。付款后回到 `/checkout/success`，直接跳到带签名的订单页（或你配置的 `redirect_url`）。
+1. **Keys**: in the back office, *Settings → Stripe & login*, enter the `Secret key`. A restricted key is recommended, with read and write on Checkout Sessions, Customers, Subscriptions, Invoices, Charges, Refunds, Billing Portal and Products/Prices, and write on Webhook Endpoints.
+2. **Webhook**: on the *Stripe* page click "Create / update webhook endpoint in Stripe". It creates `PUBLIC_URL/webhooks/stripe` in Stripe and stores the signing secret. You can also set it up by hand; the events are listed in `docs/ADMIN_API.md` §4.
+3. **Catalog**: *Stripe → Catalog* imports Stripe Products and Prices as products, variants and prices in one click (or link a variant to Stripe by hand). When migrating, each LS variant maps to one Stripe product.
+4. **Delivery rules**: on a variant, turn on "Generate license keys", set the activation limit and validity, upload files and add external links (variables such as `[license_key] [order_id] [email] …` are supported).
+5. **Buy link**: use the product's `buy_now_url` (`/checkout/buy/{variant_slug}`) or `POST /v1/checkouts` (same parameters as LS: `checkout_data.email/custom`, `custom_price`, `product_options.redirect_url`). Either creates a Stripe Checkout Session. After payment the buyer returns to `/checkout/success` and goes straight to their signed order page (or to the `redirect_url` you configured).
 
-> **Managed Payments**：设置里打开「Managed Payments」，创建 Checkout Session 时会带 `managed_payments[enabled]=true`（需 Stripe 账户已开通，且按 Stripe 要求使用对应的 API 版本）。
-> 没打开该设置时，若 Stripe 账户默认开启了 Managed Payments（会要求每个商品有 product tax code），创建 Session 会收到 Stripe 的提示并自动带 `managed_payments[enabled]=false` 重试一次。
+> **Managed Payments**: turn on "Managed Payments" in the settings and Checkout Sessions are created with `managed_payments[enabled]=true` (your Stripe account must have it enabled, and the matching API version is required by Stripe).
+> If the setting is off but your Stripe account has Managed Payments on by default (which requires a product tax code on every product), Stripe rejects the session and Keypost retries once with `managed_payments[enabled]=false`.
 
-## 从 Lemon Squeezy 迁出
+## Migrate from Lemon Squeezy
 
-1. 后台 *迁移* → 填 LS API Key（只读即可）→ 先 **Dry run** 看数量和 ID 冲突 → 正式导入（含文件下载）。也支持离线 ZIP（`scripts/export-lemonsqueezy.py` 在本机导出，Key 不出你的电脑）与订单 CSV。
-2. 上传 LS 迁移工具给出的「LS 客户 ID → Stripe 客户 ID」映射表；对订阅、商品同理。其余用「自动匹配」按邮箱/名称匹配，*下载缺口报告* 处理剩余项。
-3. 把应用里的 `https://api.lemonsqueezy.com` 换成你的域名，License Key、实例 ID、Webhook 处理逻辑无需改动；把新 Webhook 的 URL/Secret 配上。
-4. 在 LS 停止服务（2027-03-31）前完成切换。
+1. In the back office open *Migration*, enter your LS API key (read-only is enough), run a **dry run** first to see the counts and any ID conflicts, then run the real import (including file downloads). An offline ZIP is also supported (`scripts/export-lemonsqueezy.py` exports on your own machine, so the key never leaves it), as is an orders CSV.
+2. Upload the "LS customer ID → Stripe customer ID" mapping CSV produced by the LS migration tool, and do the same for subscriptions and products. Use *Auto-match against Stripe* for the rest (it matches by e-mail or name), then *Download mapping report* to deal with whatever is left.
+3. Replace `https://api.lemonsqueezy.com` in your app with your own domain. License keys, instance IDs and webhook handling need no changes; configure the new webhook URL and secret.
+4. Finish the switch before Lemon Squeezy stops service (March 31, 2027).
 
-完整步骤、归档格式与回滚建议见 [docs/MIGRATION.md](docs/MIGRATION.md)。
+For the full procedure, the archive format and rollback advice see [docs/MIGRATION.md](docs/MIGRATION.md).
 
-## 管理后台的安全
+## Back-office security
 
-**两步验证，所有成员强制开启，没有关闭开关**：邮箱密码登录和「使用 Stripe 登录」之后都要再过一次 TOTP（1Password、Google Authenticator、Authy 等都支持）。
-首次登录会引导扫码绑定并给出 10 个一次性恢复码；之后每次登录输入 6 位验证码，丢了手机可用恢复码。成员丢设备时，owner 在 *设置 → 团队* 里「重置两步验证」，
-唯一的 owner 丢设备则在服务器上执行 `dfctl admin reset-mfa --email you@example.com`。
+**Two-factor authentication is mandatory for every member and cannot be turned off.** After an e-mail and password sign-in, or "Sign in with Stripe", you must also pass a TOTP check (1Password, Google Authenticator, Authy and others all work).
+The first sign-in walks you through scanning a QR code and gives you 10 one-time recovery codes; after that you enter a 6-digit code each time, and a recovery code covers a lost phone. When a member loses their device, an owner uses "Reset two-factor" under *Settings → Team*;
+if the only owner loses theirs, run `dfctl admin reset-mfa --email you@example.com` on the server.
 
-**使用 Stripe 登录**（Stripe Connect OAuth）：
+**Sign in with Stripe** (Stripe Connect OAuth):
 
-- 在 Stripe → Connect → OAuth 设置里启用并登记回调 `PUBLIC_URL/admin-api/auth/stripe/callback`，把 `client_id`（`ca_…`）填到 *设置 → Stripe 与登录*。
-- 默认 `allowlist` 模式：只有「已绑定到某个后台用户」或在 `ADMIN_STRIPE_ACCOUNTS` 白名单里的 `acct_…` 才能登录；已登录用户可在 *个人资料* 里绑定/解绑。
-- Stripe 的 OAuth 需要 `read_write` scope，所以**登录成功后会立即调用 deauthorize 撤销平台对该账号的授权**（只取身份，不留访问权），可在设置里关闭。
-- 注意：Connect 平台与被登录的账号通常需要是**两个不同的 Stripe 账号**；Stripe 官方也不建议新平台使用 OAuth，它是目前唯一官方提供「Stripe 账号身份」的网页登录流程。邮箱密码登录始终可用。
+- In Stripe → Connect → OAuth settings, enable it and register the redirect `PUBLIC_URL/admin-api/auth/stripe/callback`, then enter the `client_id` (`ca_…`) under *Settings → Stripe & login*.
+- The default mode is `allowlist`: only a Stripe account that is linked to a back-office user, or listed in `ADMIN_STRIPE_ACCOUNTS` (as `acct_…`), can sign in. Signed-in users can link or unlink their account under *Profile*.
+- Stripe's OAuth needs the `read_write` scope, so **right after a successful sign-in Keypost calls deauthorize and revokes the platform's access to that account**. Only the identity is read and no access is kept; you can turn this off in the settings.
+- Note: the Connect platform and the account that signs in usually have to be **two different Stripe accounts**. Stripe also discourages OAuth for new platforms, but it is the only web sign-in flow it officially offers for a "Stripe account identity". E-mail and password sign-in always remains available.
 
-## 文档
+## Documentation
 
-| 文档 | 内容 |
+| Document | Contents |
 | --- | --- |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 组件、数据流、安全模型、数据模型 |
-| [docs/API_COMPATIBILITY.md](docs/API_COMPATIBILITY.md) | 与 Lemon Squeezy API 的逐项兼容矩阵 |
-| [docs/MIGRATION.md](docs/MIGRATION.md) | 迁移步骤、归档格式、ID 冲突保护、回滚 |
-| [docs/ADMIN_API.md](docs/ADMIN_API.md) | 管理后台 API 契约 |
-| [docs/FRONTEND_NOTES.md](docs/FRONTEND_NOTES.md) | 前端结构、shadcn/ui 与主题 |
-| [docs/RESEARCH_LEMONSQUEEZY.md](docs/RESEARCH_LEMONSQUEEZY.md) | Lemon Squeezy 数字交付调研 |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, data flow, security model, data model |
+| [docs/API_COMPATIBILITY.md](docs/API_COMPATIBILITY.md) | Item-by-item compatibility matrix with the Lemon Squeezy API |
+| [docs/MIGRATION.md](docs/MIGRATION.md) | Migration steps, archive format, ID-conflict guard, rollback |
+| [docs/ADMIN_API.md](docs/ADMIN_API.md) | The back-office API contract |
+| [docs/FRONTEND_NOTES.md](docs/FRONTEND_NOTES.md) | Frontend structure, shadcn/ui and theming |
+| [docs/RESEARCH_LEMONSQUEEZY.md](docs/RESEARCH_LEMONSQUEEZY.md) | Research notes on Lemon Squeezy Digital Fulfillment |
 
-## 目录结构
+## Repository layout
 
 ```
-backend/    Go 服务（cmd/server, cmd/dfctl, internal/*）
-frontend/   Next.js 管理后台 + 客户页面（shadcn/ui）
-docs/       调研、架构、API 契约、迁移指南、截图
-scripts/    离线导出脚本等
+backend/    Go service (cmd/server, cmd/dfctl, internal/*)
+frontend/   Next.js back office + customer pages (shadcn/ui)
+docs/       Research, architecture, API contract, migration guide, screenshots
+scripts/    Offline export script and friends
 ```
 
-## 已知限制
+## Known limitations
 
-- 不含：折扣码/联盟营销/用量计费（`discounts`、`affiliates`、`usage-records` 返回明确的 404）；促销码请用 Stripe 原生 Promotion Codes。
-- 只有经本服务结账（`buy_now_url` / `POST /v1/checkouts`）创建的订阅，首单才会生成订单和 License Key；在 Stripe Dashboard / API 里直接创建的订阅，其**首张**发票会被忽略（续费、失败、取消等后续事件在订阅已登记时照常处理）。迁移来的订阅请用导入器登记。
-- 订阅「改套餐」请走 Stripe Billing Portal；`PATCH /v1/subscriptions` 仅支持取消/恢复/暂停。
-- 订单的 `*_usd` 换算使用内置近似汇率表（可用环境变量 `FX_RATES='{"EUR":1.09}'` 覆盖，单位：1 个货币单位折合多少美元），仅用于报表，不影响实际扣款。
-- 运维：每个实例需要一个公网 HTTPS 地址供 Stripe Webhook 回调。多实例部署时，Webhook 投递与导入任务用数据库租约避免重复，但限流是进程内的。
-- 收据和登录邮件目前只有英文。
+- Not included: discount codes, affiliates and usage-based billing (`discounts`, `affiliates` and `usage-records` return a clear 404). Use Stripe's native Promotion Codes for promotions.
+- Only subscriptions created through this service's checkout (`buy_now_url` / `POST /v1/checkouts`) get an order and a license key on the first payment. For a subscription created directly in the Stripe Dashboard or API, its **first** invoice is ignored (renewals, failures, cancellations and other later events are handled as usual once the subscription is registered). Register migrated subscriptions with the importer.
+- Plan changes on a subscription go through the Stripe Billing Portal; `PATCH /v1/subscriptions` only supports cancel, resume and pause.
+- The `*_usd` conversions on orders use a built-in approximate exchange-rate table (override it with the environment variable `FX_RATES='{"EUR":1.09}'`, where each value is how many US dollars one unit of the currency is worth). They are for reports only and never affect what is charged.
+- Operations: every instance needs a public HTTPS address for Stripe webhook callbacks. In a multi-instance deployment, webhook deliveries and import jobs use database leases to avoid duplicates, but rate limiting is per process.
+- Receipt and sign-in e-mails are English only.

@@ -1,62 +1,62 @@
-# 与 Lemon Squeezy API 的兼容性
+# Compatibility with the Lemon Squeezy API
 
-基准：docs.lemonsqueezy.com（2026-11 抓取）。**把 `https://api.lemonsqueezy.com` 换成 `https://<你的域名>` 即可**；官方 SDK（`@lemonsqueezy/lemonsqueezy.js` 等）可通过自定义 base URL 使用。
+Baseline: docs.lemonsqueezy.com (fetched 2026-11). **Replace `https://api.lemonsqueezy.com` with `https://<your-domain>`**; the official SDKs (`@lemonsqueezy/lemonsqueezy.js`, etc.) work through a custom base URL.
 
-## License API（无需鉴权，`application/x-www-form-urlencoded`，也接受 JSON）
+## License API (no authentication, `application/x-www-form-urlencoded`, JSON also accepted)
 
-| 端点 | 状态 | 说明 |
+| Endpoint | Status | Notes |
 | --- | --- | --- |
-| `POST /v1/licenses/activate` | ✅ | 字段、`meta`、错误文案（`This license key has reached the activation limit.` 等）一致；超限/停用/过期返回 400，带 `license_key` 与 `meta`，不含 `instance` |
-| `POST /v1/licenses/validate` | ✅ | 无（或空）`instance_id` 时 `instance: null`；先查实例再看停用/过期；`license_key` 含 `test_mode` |
-| `POST /v1/licenses/deactivate` | ✅ | 释放一个激活位，`license_key.activation_usage` 即时更新 |
-| 参数校验 | ✅ | Laravel 风格 422：`{"message":"The instance name field must be at least 3 characters.","errors":{"instance_name":[…]}}`（`license_key` 必填；`instance_name` 必填、3–255 字符；`deactivate` 的 `instance_id` 必填；多个错误时 message 末尾带 ` (and N more error(s))`）。校验先于 key 查询 |
-| 404 | ✅ | key 不存在 `license_key not found.`，实例不存在 `instance_id not found.`；响应体**只有** `activated`/`valid`/`deactivated` 与 `error` 两个字段（没有 `license_key`、`meta`、`instance`）。过期文案为 `This license key is expired.` |
-| 限流 | ✅ | 每 IP 60 次/分钟（`LICENSE_RATE_LIMIT`），响应带 `X-Ratelimit-*`，超限 429 |
+| `POST /v1/licenses/activate` | ✅ | Fields, `meta`, and error messages (`This license key has reached the activation limit.`, etc.) match; over-limit/disabled/expired returns 400 with `license_key` and `meta`, without `instance` |
+| `POST /v1/licenses/validate` | ✅ | With no (or empty) `instance_id`, `instance: null`; looks up the instance first, then checks disabled/expired; `license_key` includes `test_mode` |
+| `POST /v1/licenses/deactivate` | ✅ | Releases one activation slot; `license_key.activation_usage` updates immediately |
+| Parameter validation | ✅ | Laravel-style 422: `{"message":"The instance name field must be at least 3 characters.","errors":{"instance_name":[…]}}` (`license_key` required; `instance_name` required, 3–255 characters; `deactivate` requires `instance_id`; with multiple errors the message ends with ` (and N more error(s))`). Validation runs before the key lookup |
+| 404 | ✅ | Key not found: `license_key not found.`; instance not found: `instance_id not found.`; the response body has **only** two fields, `activated`/`valid`/`deactivated` and `error` (no `license_key`, `meta`, or `instance`). The expired message is `This license key is expired.` |
+| Rate limiting | ✅ | 60 per minute per IP (`LICENSE_RATE_LIMIT`), responses carry `X-Ratelimit-*`, 429 when exceeded |
 
-## JSON:API（`Authorization: Bearer <key>`，`Accept: application/vnd.api+json`）
+## JSON:API (`Authorization: Bearer <key>`, `Accept: application/vnd.api+json`)
 
-| 资源 | 读 | 写 | 备注 |
+| Resource | Read | Write | Notes |
 | --- | --- | --- | --- |
 | `GET /v1/users/me` | ✅ | | |
-| stores | ✅ | ❌ | 创建/修改请在后台；`total_sales` 等统计实时计算，**只计正式订单**（与 LS 一样，测试订单不计入，customers 的 `total_revenue_currency` 同理） |
-| customers | ✅ | ✅ create / update | `urls.customer_portal` = 24h 签名链接，访问时动态创建 Stripe Billing Portal |
-| products / variants / prices | ✅ | ❌ | 与 LS 一样，目录通过后台维护；`buy_now_url` 指向本服务的结账入口。一个变体可有多条价格记录（LS 改价会新增记录），变体/商品的 `price`、`interval` 取**最新**一条；一次性价格的 `tiers`、`setup_fee_enabled` 为 `null` |
-| files | ✅ | ❌ | `download_url` 签名 1 小时、每 IP 每天 10 次（可配）；文件对象同时含 `createdAt` 与 `created_at` |
-| orders | ✅ | ✅ refund、generate-invoice | refund 调 Stripe Refund；invoice 返回 Stripe 收据/发票链接，否则本服务收据页 |
+| stores | ✅ | ❌ | Create/edit in the admin UI; stats such as `total_sales` are computed live and **count only live orders** (same as LS, test orders are excluded; likewise customers' `total_revenue_currency`) |
+| customers | ✅ | ✅ create / update | `urls.customer_portal` = 24h signed link; a Stripe Billing Portal session is created dynamically on access |
+| products / variants / prices | ✅ | ❌ | Same as LS, the catalog is maintained in the admin UI; `buy_now_url` points to this service's checkout entry. A variant can have multiple price records (changing a price in LS adds a record); the variant/product `price` and `interval` take the **latest** one; for one-time prices, `tiers` and `setup_fee_enabled` are `null` |
+| files | ✅ | ❌ | `download_url` is signed for 1 hour, 10 per IP per day (configurable); file objects contain both `createdAt` and `created_at` |
+| orders | ✅ | ✅ refund, generate-invoice | refund calls Stripe Refund; invoice returns the Stripe receipt/invoice link, otherwise this service's receipt page |
 | order-items | ✅ | | |
-| subscriptions | ✅ | ✅ `PATCH cancelled/pause`、`DELETE` | 取消=Stripe `cancel_at_period_end`；改套餐/用量请走 Stripe |
+| subscriptions | ✅ | ✅ `PATCH cancelled/pause`, `DELETE` | Cancel = Stripe `cancel_at_period_end`; for plan changes/usage, use Stripe |
 | subscription-invoices | ✅ | ✅ refund | |
 | subscription-items | ✅ | ❌ | |
-| license-keys | ✅ | ✅ `PATCH activation_limit/expires_at/disabled` | 触发 `license_key_updated` |
-| license-key-instances | ✅ | | `identifier` 即 `instance_id` |
-| webhooks | ✅ | ✅ create / update / delete | `secret` 6–40 位，只写 |
-| checkouts | ✅ | ✅ create | 创建 Stripe Checkout Session；`url` 即 Stripe 托管页；支持 `custom_price`、`checkout_data.{email,name,custom,variant_quantities,billing_address,discount_code→allow_promotion_codes}`、`product_options.redirect_url`、`expires_at` |
-| discounts / discount-redemptions / usage-records / affiliates | ❌ | ❌ | 返回 JSON:API 404；折扣请用 Stripe Promotion Codes |
+| license-keys | ✅ | ✅ `PATCH activation_limit/expires_at/disabled` | Triggers `license_key_updated` |
+| license-key-instances | ✅ | | `identifier` is the `instance_id` |
+| webhooks | ✅ | ✅ create / update / delete | `secret` 6–40 characters, write-only |
+| checkouts | ✅ | ✅ create | Creates a Stripe Checkout Session; `url` is the Stripe-hosted page; supports `custom_price`, `checkout_data.{email,name,custom,variant_quantities,billing_address,discount_code→allow_promotion_codes}`, `product_options.redirect_url`, `expires_at` |
+| discounts / discount-redemptions / usage-records / affiliates | ❌ | ❌ | Return JSON:API 404; for discounts, use Stripe Promotion Codes |
 
-通用行为：`page[number]`/`page[size]`（默认 10，最大 100）、`meta.page`、`links.first/last/next/prev`、`filter[...]`、`include=`、`sort=`、嵌套路由（`/v1/orders/1/license-keys`、`/v1/orders/1/customer` …）、错误体 `{"jsonapi":…, "errors":[{detail,status,title}]}`（校验错误带 `source.pointer`）、限流 300 次/分钟 + `X-Ratelimit-Limit/Remaining`。
+Common behavior: `page[number]`/`page[size]` (default 10, max 100), `meta.page`, `links.first/last/next/prev`, `filter[...]`, `include=`, `sort=`, nested routes (`/v1/orders/1/license-keys`, `/v1/orders/1/customer` …), error body `{"jsonapi":…, "errors":[{detail,status,title}]}` (validation errors carry `source.pointer`), rate limit 300 per minute + `X-Ratelimit-Limit/Remaining`.
 
-## Webhook（出站）
+## Webhook (outgoing)
 
-| 项 | 状态 |
+| Item | Status |
 | --- | --- |
-| 事件 | `order_created` `order_refunded` `customer_updated` `subscription_created/updated/cancelled/resumed/expired/paused/unpaused` `subscription_payment_success/failed/recovered/refunded` `license_key_created/updated`（`affiliate_activated` 可订阅但不会触发） |
-| 头 | `Content-Type: application/json`、`X-Event-Name`、`X-Signature`（`HMAC_SHA256(secret, rawBody)` hex，直接沿用 LS 文档里的 Node/PHP/Python 验签代码） |
+| Events | `order_created` `order_refunded` `customer_updated` `subscription_created/updated/cancelled/resumed/expired/paused/unpaused` `subscription_payment_success/failed/recovered/refunded` `license_key_created/updated` (`affiliate_activated` can be subscribed to but never fires) |
+| Headers | `Content-Type: application/json`, `X-Event-Name`, `X-Signature` (`HMAC_SHA256(secret, rawBody)` hex; use the Node/PHP/Python signature-verification code from the LS docs as is) |
 | Body | `{"meta":{"event_name","custom_data"},"data":{type,id,attributes,relationships,links}}` |
-| 事件序 | 首单：`order_created → subscription_created → subscription_payment_success → license_key_created`；续费成功：`subscription_payment_success → subscription_updated`；失败/恢复/取消/过期序列与 LS 文档一致 |
-| 重试 | 非 2xx 或超时（10s）重试，默认共 4 次（5s/25s/125s 退避） |
-| 自定义数据 | `checkout_data.custom` → 订单、订阅、License、发票相关事件的 `meta.custom_data`（非本服务创建的 Stripe Checkout 则取 Session metadata） |
+| Event order | First order: `order_created → subscription_created → subscription_payment_success → license_key_created`; successful renewal: `subscription_payment_success → subscription_updated`; failure/recovery/cancellation/expiry sequences match the LS docs |
+| Retries | Non-2xx or timeout (10s) is retried, 4 attempts in total by default (5s/25s/125s backoff) |
+| Custom data | `checkout_data.custom` → `meta.custom_data` of order, subscription, license key, and invoice events (for Stripe Checkouts not created by this service, taken from the Session metadata) |
 
-## 有意的差异
+## Intentional differences
 
-1. **支付方是 Stripe**：`payment_processor` 恒为 `stripe`；历史 PayPal 订阅会被导入但无法续费（LS 官方也不支持迁移 PayPal 订阅）。
-2. **金额口径**：`subtotal` = Stripe `amount_subtotal`，`discount_total`/`tax` 取自 `total_details`，`total` = `amount_total`；`*_usd` 为近似换算。
-3. **订单号**：本服务按店铺自增；导入的历史订单保留原订单号，新单从最大值继续。
-4. **下载链接域名**：由 `app.lemonsqueezy.com` 变为你自己的域名；链接内含订单信息，退款/订阅失效后立即失效。
-5. **客户门户**：`urls.customer_portal` 不再是 LS Portal，而是跳转到 Stripe Billing Portal（订阅、支付方式、发票）。
-6. **ID 与 Key**：导入数据 ID 不变；新生成的 License Key 仍是 UUID v4。
+1. **Stripe is the payment processor**: `payment_processor` is always `stripe`; historical PayPal subscriptions are imported but cannot renew (LS itself doesn't support migrating PayPal subscriptions either).
+2. **Amount basis**: `subtotal` = Stripe `amount_subtotal`, `discount_total`/`tax` come from `total_details`, `total` = `amount_total`; `*_usd` are approximate conversions.
+3. **Order numbers**: this service auto-increments per store; imported historical orders keep their original order numbers, and new orders continue from the maximum.
+4. **Download link domain**: changes from `app.lemonsqueezy.com` to your own domain; the link embeds order information and becomes invalid immediately after a refund or once the subscription lapses.
+5. **Customer portal**: `urls.customer_portal` is no longer the LS Portal but redirects to the Stripe Billing Portal (subscriptions, payment methods, invoices).
+6. **IDs and keys**: imported data keeps its IDs; newly generated license keys are still UUID v4.
 
-## 与真实 Lemon Squeezy 对拍过的部分
+## What was compared against real Lemon Squeezy
 
-License API 的响应形状、状态码和错误文案，以及 JSON:API 里 stores / customers / products / variants / prices / orders / order-items / license-keys / license-key-instances 的全部属性，
-都用一个真实的 test-mode LS 账号逐字段比对过：用导入器把账号数据导入本服务，再对两边的 `/v1/*` 取数做 diff，并对同一个 Key 在两边依次执行 activate / 超限 / validate / deactivate / 停用 / 过期等操作比对。
-差异只剩按设计不同的 URL（`buy_now_url`、`urls.receipt`、`customer_portal` 指向你自己的域名）。**没有真实样本的资源**——订阅、订阅发票、文件——仍按官方文档实现，没有对拍过。
+The License API's response shapes, status codes, and error messages, plus all attributes of stores / customers / products / variants / prices / orders / order-items / license-keys / license-key-instances in the JSON:API,
+were compared field by field against a real test-mode LS account: the importer loaded the account's data into this service, then the `/v1/*` data from both sides was diffed, and the same key was run through activate / over-limit / validate / deactivate / disable / expire and similar operations on both sides and the results compared.
+The only remaining differences are URLs that differ by design (`buy_now_url`, `urls.receipt`, and `customer_portal` point to your own domain). **Resources with no real samples** — subscriptions, subscription invoices, files — are still implemented per the official docs and have not been compared.
