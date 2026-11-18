@@ -153,7 +153,7 @@ func (r *Runner) MappingReport(w io.Writer) error {
 				name = prod.Name + " - " + v.Name
 			}
 			interval := ""
-			if p.RenewalIntervalUnit != nil {
+			if p.Category == "subscription" && p.RenewalIntervalUnit != nil {
 				q := 1
 				if p.RenewalIntervalQuantity != nil {
 					q = *p.RenewalIntervalQuantity

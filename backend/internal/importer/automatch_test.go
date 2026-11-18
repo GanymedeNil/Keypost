@@ -12,6 +12,7 @@ import (
 
 	"fulfillment/internal/config"
 	"fulfillment/internal/db"
+	"fulfillment/internal/stripe"
 )
 
 type fakeStripe struct {
@@ -445,5 +446,22 @@ func TestListSubscriptionsPaginatesAndAsksForAllStatuses(t *testing.T) {
 	}
 	if fs.calls("/v1/subscriptions?customer=cus_Many&limit=100&status=all") != 1 || fs.calls("/v1/subscriptions") != 3 {
 		t.Errorf("requests = %v", fs.requests)
+	}
+}
+
+// Lemon Squeezy keeps the renewal interval on a price that was switched to
+// one-time (seen in a real account): only the category says it is not recurring.
+func TestPriceMatchesIgnoresTheIntervalOfOneTimePrices(t *testing.T) {
+	amount := int64(1999)
+	year, one := "year", 1
+	oneTime := stripe.Price{UnitAmount: &amount, Currency: "usd"}
+	yearly := stripe.Price{UnitAmount: &amount, Currency: "usd", Recurring: &stripe.Recurring{Interval: "year", IntervalCount: 1}}
+	staleOneTime := db.Price{Category: "one_time", UnitPrice: 1999, Currency: "USD", RenewalIntervalUnit: &year, RenewalIntervalQuantity: &one}
+	sub := db.Price{Category: "subscription", UnitPrice: 1999, Currency: "USD", RenewalIntervalUnit: &year, RenewalIntervalQuantity: &one}
+	if !priceMatches(oneTime, staleOneTime) || priceMatches(yearly, staleOneTime) {
+		t.Error("a one-time price must match the non-recurring Stripe price only")
+	}
+	if priceMatches(oneTime, sub) || !priceMatches(yearly, sub) {
+		t.Error("a subscription price must match the recurring Stripe price only")
 	}
 }

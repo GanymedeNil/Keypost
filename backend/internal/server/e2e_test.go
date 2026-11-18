@@ -37,6 +37,7 @@ type fakeStripe struct {
 	mu      sync.Mutex
 	objects map[string]string // "GET /v1/..." → JSON
 	posts   []url.Values
+	reject  func(path string, form url.Values) string // optional: a message makes the POST fail with HTTP 400
 	srv     *httptest.Server
 }
 
@@ -48,6 +49,14 @@ func newFakeStripe(t *testing.T) *fakeStripe {
 		if r.Method == "POST" {
 			_ = r.ParseForm()
 			f.posts = append(f.posts, r.PostForm)
+			if f.reject != nil {
+				if msg := f.reject(r.URL.Path, r.PostForm); msg != "" {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(400)
+					_, _ = io.WriteString(w, `{"error":{"type":"invalid_request_error","message":`+strconv.Quote(msg)+`}}`)
+					return
+				}
+			}
 		}
 		key := r.Method + " " + r.URL.Path
 		if body, ok := f.objects[key]; ok {
@@ -917,6 +926,52 @@ func TestJSONAPIShapesMatchRealLemonSqueezyData(t *testing.T) {
 	foi, _ := sub(o, "data", "attributes", "first_order_item").(map[string]any)
 	if _, has := foi["deleted_at"]; has || foi["price_id"] != float64(priceID) {
 		t.Errorf("first_order_item = %v", foi)
+	}
+}
+
+// A variant that went through a price change has several price records (as
+// imported from Lemon Squeezy); checkout sells at the latest one.
+func TestCheckoutUsesTheLatestPriceRecord(t *testing.T) {
+	e := newEnv(t)
+	once, _ := e.seedCatalog()
+	now := db.Now()
+	e.app.DB.Create(&db.Price{VariantID: once.ID, Category: "one_time", Scheme: "standard", UnitPrice: 1999, PackageSize: 1, TaxCode: "eservice", Currency: "USD", StripePriceID: "price_once_v2", CreatedAt: now, UpdatedAt: now})
+	e.stripe.set("POST", "/v1/checkout/sessions", `{"id":"cs_test_v2","url":"https://checkout.stripe.com/c/pay/cs_test_v2","expires_at":1999999999}`)
+	if buy := e.do("GET", "/checkout/buy/"+once.Slug, nil, nil); buy.Code != 303 {
+		t.Fatalf("buy now: %d", buy.Code)
+	}
+	if got := e.stripe.lastPost().Get("line_items[0][price]"); got != "price_once_v2" {
+		t.Errorf("checkout sold %q, want the latest price record", got)
+	}
+}
+
+// An account with Managed Payments on by default refuses sessions without a product tax code
+// unless they opt out (seen with a real Stripe sandbox); the checkout retries once with the opt-out.
+func TestCheckoutOptsOutOfDefaultManagedPayments(t *testing.T) {
+	e := newEnv(t)
+	once, _ := e.seedCatalog()
+	e.stripe.set("POST", "/v1/checkout/sessions", `{"id":"cs_test_mp","url":"https://checkout.stripe.com/c/pay/cs_test_mp","expires_at":1999999999}`)
+	e.stripe.reject = func(path string, form url.Values) string {
+		if path == "/v1/checkout/sessions" && form.Get("managed_payments[enabled]") == "" {
+			return "Invalid line_items[0]: the product tax code is missing. If you want to disable Managed Payments on this session, you can pass managed_payments[enabled]=false."
+		}
+		return ""
+	}
+	buy := e.do("GET", "/checkout/buy/"+once.Slug, nil, nil)
+	if buy.Code != 303 || !strings.HasPrefix(buy.Header().Get("Location"), "https://checkout.stripe.com/") {
+		t.Fatalf("buy now: %d %s", buy.Code, buy.Body.String())
+	}
+	if lp := e.stripe.lastPost(); lp.Get("managed_payments[enabled]") != "false" {
+		t.Errorf("retry params: %v", lp)
+	}
+	// an unrelated Stripe error is not retried
+	e.stripe.posts = nil
+	e.stripe.reject = func(string, url.Values) string { return "Invalid currency." }
+	if buy := e.do("GET", "/checkout/buy/"+once.Slug, nil, nil); buy.Code == 303 {
+		t.Errorf("an unrelated error must fail the checkout")
+	}
+	if len(e.stripe.posts) != 1 {
+		t.Errorf("unrelated errors must not be retried: %d posts", len(e.stripe.posts))
 	}
 }
 

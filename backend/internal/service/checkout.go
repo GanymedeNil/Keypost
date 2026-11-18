@@ -51,7 +51,7 @@ func (s *Svc) CreateCheckout(ctx context.Context, in CheckoutInput) (*db.Checkou
 		return nil, Invalid("/data/attributes/test_mode", "The variant belongs to a different mode (test/live).")
 	}
 	var price db.Price
-	if err := s.DB.Where("variant_id = ?", v.ID).Order("id").First(&price).Error; err != nil {
+	if err := s.DB.Where("variant_id = ?", v.ID).Order("id DESC").First(&price).Error; err != nil { // the latest price record is the current one
 		return nil, Invalid("/data/relationships/variant", "This variant has no price.")
 	}
 	if price.StripePriceID == "" && in.CustomPrice == nil {
@@ -117,10 +117,18 @@ func (s *Svc) CreateCheckout(ctx context.Context, in CheckoutInput) (*db.Checkou
 	if in.ExpiresAt != nil {
 		p.Int("expires_at", in.ExpiresAt.Unix())
 	}
-	if s.Settings.Bool(settings.StripeManagedPayments) {
+	managed := s.Settings.Bool(settings.StripeManagedPayments)
+	if managed {
 		p.Bool("managed_payments[enabled]", true)
 	}
 	sess, err := cl.CreateSession(ctx, p, "checkout-"+id)
+	if err != nil && !managed && asksForManagedPaymentsOptOut(err) {
+		// Some accounts have Managed Payments switched on by default, which needs a product tax code
+		// on every product; this service does not use it unless the setting says so, so opt out for
+		// this session. (Sent only on that answer: accounts without the feature do not know the field.)
+		p.Bool("managed_payments[enabled]", false)
+		sess, err = cl.CreateSession(ctx, p, "checkout-"+id+"-unmanaged")
+	}
 	if err != nil {
 		return nil, stripeErr(err)
 	}
@@ -215,4 +223,10 @@ func (s *Svc) fillLinkVariables(raw string, o db.Order) string {
 
 func formatTotal(o db.Order) string {
 	return strconv.FormatFloat(float64(o.Total)/100, 'f', 2, 64) + " " + o.Currency
+}
+
+// asksForManagedPaymentsOptOut recognises Stripe's "pass managed_payments[enabled]=false" answer.
+func asksForManagedPaymentsOptOut(err error) bool {
+	var se *stripe.Error
+	return errors.As(err, &se) && strings.Contains(se.Message, "managed_payments[enabled]=false")
 }

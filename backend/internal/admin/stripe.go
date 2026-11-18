@@ -290,7 +290,7 @@ func (h *Handler) linkVariant(w http.ResponseWriter, r *http.Request, u *db.User
 		}
 		if priceID != "" {
 			var pr db.Price
-			if err := tx.Where("variant_id = ?", v.ID).Order("id").First(&pr).Error; err != nil {
+			if err := tx.Where("variant_id = ?", v.ID).Order("id DESC").First(&pr).Error; err != nil {
 				return fieldErr{"stripe_price_id", "This variant has no price to link; add a price first."}
 			}
 			return tx.Model(&pr).Updates(map[string]any{"stripe_price_id": priceID, "updated_at": db.Now()}).Error

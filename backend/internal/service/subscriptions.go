@@ -266,7 +266,7 @@ func (s *Svc) handleInvoicePaid(ctx context.Context, invID string) (Result, erro
 	sub, ok := s.subByStripeID(subID)
 	if !ok {
 		if inv.BillingReason == "subscription_create" {
-			return ignored("initial invoice is recorded during checkout fulfilment"), nil
+			return ignored("first invoice of subscription " + subID + ": it is recorded when this service's checkout session is fulfilled. A subscription created outside that checkout (Stripe Dashboard or API) gets no order or license key here"), nil
 		}
 		return ignored("unknown subscription " + subID + " (import / map it, then replay this event)"), nil
 	}

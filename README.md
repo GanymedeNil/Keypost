@@ -63,6 +63,7 @@ make test-pg         # 同一套测试跑在真实 PostgreSQL 16 上
 5. **下单入口**：商品的 `buy_now_url`（`/checkout/buy/{variant_slug}`）或 `POST /v1/checkouts`（与 LS 同参：`checkout_data.email/custom`、`custom_price`、`product_options.redirect_url`），自动创建 Stripe Checkout Session。付款后回到 `/checkout/success`，直接跳到带签名的订单页（或你配置的 `redirect_url`）。
 
 > **Managed Payments**：设置里打开「Managed Payments」，创建 Checkout Session 时会带 `managed_payments[enabled]=true`（需 Stripe 账户已开通，且按 Stripe 要求使用对应的 API 版本）。
+> 没打开该设置时，若 Stripe 账户默认开启了 Managed Payments（会要求每个商品有 product tax code），创建 Session 会收到 Stripe 的提示并自动带 `managed_payments[enabled]=false` 重试一次。
 
 ## 从 Lemon Squeezy 迁出
 
@@ -93,6 +94,7 @@ docs/       调研、架构、API 契约、迁移指南
 ## 已知限制
 
 - 不含：折扣码/联盟营销/用量计费（`discounts`、`affiliates`、`usage-records` 返回明确的 404）；促销码请用 Stripe 原生 Promotion Codes。
+- 只有经本服务结账（`buy_now_url` / `POST /v1/checkouts`）创建的订阅，首单才会生成订单和 License Key；在 Stripe Dashboard / API 里直接创建的订阅，其**首张**发票会被忽略（续费、失败、取消等后续事件在订阅已登记时照常处理）。迁移来的订阅请用导入器登记。
 - 订阅「改套餐」请走 Stripe Billing Portal；`PATCH /v1/subscriptions` 仅支持取消/恢复/暂停。
 - 订单的 `*_usd` 换算使用内置近似汇率表（可用环境变量 `FX_RATES='{"EUR":1.09}'` 覆盖，单位：1 个货币单位折合多少美元），仅用于报表，不影响实际扣款。
 - 运维：每个实例需要一个公网 HTTPS 地址供 Stripe Webhook 回调。多实例部署时，Webhook 投递与导入任务用数据库租约避免重复，但限流是进程内的。

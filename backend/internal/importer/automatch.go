@@ -295,7 +295,9 @@ func priceMatches(sp stripe.Price, lp db.Price) bool {
 	if sp.Currency != "" && lp.Currency != "" && !strings.EqualFold(sp.Currency, lp.Currency) {
 		return false
 	}
-	if lp.RenewalIntervalUnit == nil {
+	// Only a subscription price is recurring. Lemon Squeezy keeps the renewal
+	// interval on a price that was switched to one-time, so the category decides.
+	if lp.Category != "subscription" || lp.RenewalIntervalUnit == nil {
 		return sp.Recurring == nil
 	}
 	if sp.Recurring == nil || sp.Recurring.Interval != *lp.RenewalIntervalUnit {
