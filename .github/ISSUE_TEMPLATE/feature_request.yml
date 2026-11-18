@@ -1,0 +1,54 @@
+name: Feature request
+description: Suggest an improvement or a missing capability.
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Keypost's scope is license-key and file fulfillment on top of Stripe, with a Lemon Squeezy compatible API and migration path. Requests that fit that scope are the easiest to accept. Please check the [known limitations](https://github.com/GanymedeNil/Keypost#known-limitations) first: some gaps (discounts, affiliates, usage-based billing) are deliberate.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe your use case, not only the solution you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should Keypost do? For API changes, sketch the endpoint or payload.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - License API / JSON:API compatibility
+        - Outgoing webhooks
+        - Stripe integration
+        - Migration from Lemon Squeezy
+        - Admin back office
+        - Customer pages
+        - E-mail
+        - Security / authentication
+        - Deployment and operations
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and the known limitations.
+          required: true
+        - label: I am willing to test a change for this in my own business scenario.
+          required: false

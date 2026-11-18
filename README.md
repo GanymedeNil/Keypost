@@ -12,6 +12,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/GanymedeNil/Keypost/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/GanymedeNil/Keypost/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <img alt="Go" src="https://img.shields.io/badge/Go-API-00ADD8?logo=go&logoColor=white">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white">
   <img alt="shadcn/ui" src="https://img.shields.io/badge/shadcn%2Fui-neutral-000000">
@@ -26,7 +27,7 @@
 </picture>
 
 > [!WARNING]
-> **Test it thoroughly in your own business scenario before you take real money with it.** Keypost handles payments, refunds, subscriptions and license entitlements. The author provides it as is, with no warranty, and accepts no responsibility for any loss, including financial loss. See the [Disclaimer](#disclaimer).
+> **Keypost sits in the payment path: it creates orders, refunds, subscriptions and license entitlements, and it comes with no warranty.** Anyone who deploys it must test it thoroughly in their own business scenario before taking real money, and is solely responsible for the outcome. The authors accept no liability for any loss, including financial loss. See the [Disclaimer](#disclaimer).
 
 ## Why Keypost
 
@@ -226,6 +227,10 @@ if the only owner loses theirs, run `dfctl admin reset-mfa --email you@example.c
 | [docs/FRONTEND_NOTES.md](docs/FRONTEND_NOTES.md) | Frontend structure, shadcn/ui and theming |
 | [docs/RESEARCH_LEMONSQUEEZY.md](docs/RESEARCH_LEMONSQUEEZY.md) | Research notes on Lemon Squeezy Digital Fulfillment |
 
+## Contributing
+
+`main` only accepts pull requests, and CI (Go tests on SQLite and PostgreSQL 18, frontend lint, type check and build, version check) must pass. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [CHANGELOG](CHANGELOG.md).
+
 ## Repository layout
 
 ```
@@ -246,23 +251,23 @@ scripts/    Offline export script and friends
 
 ## Disclaimer
 
-Keypost is an independent, community-style open-source project. It is **not affiliated with, endorsed by or supported by Lemon Squeezy or Stripe**; "Lemon Squeezy" and "Stripe" are trademarks of their respective owners and are used here only to describe compatibility.
+Keypost is an independent open-source project. It is not affiliated with, endorsed by or sponsored by Lemon Squeezy or Stripe. "Lemon Squeezy" and "Stripe" are trademarks of their respective owners and are used here only to describe compatibility.
 
-**The software is provided "as is", without warranty of any kind**, express or implied, including but not limited to merchantability, fitness for a particular purpose, accuracy and non-infringement. Compatibility with Lemon Squeezy was checked against a test-mode account and a Stripe sandbox, as described in [API compatibility](docs/API_COMPATIBILITY.md). That is not a guarantee that it behaves identically in every case, in your environment or with your data.
+**No warranty.** Keypost is provided "as is", without warranty of any kind, express or implied, including but not limited to merchantability, fitness for a particular purpose, accuracy and non-infringement. API compatibility with Lemon Squeezy was checked against a test-mode account and a Stripe sandbox (see [API compatibility](docs/API_COMPATIBILITY.md)). That is no guarantee of identical behavior in every case, environment or data set.
 
-**You are responsible for testing it rigorously in your own business scenario before you use it in production.** At a minimum:
+**Operators must test it themselves.** Keypost sits in the payment and entitlement path of a business, and every business differs in products, prices, taxes, currencies, clients and integrations. Before running it in production, the operator must verify it rigorously in their own business scenario. At a minimum:
 
-- Run the whole flow end to end in Stripe test mode with your own products, prices, tax settings, currencies and webhooks: purchase, fulfillment, renewal, failed payment, cancellation, refund and chargeback.
-- Run the migration as a dry run first, then on a copy of your data, and check the result against your Lemon Squeezy records (customers, orders, license keys, activations, subscriptions, files) before you cut over.
-- Check the amounts, taxes and currencies that Keypost shows and sends. The `*_usd` figures use an approximate exchange-rate table and are for reporting only.
-- Verify that your own clients and servers work against the License API, the JSON:API and the outgoing webhooks, and that webhook signatures verify.
-- Keep backups of the database and file storage, and keep your Lemon Squeezy exports and tax documents.
-- Review the [known limitations](#known-limitations), and secure the server, the database, `APP_SECRET` and your Stripe keys yourself.
+- Run the complete flow end to end in Stripe test mode with the real products, prices, tax settings, currencies and webhooks of the deployment: purchase, fulfillment, renewal, failed payment, cancellation, refund and chargeback.
+- Run a migration as a dry run first, then on a copy of the data, and compare the result with the Lemon Squeezy records (customers, orders, license keys, activations, subscriptions, files) before cutting over.
+- Check the amounts, taxes and currencies that Keypost displays and sends. The `*_usd` figures use an approximate exchange-rate table and are for reporting only.
+- Verify that client applications and servers work against the License API, the JSON:API and the outgoing webhooks, including webhook signature verification.
+- Back up the database and file storage, and keep the Lemon Squeezy exports and tax documents.
+- Review the [known limitations](#known-limitations), and secure the server, the database, `APP_SECRET` and the Stripe keys.
 
-**To the maximum extent permitted by law, the author and contributors are not liable for any claim, damage or loss arising from the use of, or inability to use, this software.** That covers, without limitation, lost or duplicated payments, wrong or missing refunds, incorrect charges, taxes or invoices, lost orders, license keys or files, unauthorized access, downtime, and any indirect or consequential loss. All decisions and the consequences of running a payment system are yours.
+**Limitation of liability.** To the maximum extent permitted by law, the author and contributors are not liable for any claim, damages or other loss arising from the use of, or inability to use, Keypost. This includes, without limitation, lost or duplicated payments, wrong or missing refunds, incorrect charges, taxes or invoices, lost orders, license keys or files, unauthorized access, downtime, and any indirect or consequential loss. Operating a payment system, and every decision and consequence that comes with it, is the operator's responsibility.
 
-This section is not legal advice. If you handle real money, check your legal, tax and payment-provider obligations with a qualified professional.
+Nothing here is legal advice. Operators who handle real money should check their own legal, tax and payment-provider obligations with a qualified professional.
 
 ## License
 
-[MIT](LICENSE). The license text itself also disclaims all warranty and liability; the [Disclaimer](#disclaimer) above spells out what that means for a payment system.
+Keypost is released under the [MIT License](LICENSE).
