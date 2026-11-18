@@ -654,7 +654,9 @@ func (h *Handler) testEmail(w http.ResponseWriter, r *http.Request, u *db.User) 
 		h.fail(w, http.StatusUnprocessableEntity, "validation_failed", "SMTP is not configured (Settings → Email).", nil)
 		return
 	}
-	html, text, _ := mail.RenderMagicLink(mail.MagicLinkData{StoreName: brand.Name, Link: h.S.URLs.Base + "/admin"})
+	var store db.Store
+	h.S.DB.Order("id").First(&store)
+	html, text, _ := mail.RenderTest(mail.TestData{StoreName: firstNonEmpty(store.Name, brand.Name), AvatarURL: store.AvatarURL, Product: brand.Name})
 	if err := h.S.Mail.Send(r.Context(), mail.Message{To: in.To, Subject: "Test email from " + brand.Name, HTML: html, Text: text, Template: "test"}); err != nil {
 		h.fail(w, http.StatusBadGateway, "internal", "SMTP error: "+err.Error(), nil)
 		return

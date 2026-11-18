@@ -315,7 +315,7 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 			}
 			link := h.S.URLs.MagicLink(token)
 			h.S.Go(func() {
-				html, text, err := mail.RenderMagicLink(mail.MagicLinkData{StoreName: firstNonEmpty(store.Name, "Your store"), Link: link})
+				html, text, err := mail.RenderMagicLink(mail.MagicLinkData{StoreName: firstNonEmpty(store.Name, "Your store"), AvatarURL: store.AvatarURL, Link: link})
 				if err == nil {
 					_ = h.S.Mail.Send(context.Background(), mail.Message{To: email, Subject: "Your sign-in link", HTML: html, Text: text, StoreID: store.ID, Template: "magic_link", FromName: store.EmailFromName})
 				}

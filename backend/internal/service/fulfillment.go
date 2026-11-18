@@ -630,8 +630,21 @@ func (s *Svc) sendReceipt(ctx context.Context, orderID int64, overrideTo string)
 		names[it.ID] = it.ProductName
 	}
 	d := mail.ReceiptData{
-		StoreName: firstOf(store.Name, "Store"), Intro: store.ReceiptIntro, CustomerName: o.UserName, OrderNumber: o.OrderNumber,
-		Total: resource.FormatMoney(o.Total, o.Currency), ReceiptURL: s.URLs.Receipt(o.Identifier), SupportEmail: store.SupportEmail,
+		StoreName: firstOf(store.Name, "Store"), AvatarURL: store.AvatarURL, Intro: store.ReceiptIntro, CustomerName: o.UserName, OrderNumber: o.OrderNumber,
+		OrderDate: o.CreatedAt.UTC().Format("Jan 2, 2006"),
+		Total:     resource.FormatMoney(o.Total, o.Currency), ReceiptURL: s.URLs.Receipt(o.Identifier), SupportEmail: store.SupportEmail,
+	}
+	if o.Tax > 0 || o.DiscountTotal > 0 {
+		d.Subtotal = resource.FormatMoney(o.Subtotal, o.Currency)
+		if o.DiscountTotal > 0 {
+			d.Discount = resource.FormatMoney(o.DiscountTotal, o.Currency)
+		}
+		if o.Tax > 0 {
+			d.Tax = resource.FormatMoney(o.Tax, o.Currency)
+		}
+	}
+	if o.CardBrand != "" && o.CardLastFour != "" {
+		d.PaidWith = cardBrandName(o.CardBrand) + " ending in " + o.CardLastFour
 	}
 	for _, it := range items {
 		d.Items = append(d.Items, mail.ReceiptItem{Name: it.ProductName, Variant: it.VariantName, Price: resource.FormatMoney(it.Price*int64(maxI(it.Quantity, 1)), o.Currency)})
@@ -683,3 +696,27 @@ func (s *Svc) InvoiceURLForOrder(ctx context.Context, o db.Order) string {
 }
 
 var _ = settings.StripeSecretKey
+
+// cardBrandName turns Stripe's card brand ("visa", "amex") into what a person calls it.
+func cardBrandName(b string) string {
+	switch strings.ToLower(b) {
+	case "visa":
+		return "Visa"
+	case "mastercard":
+		return "Mastercard"
+	case "amex":
+		return "American Express"
+	case "discover":
+		return "Discover"
+	case "jcb":
+		return "JCB"
+	case "diners":
+		return "Diners Club"
+	case "unionpay":
+		return "UnionPay"
+	}
+	if b == "" {
+		return "card"
+	}
+	return strings.ToUpper(b[:1]) + b[1:]
+}
