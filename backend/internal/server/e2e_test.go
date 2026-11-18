@@ -975,6 +975,44 @@ func TestCheckoutOptsOutOfDefaultManagedPayments(t *testing.T) {
 	}
 }
 
+// Stripe refuses cancel_at_period_end together with cancel_at (found by resuming a subscription
+// against a real sandbox). Resume sends one of them, whichever applies.
+func TestResumeSubscriptionNeverSendsBothCancelFields(t *testing.T) {
+	e := newEnv(t)
+	e.seedCatalog()
+	g := e.app.DB
+	var st db.Store
+	g.First(&st)
+	now := db.Now()
+	cust := db.Customer{StoreID: st.ID, Email: "r@example.com", StripeCustomerID: "cus_r", TestMode: true, CreatedAt: now, UpdatedAt: now}
+	g.Create(&cust)
+	stripeID := "sub_resume"
+	sub := db.Subscription{StoreID: st.ID, CustomerID: cust.ID, StripeSubscriptionID: &stripeID, Status: "cancelled", Cancelled: true, PaymentProcessor: "stripe", Quantity: 1, TestMode: true, CreatedAt: now, UpdatedAt: now}
+	g.Create(&sub)
+	e.stripe.reject = func(path string, form url.Values) string {
+		if path == "/v1/subscriptions/sub_resume" && form.Has("cancel_at_period_end") && form.Has("cancel_at") {
+			return "Received both cancel_at_period_end and cancel_at parameters. Please pass in only one."
+		}
+		return ""
+	}
+	for _, c := range []struct{ name, current, wantKey string }{
+		{"cancelled at period end", `"cancel_at_period_end":true,"cancel_at":1999999999`, "cancel_at_period_end"},
+		{"explicit cancel date", `"cancel_at_period_end":false,"cancel_at":1999999999`, "cancel_at"},
+	} {
+		body := fmt.Sprintf(`{"id":"sub_resume","status":"active","customer":"cus_r",%s,"billing_cycle_anchor":1,"livemode":false,"created":1,"items":{"data":[]}}`, c.current)
+		e.stripe.set("GET", "/v1/subscriptions/sub_resume", body)
+		e.stripe.set("POST", "/v1/subscriptions/sub_resume", `{"id":"sub_resume","status":"active","customer":"cus_r","cancel_at_period_end":false,"cancel_at":null,"billing_cycle_anchor":1,"livemode":false,"created":1,"items":{"data":[]}}`)
+		e.stripe.posts = nil
+		if _, err := e.app.Svc.ResumeSubscription(context.Background(), sub.ID); err != nil {
+			t.Fatalf("%s: %v", c.name, err)
+		}
+		lp := e.stripe.lastPost()
+		if !lp.Has(c.wantKey) || lp.Has("cancel_at") && lp.Has("cancel_at_period_end") {
+			t.Errorf("%s: resume sent %v", c.name, lp)
+		}
+	}
+}
+
 func TestAdminImportRejectsUnknownConflictPolicy(t *testing.T) {
 	e := newEnv(t)
 	hdr := map[string]string{"Content-Type": "application/json", "X-Requested-With": "df-admin"}

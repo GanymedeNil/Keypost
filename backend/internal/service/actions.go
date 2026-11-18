@@ -190,7 +190,18 @@ func (s *Svc) ResumeSubscription(ctx context.Context, id int64) (*db.Subscriptio
 	if sub.Status == "expired" {
 		return nil, Invalid("", "An expired subscription cannot be resumed; the customer must subscribe again.")
 	}
-	return s.updateStripeSub(ctx, id, stripe.P().Bool("cancel_at_period_end", false).Set("cancel_at", ""))
+	// Stripe rejects cancel_at_period_end and cancel_at in one request (seen against a real
+	// sandbox). Turning off cancel_at_period_end also clears the date it set; only a subscription
+	// that was given an explicit cancel_at date needs that field cleared on its own.
+	p := stripe.P().Bool("cancel_at_period_end", false)
+	if sub.StripeSubscriptionID != nil && *sub.StripeSubscriptionID != "" {
+		if cl, err := s.Stripe(); err == nil {
+			if cur, err := cl.RetrieveSubscription(ctx, *sub.StripeSubscriptionID); err == nil && !cur.CancelAtPeriodEnd && cur.CancelAt != nil {
+				p = stripe.P().Set("cancel_at", "")
+			}
+		}
+	}
+	return s.updateStripeSub(ctx, id, p)
 }
 
 func (s *Svc) PauseSubscription(ctx context.Context, id int64, mode string, resumesAt *time.Time) (*db.Subscription, error) {
