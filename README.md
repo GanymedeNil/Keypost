@@ -17,6 +17,7 @@
   <img alt="shadcn/ui" src="https://img.shields.io/badge/shadcn%2Fui-neutral-000000">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-18-336791?logo=postgresql&logoColor=white">
   <img alt="Stripe" src="https://img.shields.io/badge/Stripe-powered-635BFF?logo=stripe&logoColor=white">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green"></a>
 </p>
 
 <picture>
@@ -261,3 +262,7 @@ Keypost is an independent, community-style open-source project. It is **not affi
 **To the maximum extent permitted by law, the author and contributors are not liable for any claim, damage or loss arising from the use of, or inability to use, this software.** That covers, without limitation, lost or duplicated payments, wrong or missing refunds, incorrect charges, taxes or invoices, lost orders, license keys or files, unauthorized access, downtime, and any indirect or consequential loss. All decisions and the consequences of running a payment system are yours.
 
 This section is not legal advice. If you handle real money, check your legal, tax and payment-provider obligations with a qualified professional.
+
+## License
+
+[MIT](LICENSE). The license text itself also disclaims all warranty and liability; the [Disclaimer](#disclaimer) above spells out what that means for a payment system.
