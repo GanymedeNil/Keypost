@@ -14,7 +14,8 @@ import (
 // are an enhancement that clients which ignore them can do without.
 // Every message ships as multipart/alternative with a hand-written plain-text part.
 
-const accent = "#4f46e5"
+// accent is the product ink, the same near-black as the logo and the primary button in the admin UI (shadcn neutral theme).
+const accent = "#171717"
 
 // ReceiptItem, ReceiptKey and ReceiptFile are the lines of a receipt.
 type ReceiptItem struct{ Name, Variant, Price string }
@@ -77,14 +78,16 @@ const frame = `<!doctype html>
 <title>{{.L.Title}}</title>
 <style>
 @media (prefers-color-scheme: dark) {
-  .bg { background: #0e1014 !important; }
-  .card { background: #171a21 !important; border-color: #262b36 !important; }
-  .tx { color: #f2f4f8 !important; }
-  .mu { color: #98a1b2 !important; }
-  .box { background: #11141a !important; border-color: #2b313d !important; }
-  .hr { border-color: #262b36 !important; }
-  .pill { background: #1f2330 !important; color: #c7cbff !important; }
-  .lnk { color: #a5b4fc !important; }
+  .bg { background: #0a0a0a !important; }
+  .card { background: #171717 !important; border-color: #262626 !important; }
+  .tx { color: #fafafa !important; }
+  .mu { color: #a3a3a3 !important; }
+  .box { background: #0f0f0f !important; border-color: #2a2a2a !important; }
+  .hr { border-color: #262626 !important; }
+  .pill { background: #262626 !important; color: #fafafa !important; }
+  .lnk { color: #fafafa !important; }
+  .btn { background: #fafafa !important; }
+  .btnlink { color: #171717 !important; }
 }
 @media only screen and (max-width: 620px) {
   .wrap { width: 100% !important; }
@@ -94,30 +97,30 @@ const frame = `<!doctype html>
 }
 </style>
 </head>
-<body class="bg" style="margin:0;padding:0;background:#f4f5f9;-webkit-text-size-adjust:100%;">
+<body class="bg" style="margin:0;padding:0;background:#f5f5f5;-webkit-text-size-adjust:100%;">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;font-size:1px;line-height:1px;">{{.L.Preheader}}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" style="background:#f4f5f9;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" style="background:#f5f5f5;">
 <tr><td align="center" style="padding:32px 12px 40px;">
 <table role="presentation" class="wrap" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:100%;">
   <tr><td style="padding:0 6px 18px;">
     <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
       <td style="padding-right:10px;vertical-align:middle;">{{if .L.AvatarURL}}<img src="{{.L.AvatarURL}}" width="36" height="36" alt="" style="display:block;width:36px;height:36px;border-radius:9px;border:0;">{{else}}<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td width="36" height="36" align="center" valign="middle" bgcolor="` + accent + `" style="width:36px;height:36px;border-radius:9px;background:` + accent + `;color:#ffffff;font:700 17px/36px -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;">{{.L.Initial}}</td></tr></table>{{end}}</td>
-      <td class="tx" style="vertical-align:middle;font:600 16px/1.3 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;">{{.L.StoreName}}</td>
+      <td class="tx" style="vertical-align:middle;font:600 16px/1.3 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;">{{.L.StoreName}}</td>
     </tr></table>
   </td></tr>
-  <tr><td class="card" style="background:#ffffff;border:1px solid #e6e8ef;border-radius:16px;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="pad tx" style="padding:38px 40px 36px;font:400 15px/1.6 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;">
+  <tr><td class="card" style="background:#ffffff;border:1px solid #e5e5e5;border-radius:16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td class="pad tx" style="padding:38px 40px 36px;font:400 15px/1.6 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;">
 {{block "body" .}}{{end}}
     </td></tr></table>
   </td></tr>
-  <tr><td class="mu" align="center" style="padding:22px 12px 0;font:400 12px/1.6 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#8a92a3;">{{.L.Footer}}</td></tr>
+  <tr><td class="mu" align="center" style="padding:22px 12px 0;font:400 12px/1.6 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#a3a3a3;">{{.L.Footer}}</td></tr>
 </table>
 </td></tr>
 </table>
 </body>
 </html>`
 
-const button = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 0;"><tr><td align="center" bgcolor="` + accent + `" style="border-radius:10px;background:` + accent + `;"><a href="@HREF@" style="display:inline-block;padding:13px 28px;font:600 15px/1 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#ffffff;text-decoration:none;border-radius:10px;">@LABEL@</a></td></tr></table>`
+const button = `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 0;"><tr><td align="center" class="btn" bgcolor="` + accent + `" style="border-radius:10px;background:` + accent + `;"><a class="btnlink" href="@HREF@" style="display:inline-block;padding:13px 28px;font:600 15px/1 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#ffffff;text-decoration:none;border-radius:10px;">@LABEL@</a></td></tr></table>`
 
 // btn is the call-to-action button; href may be a template action.
 func btn(href, label string) string {
@@ -140,54 +143,54 @@ func exec[T any](t *template.Template, v view[T]) (string, error) {
 // ---------------------------------------------------------------- receipt
 
 var receiptTpl = page(`
-<h1 class="h1 tx" style="margin:0 0 6px;font:700 26px/1.25 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;letter-spacing:-0.01em;">Thanks for your order{{if .D.CustomerName}}, {{.D.CustomerName}}{{end}}</h1>
-<p class="mu" style="margin:0 0 22px;font-size:14px;color:#6b7385;">Order #{{.D.OrderNumber}}{{if .D.OrderDate}} · {{.D.OrderDate}}{{end}}</p>
+<h1 class="h1 tx" style="margin:0 0 6px;font:700 26px/1.25 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;letter-spacing:-0.01em;">Thanks for your order{{if .D.CustomerName}}, {{.D.CustomerName}}{{end}}</h1>
+<p class="mu" style="margin:0 0 22px;font-size:14px;color:#737373;">Order #{{.D.OrderNumber}}{{if .D.OrderDate}} · {{.D.OrderDate}}{{end}}</p>
 {{if .D.Intro}}<p style="margin:0 0 24px;">{{.D.Intro}}</p>{{end}}
 
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="box" style="background:#f8f9fc;border:1px solid #e6e8ef;border-radius:12px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="box" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;">
 <tr><td style="padding:6px 20px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
   {{range .D.Items}}<tr>
-    <td style="padding:13px 12px 13px 0;border-bottom:1px solid #e6e8ef;" class="hr"><div class="tx" style="font-weight:600;color:#14161c;">{{.Name}}</div>{{if .Variant}}<div class="mu" style="font-size:13px;color:#6b7385;">{{.Variant}}</div>{{end}}</td>
-    <td align="right" valign="top" class="tx hr" style="padding:13px 0;border-bottom:1px solid #e6e8ef;white-space:nowrap;color:#14161c;">{{.Price}}</td>
+    <td style="padding:13px 12px 13px 0;border-bottom:1px solid #e5e5e5;" class="hr"><div class="tx" style="font-weight:600;color:#0a0a0a;">{{.Name}}</div>{{if .Variant}}<div class="mu" style="font-size:13px;color:#737373;">{{.Variant}}</div>{{end}}</td>
+    <td align="right" valign="top" class="tx hr" style="padding:13px 0;border-bottom:1px solid #e5e5e5;white-space:nowrap;color:#0a0a0a;">{{.Price}}</td>
   </tr>{{end}}
   {{if or .D.Discount .D.Tax}}
-    <tr><td class="mu" style="padding:10px 0 0;font-size:14px;color:#6b7385;">Subtotal</td><td align="right" class="mu" style="padding:10px 0 0;font-size:14px;color:#6b7385;">{{.D.Subtotal}}</td></tr>
-    {{if .D.Discount}}<tr><td class="mu" style="padding:4px 0 0;font-size:14px;color:#6b7385;">Discount</td><td align="right" class="mu" style="padding:4px 0 0;font-size:14px;color:#6b7385;">−{{.D.Discount}}</td></tr>{{end}}
-    {{if .D.Tax}}<tr><td class="mu" style="padding:4px 0 0;font-size:14px;color:#6b7385;">Tax</td><td align="right" class="mu" style="padding:4px 0 0;font-size:14px;color:#6b7385;">{{.D.Tax}}</td></tr>{{end}}
+    <tr><td class="mu" style="padding:10px 0 0;font-size:14px;color:#737373;">Subtotal</td><td align="right" class="mu" style="padding:10px 0 0;font-size:14px;color:#737373;">{{.D.Subtotal}}</td></tr>
+    {{if .D.Discount}}<tr><td class="mu" style="padding:4px 0 0;font-size:14px;color:#737373;">Discount</td><td align="right" class="mu" style="padding:4px 0 0;font-size:14px;color:#737373;">−{{.D.Discount}}</td></tr>{{end}}
+    {{if .D.Tax}}<tr><td class="mu" style="padding:4px 0 0;font-size:14px;color:#737373;">Tax</td><td align="right" class="mu" style="padding:4px 0 0;font-size:14px;color:#737373;">{{.D.Tax}}</td></tr>{{end}}
   {{end}}
-    <tr><td class="tx" style="padding:14px 0 12px;font-weight:700;font-size:16px;color:#14161c;">Total</td><td align="right" class="tx" style="padding:14px 0 12px;font-weight:700;font-size:16px;color:#14161c;white-space:nowrap;">{{.D.Total}}</td></tr>
+    <tr><td class="tx" style="padding:14px 0 12px;font-weight:700;font-size:16px;color:#0a0a0a;">Total</td><td align="right" class="tx" style="padding:14px 0 12px;font-weight:700;font-size:16px;color:#0a0a0a;white-space:nowrap;">{{.D.Total}}</td></tr>
   </table>
 </td></tr></table>
-{{if .D.PaidWith}}<p class="mu" style="margin:10px 2px 0;font-size:13px;color:#6b7385;">Paid with {{.D.PaidWith}}</p>{{end}}
+{{if .D.PaidWith}}<p class="mu" style="margin:10px 2px 0;font-size:13px;color:#737373;">Paid with {{.D.PaidWith}}</p>{{end}}
 
 {{if .D.Keys}}
-<h2 class="tx" style="margin:34px 0 4px;font:700 17px/1.3 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;">{{if gt (len .D.Keys) 1}}Your license keys{{else}}Your license key{{end}}</h2>
-<p class="mu" style="margin:0 0 14px;font-size:13px;color:#6b7385;">Keep {{if gt (len .D.Keys) 1}}them{{else}}it{{end}} private. You can always find {{if gt (len .D.Keys) 1}}them{{else}}it{{end}} again on your order page.</p>
+<h2 class="tx" style="margin:34px 0 4px;font:700 17px/1.3 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;">{{if gt (len .D.Keys) 1}}Your license keys{{else}}Your license key{{end}}</h2>
+<p class="mu" style="margin:0 0 14px;font-size:13px;color:#737373;">Keep {{if gt (len .D.Keys) 1}}them{{else}}it{{end}} private. You can always find {{if gt (len .D.Keys) 1}}them{{else}}it{{end}} again on your order page.</p>
 {{range .D.Keys}}
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;"><tr><td class="box" style="background:#f8f9fc;border:1px solid #e6e8ef;border-radius:12px;padding:14px 18px;">
-  {{if .Product}}<div class="mu" style="font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#6b7385;margin-bottom:6px;">{{.Product}}</div>{{end}}
-  <div class="key tx" style="font:600 16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#14161c;word-break:break-all;">{{.Key}}</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 12px;"><tr><td class="box" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;padding:14px 18px;">
+  {{if .Product}}<div class="mu" style="font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:#737373;margin-bottom:6px;">{{.Product}}</div>{{end}}
+  <div class="key tx" style="font:600 16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#0a0a0a;word-break:break-all;">{{.Key}}</div>
 </td></tr></table>
 {{end}}
 {{end}}
 
 {{if .D.Files}}
-<h2 class="tx" style="margin:30px 0 12px;font:700 17px/1.3 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;">Downloads</h2>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="box" style="background:#f8f9fc;border:1px solid #e6e8ef;border-radius:12px;"><tr><td style="padding:2px 18px;">
+<h2 class="tx" style="margin:30px 0 12px;font:700 17px/1.3 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;">Downloads</h2>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="box" style="background:#fafafa;border:1px solid #e5e5e5;border-radius:12px;"><tr><td style="padding:2px 18px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
   {{range $i, $f := .D.Files}}<tr>
-    <td class="hr" style="padding:12px 10px 12px 0;{{if $i}}border-top:1px solid #e6e8ef;{{end}}"><div class="tx" style="font-weight:600;color:#14161c;word-break:break-word;">{{$f.Name}}</div>{{if $f.Size}}<div class="mu" style="font-size:13px;color:#6b7385;">{{$f.Size}}</div>{{end}}</td>
-    <td align="right" valign="middle" class="hr" style="padding:12px 0;{{if $i}}border-top:1px solid #e6e8ef;{{end}}white-space:nowrap;"><a class="lnk" href="{{$f.URL}}" style="color:` + accent + `;font-weight:600;text-decoration:none;">Download &rarr;</a></td>
+    <td class="hr" style="padding:12px 10px 12px 0;{{if $i}}border-top:1px solid #e5e5e5;{{end}}"><div class="tx" style="font-weight:600;color:#0a0a0a;word-break:break-word;">{{$f.Name}}</div>{{if $f.Size}}<div class="mu" style="font-size:13px;color:#737373;">{{$f.Size}}</div>{{end}}</td>
+    <td align="right" valign="middle" class="hr" style="padding:12px 0;{{if $i}}border-top:1px solid #e5e5e5;{{end}}white-space:nowrap;"><a class="lnk" href="{{$f.URL}}" style="color:` + accent + `;font-weight:600;text-decoration:underline;">Download &rarr;</a></td>
   </tr>{{end}}
   </table>
 </td></tr></table>
 {{end}}
 
 <div style="margin:32px 0 0;">` + btn("{{.D.ReceiptURL}}", "View your order") + `</div>
-<p class="mu" style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#8a92a3;word-break:break-all;">Button not working? Copy this link into your browser:<br>{{.D.ReceiptURL}}</p>
-{{if .D.SupportEmail}}<hr class="hr" style="border:0;border-top:1px solid #e6e8ef;margin:28px 0 18px;">
-<p class="mu" style="margin:0;font-size:13px;color:#6b7385;">Questions about your order? Write to <a class="lnk" href="mailto:{{.D.SupportEmail}}" style="color:` + accent + `;text-decoration:none;">{{.D.SupportEmail}}</a>.</p>{{end}}
+<p class="mu" style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#a3a3a3;word-break:break-all;">Button not working? Copy this link into your browser:<br>{{.D.ReceiptURL}}</p>
+{{if .D.SupportEmail}}<hr class="hr" style="border:0;border-top:1px solid #e5e5e5;margin:28px 0 18px;">
+<p class="mu" style="margin:0;font-size:13px;color:#737373;">Questions about your order? Write to <a class="lnk" href="mailto:{{.D.SupportEmail}}" style="color:` + accent + `;text-decoration:underline;">{{.D.SupportEmail}}</a>.</p>{{end}}
 `)
 
 func RenderReceipt(d ReceiptData) (html, text string, err error) {
@@ -278,12 +281,12 @@ func receiptText(d ReceiptData) string {
 // ---------------------------------------------------------------- magic link
 
 var magicTpl = page(`
-<h1 class="h1 tx" style="margin:0 0 10px;font:700 26px/1.25 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;letter-spacing:-0.01em;">Sign in to your orders</h1>
+<h1 class="h1 tx" style="margin:0 0 10px;font:700 26px/1.25 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;letter-spacing:-0.01em;">Sign in to your orders</h1>
 <p style="margin:0 0 26px;">Use the button below to sign in to {{.D.StoreName}} and see your orders, downloads and license keys. The link works once and expires in 15 minutes.</p>
 ` + btn("{{.D.Link}}", "Sign in") + `
-<p class="mu" style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#8a92a3;word-break:break-all;">Button not working? Copy this link into your browser:<br>{{.D.Link}}</p>
-<hr class="hr" style="border:0;border-top:1px solid #e6e8ef;margin:28px 0 18px;">
-<p class="mu" style="margin:0;font-size:13px;color:#6b7385;">If you did not ask for this e-mail, you can safely ignore it. Nobody can sign in without the link.</p>
+<p class="mu" style="margin:22px 0 0;font-size:12px;line-height:1.6;color:#a3a3a3;word-break:break-all;">Button not working? Copy this link into your browser:<br>{{.D.Link}}</p>
+<hr class="hr" style="border:0;border-top:1px solid #e5e5e5;margin:28px 0 18px;">
+<p class="mu" style="margin:0;font-size:13px;color:#737373;">If you did not ask for this e-mail, you can safely ignore it. Nobody can sign in without the link.</p>
 `)
 
 func RenderMagicLink(d MagicLinkData) (html, text string, err error) {
@@ -298,9 +301,9 @@ func RenderMagicLink(d MagicLinkData) (html, text string, err error) {
 // ---------------------------------------------------------------- test message
 
 var testTpl = page(`
-<h1 class="h1 tx" style="margin:0 0 10px;font:700 26px/1.25 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#14161c;letter-spacing:-0.01em;">Your e-mail settings work</h1>
+<h1 class="h1 tx" style="margin:0 0 10px;font:700 26px/1.25 -apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#0a0a0a;letter-spacing:-0.01em;">Your e-mail settings work</h1>
 <p style="margin:0 0 18px;">This is a test message from {{.D.Product}}. If you can read it, your SMTP server accepted the message and your customers will get their receipts and sign-in links.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="pill" style="background:#eef0ff;color:#3730a3;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;">&#10003; Delivered</td></tr></table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td class="pill" style="background:#f5f5f5;color:#171717;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:600;">&#10003; Delivered</td></tr></table>
 `)
 
 func RenderTest(d TestData) (html, text string, err error) {
