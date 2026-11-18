@@ -1216,6 +1216,40 @@ func TestMFAIsEnforcedForEveryMember(t *testing.T) {
 	}
 }
 
+// My Orders is for live data; on a server that runs with a Stripe test key everything is test data and
+// has to be reachable too (found while trying the magic-link e-mail against a Stripe sandbox).
+func TestMagicLinkForTestOrdersOnlyWithATestKey(t *testing.T) {
+	e := newEnv(t)
+	e.seedCatalog()
+	g := e.app.DB
+	var st db.Store
+	g.First(&st)
+	now := db.Now()
+	for _, em := range []string{"a@example.com", "b@example.com"} {
+		g.Create(&db.Order{StoreID: st.ID, Identifier: "id-" + em, OrderNumber: 1, UserEmail: em, Status: "paid", Total: 100, Currency: "USD", TestMode: true, Source: "stripe", CreatedAt: now, UpdatedAt: now})
+	}
+	sent := func() int { e.mu.Lock(); defer e.mu.Unlock(); return len(e.sent) }
+	ask := func(email string) {
+		rr := e.do("POST", "/storefront-api/auth/magic-link", map[string]string{"Content-Type": "application/json", "X-Requested-With": "df-admin"}, strings.NewReader(fmt.Sprintf(`{"email":%q}`, email)))
+		if rr.Code != 204 {
+			t.Fatalf("magic link: %d", rr.Code)
+		}
+		service.WaitBackground()
+	}
+	before := sent()
+	ask("a@example.com") // the harness runs on an sk_test_ key
+	if sent() != before+1 {
+		t.Fatalf("a test-key server must send the link for a test order (sent %d -> %d)", before, sent())
+	}
+	if err := e.app.Svc.Settings.Set("stripe.secret_key", "sk_live_x"); err != nil {
+		t.Fatal(err)
+	}
+	ask("b@example.com") // a live-key server: test orders are not for customers
+	if sent() != before+1 {
+		t.Fatalf("a live-key server must not send a link for a test order (sent %d)", sent())
+	}
+}
+
 func TestAdminImportRejectsUnknownConflictPolicy(t *testing.T) {
 	e := newEnv(t)
 	hdr := map[string]string{"Content-Type": "application/json", "X-Requested-With": "df-admin"}

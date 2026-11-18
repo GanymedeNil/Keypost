@@ -303,14 +303,16 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ok, _, _ := h.limiter.Allow("ml-mail:"+email, 3); ok {
-		var n int64
-		h.S.DB.Model(&db.Order{}).Where("LOWER(user_email) = ? AND test_mode = ?", email, false).Count(&n)
-		if n > 0 {
+		var last db.Order
+		found := h.S.DB.Where("LOWER(user_email) = ? AND test_mode IN ?", email, h.visibleModes()).Order("id DESC").Limit(1).Find(&last).RowsAffected > 0
+		if found {
 			token := crypt.RandomToken(32)
 			now := db.Now()
 			h.S.DB.Create(&db.CustomerLoginToken{TokenHash: crypt.SHA256Hex(token), Email: email, ExpiresAt: now.Add(15 * time.Minute), CreatedAt: now})
-			var store db.Store
-			h.S.DB.Order("id").First(&store)
+			var store db.Store // the store the customer bought from, so the e-mail names the right shop
+			if h.S.DB.First(&store, last.StoreID).Error != nil {
+				h.S.DB.Order("id").First(&store)
+			}
 			link := h.S.URLs.MagicLink(token)
 			h.S.Go(func() {
 				html, text, err := mail.RenderMagicLink(mail.MagicLinkData{StoreName: firstNonEmpty(store.Name, "Your store"), Link: link})
@@ -321,6 +323,16 @@ func (h *Handler) magicLink(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// visibleModes: customers see live data. On a server running with a Stripe test key (an
+// evaluation or staging instance) everything is test data, so test-mode rows are shown too;
+// otherwise nobody could sign in to My Orders there.
+func (h *Handler) visibleModes() []bool {
+	if h.S.StripeTestMode() {
+		return []bool{false, true}
+	}
+	return []bool{false}
 }
 
 func firstNonEmpty(a, b string) string {
@@ -383,7 +395,7 @@ func (h *Handler) myOrders(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var orders []db.Order
-	h.S.DB.Where("LOWER(user_email) = ? AND test_mode = ?", strings.ToLower(email), false).Order("id DESC").Limit(200).Find(&orders)
+	h.S.DB.Where("LOWER(user_email) = ? AND test_mode IN ?", strings.ToLower(email), h.visibleModes()).Order("id DESC").Limit(200).Find(&orders)
 	ids := make([]int64, len(orders))
 	for i, o := range orders {
 		ids[i] = o.ID
@@ -438,7 +450,7 @@ func (h *Handler) myOrders(w http.ResponseWriter, r *http.Request) {
 		out = append(out, b)
 	}
 	var subs []db.Subscription
-	h.S.DB.Where("LOWER(user_email) = ? AND test_mode = ?", strings.ToLower(email), false).Order("id DESC").Limit(100).Find(&subs)
+	h.S.DB.Where("LOWER(user_email) = ? AND test_mode IN ?", strings.ToLower(email), h.visibleModes()).Order("id DESC").Limit(100).Find(&subs)
 	subOut := make([]map[string]any, 0, len(subs))
 	for _, s := range subs {
 		subOut = append(subOut, map[string]any{
@@ -568,7 +580,7 @@ func (h *Handler) billingURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var c db.Customer
-	if err := h.S.DB.Where("LOWER(email) = ? AND test_mode = ?", strings.ToLower(email), false).Order("(stripe_customer_id = '') ASC, id").First(&c).Error; err != nil {
+	if err := h.S.DB.Where("LOWER(email) = ? AND test_mode IN ?", strings.ToLower(email), h.visibleModes()).Order("(stripe_customer_id = '') ASC, id").First(&c).Error; err != nil {
 		apiErr(w, http.StatusNotFound, "not_found", "No billing profile found for this email.")
 		return
 	}
