@@ -77,11 +77,12 @@ func loadFixtures(f *fakeLS) {
 	price := func(id, variantID int64, category string, unit int64, renewal any) map[string]any {
 		a := map[string]any{
 			"variant_id": variantID, "category": category, "scheme": "standard", "usage_aggregation": nil, "unit_price": unit,
-			"unit_price_decimal": nil, "setup_fee_enabled": false, "setup_fee": nil, "package_size": 1, "tiers": []any{},
+			"unit_price_decimal": nil, "setup_fee_enabled": nil, "setup_fee": nil, "package_size": 1, "tiers": nil, // one-time prices have both as null in the real API
 			"renewal_interval_unit": nil, "renewal_interval_quantity": nil, "trial_interval_unit": nil, "trial_interval_quantity": nil,
 			"min_price": nil, "suggested_price": nil, "tax_code": "eservice", "created_at": tsA, "updated_at": tsB,
 		}
 		if renewal != nil {
+			a["setup_fee_enabled"] = false // subscription prices carry false
 			a["renewal_interval_unit"], a["renewal_interval_quantity"] = renewal, 1
 			a["trial_interval_unit"], a["trial_interval_quantity"] = "day", 14
 		}

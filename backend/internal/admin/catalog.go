@@ -169,9 +169,7 @@ func (h *Handler) productDTOs(ps []db.Product) []map[string]any {
 		var prs []db.Price
 		h.S.DB.Where("variant_id IN ?", vids).Order("id").Find(&prs)
 		for _, p := range prs {
-			if _, ok := first[p.VariantID]; !ok {
-				first[p.VariantID] = p
-			}
+			first[p.VariantID] = p // ascending ids: the latest price record is the current one
 		}
 	}
 	by := map[int64][]db.Variant{}

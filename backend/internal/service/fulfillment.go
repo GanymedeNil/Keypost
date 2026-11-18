@@ -89,7 +89,7 @@ func (s *Svc) matchLineItem(tx *gorm.DB, li stripe.LineItem) matched {
 	prodID := li.Price.Product.ID
 	if prodID != "" && tx.Where("stripe_product_id = ?", prodID).Order("id").First(&m.Variant).Error == nil {
 		_ = tx.First(&m.Product, m.Variant.ProductID).Error
-		_ = tx.Where("variant_id = ?", m.Variant.ID).Order("id").First(&m.Price).Error
+		_ = tx.Where("variant_id = ?", m.Variant.ID).Order("id DESC").First(&m.Price).Error
 		m.Found = true
 		return m
 	}
@@ -98,7 +98,7 @@ func (s *Svc) matchLineItem(tx *gorm.DB, li stripe.LineItem) matched {
 		if v := sp.Metadata[k]; v != "" {
 			if id, err := strconv.ParseInt(v, 10, 64); err == nil && tx.First(&m.Variant, id).Error == nil {
 				_ = tx.First(&m.Product, m.Variant.ProductID).Error
-				_ = tx.Where("variant_id = ?", m.Variant.ID).Order("id").First(&m.Price).Error
+				_ = tx.Where("variant_id = ?", m.Variant.ID).Order("id DESC").First(&m.Price).Error
 				m.Found = true
 				return m
 			}
@@ -111,7 +111,7 @@ func (s *Svc) matchLineItem(tx *gorm.DB, li stripe.LineItem) matched {
 		tx.Where("product_id = ?", prod.ID).Order("sort, id").Limit(2).Find(&vs)
 		if len(vs) == 1 {
 			m.Variant, m.Product, m.Found = vs[0], prod, true
-			_ = tx.Where("variant_id = ?", m.Variant.ID).Order("id").First(&m.Price).Error
+			_ = tx.Where("variant_id = ?", m.Variant.ID).Order("id DESC").First(&m.Price).Error
 		}
 	}
 	return m

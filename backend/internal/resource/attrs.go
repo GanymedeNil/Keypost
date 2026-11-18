@@ -90,7 +90,9 @@ func CountryName(code string) string {
 }
 
 func (b *Builder) Store(s db.Store, testMode bool) Resource {
-	st := b.StoreStats(s.ID, testMode)
+	// Lemon Squeezy reports 0 sales/revenue for a store that only has test orders:
+	// test mode never counts towards the totals, whatever mode the API key is in
+	st := b.StoreStats(s.ID, false)
 	return b.res("stores", s.ID, StoreAttrs{
 		Name: s.Name, Slug: s.Slug, Domain: s.Domain, URL: s.URL, AvatarURL: s.AvatarURL, Plan: s.Plan,
 		Country: s.Country, CountryNicename: CountryName(s.Country), Currency: s.Currency,
@@ -168,6 +170,12 @@ func monthlyAmount(amount int64, unit string, qty int) int64 {
 }
 
 func (b *Builder) CustomerStats(ids []int64) map[int64]CustomerStats {
+	return b.customerStats(ids, false)
+}
+
+// customerStats sums what a customer paid. liveOnly leaves test-mode orders and
+// invoices out, which is what Lemon Squeezy's customers resource does.
+func (b *Builder) customerStats(ids []int64, liveOnly bool) map[int64]CustomerStats {
 	out := map[int64]CustomerStats{}
 	ids = uniq(ids)
 	if len(ids) == 0 {
@@ -178,16 +186,24 @@ func (b *Builder) CustomerStats(ids []int64) map[int64]CustomerStats {
 		Sum        int64
 	}
 	var rs []rev
-	b.DB.Model(&db.Order{}).Select("customer_id, COALESCE(SUM(total_usd - refunded_amount_usd),0) AS sum").
-		Where("customer_id IN ? AND status IN ?", ids, []string{"paid", "partial_refund", "refunded"}).Group("customer_id").Scan(&rs)
+	orders := b.DB.Model(&db.Order{}).Select("customer_id, COALESCE(SUM(total_usd - refunded_amount_usd),0) AS sum").
+		Where("customer_id IN ? AND status IN ?", ids, []string{"paid", "partial_refund", "refunded"})
+	if liveOnly {
+		orders = orders.Where("test_mode = ?", false)
+	}
+	orders.Group("customer_id").Scan(&rs)
 	for _, r := range rs {
 		s := out[r.CustomerID]
 		s.Revenue += r.Sum
 		out[r.CustomerID] = s
 	}
 	var rs2 []rev
-	b.DB.Model(&db.SubscriptionInvoice{}).Select("customer_id, COALESCE(SUM(total_usd - refunded_amount_usd),0) AS sum").
-		Where("customer_id IN ? AND billing_reason <> ? AND status IN ?", ids, "initial", []string{"paid", "partial_refund", "refunded"}).Group("customer_id").Scan(&rs2)
+	invoices := b.DB.Model(&db.SubscriptionInvoice{}).Select("customer_id, COALESCE(SUM(total_usd - refunded_amount_usd),0) AS sum").
+		Where("customer_id IN ? AND billing_reason <> ? AND status IN ?", ids, "initial", []string{"paid", "partial_refund", "refunded"})
+	if liveOnly {
+		invoices = invoices.Where("test_mode = ?", false)
+	}
+	invoices.Group("customer_id").Scan(&rs2)
 	for _, r := range rs2 {
 		s := out[r.CustomerID]
 		s.Revenue += r.Sum
@@ -234,7 +250,7 @@ func (b *Builder) Customers(cs []db.Customer) []Resource {
 	for i, c := range cs {
 		ids[i] = c.ID
 	}
-	stats := b.CustomerStats(ids)
+	stats := b.customerStats(ids, true)
 	out := make([]Resource, len(cs))
 	for i, c := range cs {
 		st := stats[c.ID]
@@ -283,8 +299,11 @@ type ProductAttrs struct {
 	TestMode           bool    `json:"test_mode"`
 }
 
-// firstPrices returns the lowest-id price for every variant id.
-func (b *Builder) firstPrices(variantIDs []int64) map[int64]db.Price {
+// currentPrices returns the price a variant sells at: the most recent price
+// record. Lemon Squeezy keeps the old records when a variant's price is edited
+// (so a variant can have several), and its variant/product "price" attributes
+// follow the latest one.
+func (b *Builder) currentPrices(variantIDs []int64) map[int64]db.Price {
 	out := map[int64]db.Price{}
 	variantIDs = uniq(variantIDs)
 	if len(variantIDs) == 0 {
@@ -293,9 +312,7 @@ func (b *Builder) firstPrices(variantIDs []int64) map[int64]db.Price {
 	var ps []db.Price
 	b.DB.Where("variant_id IN ?", variantIDs).Order("id").Find(&ps)
 	for _, p := range ps {
-		if _, ok := out[p.VariantID]; !ok {
-			out[p.VariantID] = p
-		}
+		out[p.VariantID] = p // ascending ids: the last one wins
 	}
 	return out
 }
@@ -313,7 +330,7 @@ func (b *Builder) Products(ps []db.Product) []Resource {
 	for i, v := range vs {
 		vids[i] = v.ID
 	}
-	prices := b.firstPrices(vids)
+	prices := b.currentPrices(vids)
 	byProduct := map[int64][]db.Variant{}
 	for _, v := range vs {
 		byProduct[v.ProductID] = append(byProduct[v.ProductID], v)
@@ -393,7 +410,7 @@ func (b *Builder) Variants(vs []db.Variant) []Resource {
 	for i, v := range vs {
 		ids[i] = v.ID
 	}
-	prices := b.firstPrices(ids)
+	prices := b.currentPrices(ids)
 	out := make([]Resource, len(vs))
 	for i, v := range vs {
 		a := VariantAttrs{
@@ -440,7 +457,7 @@ type PriceAttrs struct {
 	UsageAggregation        *string        `json:"usage_aggregation"`
 	UnitPrice               int64          `json:"unit_price"`
 	UnitPriceDecimal        *string        `json:"unit_price_decimal"`
-	SetupFeeEnabled         bool           `json:"setup_fee_enabled"`
+	SetupFeeEnabled         *bool          `json:"setup_fee_enabled"`
 	SetupFee                *int64         `json:"setup_fee"`
 	PackageSize             int            `json:"package_size"`
 	Tiers                   []db.PriceTier `json:"tiers"`
@@ -458,9 +475,13 @@ type PriceAttrs struct {
 func (b *Builder) Prices(ps []db.Price) []Resource {
 	out := make([]Resource, len(ps))
 	for i, p := range ps {
-		tiers := p.Tiers.V
-		if tiers == nil {
-			tiers = []db.PriceTier{}
+		var tiers []db.PriceTier // null for a standard scheme, as Lemon Squeezy has it
+		if len(p.Tiers.V) > 0 {
+			tiers = p.Tiers.V
+		}
+		var setupFee *bool // null (not false) for one-time prices
+		if p.Category != "one_time" || p.SetupFeeEnabled {
+			setupFee = &p.SetupFeeEnabled
 		}
 		pkg := p.PackageSize
 		if pkg == 0 {
@@ -468,7 +489,7 @@ func (b *Builder) Prices(ps []db.Price) []Resource {
 		}
 		out[i] = b.res("prices", p.ID, PriceAttrs{
 			VariantID: p.VariantID, Category: p.Category, Scheme: p.Scheme, UsageAggregation: p.UsageAggregation,
-			UnitPrice: p.UnitPrice, UnitPriceDecimal: p.UnitPriceDecimal, SetupFeeEnabled: p.SetupFeeEnabled, SetupFee: p.SetupFee,
+			UnitPrice: p.UnitPrice, UnitPriceDecimal: p.UnitPriceDecimal, SetupFeeEnabled: setupFee, SetupFee: p.SetupFee,
 			PackageSize: pkg, Tiers: tiers, RenewalIntervalUnit: p.RenewalIntervalUnit, RenewalIntervalQuantity: p.RenewalIntervalQuantity,
 			TrialIntervalUnit: p.TrialIntervalUnit, TrialIntervalQuantity: p.TrialIntervalQuantity,
 			MinPrice: p.MinPrice, SuggestedPrice: p.SuggestedPrice, TaxCode: p.TaxCode,
@@ -514,18 +535,18 @@ func (b *Builder) Files(fs []db.File) []Resource {
 // ---------------------------------------------------------------- orders
 
 type OrderItemBrief struct {
-	ID          int64   `json:"id"`
-	OrderID     int64   `json:"order_id"`
-	ProductID   int64   `json:"product_id"`
-	VariantID   int64   `json:"variant_id"`
-	ProductName string  `json:"product_name"`
-	VariantName string  `json:"variant_name"`
-	Price       int64   `json:"price"`
-	Quantity    int     `json:"quantity"`
-	CreatedAt   string  `json:"created_at"`
-	UpdatedAt   string  `json:"updated_at"`
-	DeletedAt   *string `json:"deleted_at"`
-	TestMode    bool    `json:"test_mode"`
+	ID          int64  `json:"id"`
+	OrderID     int64  `json:"order_id"`
+	ProductID   int64  `json:"product_id"`
+	VariantID   int64  `json:"variant_id"`
+	PriceID     *int64 `json:"price_id"`
+	ProductName string `json:"product_name"`
+	VariantName string `json:"variant_name"`
+	Price       int64  `json:"price"`
+	Quantity    int    `json:"quantity"`
+	CreatedAt   string `json:"created_at"`
+	UpdatedAt   string `json:"updated_at"`
+	TestMode    bool   `json:"test_mode"`
 }
 
 type OrderAttrs struct {
@@ -613,7 +634,7 @@ func (b *Builder) Orders(os []db.Order) []Resource {
 		a.URLs.Receipt = b.URLs.Receipt(o.Identifier)
 		if it, ok := first[o.ID]; ok {
 			a.FirstOrderItem = &OrderItemBrief{
-				ID: it.ID, OrderID: it.OrderID, ProductID: it.ProductID, VariantID: it.VariantID, ProductName: it.ProductName,
+				ID: it.ID, OrderID: it.OrderID, ProductID: it.ProductID, VariantID: it.VariantID, PriceID: it.PriceID, ProductName: it.ProductName,
 				VariantName: it.VariantName, Price: it.Price, Quantity: it.Quantity, CreatedAt: TS(it.CreatedAt), UpdatedAt: TS(it.UpdatedAt), TestMode: it.TestMode,
 			}
 		}
@@ -826,6 +847,7 @@ type LicenseKeyAttrs struct {
 	ExpiresAt       *string `json:"expires_at"`
 	CreatedAt       string  `json:"created_at"`
 	UpdatedAt       string  `json:"updated_at"`
+	TestMode        bool    `json:"test_mode"`
 }
 
 func KeyShort(key string) string {
@@ -849,7 +871,7 @@ func (b *Builder) LicenseKeys(ks []db.LicenseKey) []Resource {
 			StoreID: k.StoreID, CustomerID: k.CustomerID, OrderID: k.OrderID, OrderItemID: k.OrderItemID, ProductID: k.ProductID,
 			UserName: k.UserName, UserEmail: k.UserEmail, Key: k.Key, KeyShort: KeyShort(k.Key), ActivationLimit: k.ActivationLimit,
 			InstancesCount: k.InstancesCount, Disabled: dis, Status: st, StatusFormatted: FormatStatus(st),
-			ExpiresAt: TSP(k.ExpiresAt), CreatedAt: TS(k.CreatedAt), UpdatedAt: TS(k.UpdatedAt),
+			ExpiresAt: TSP(k.ExpiresAt), CreatedAt: TS(k.CreatedAt), UpdatedAt: TS(k.UpdatedAt), TestMode: k.TestMode,
 		}, "store", "customer", "order", "order-item", "product", "license-key-instances")
 	}
 	return out
