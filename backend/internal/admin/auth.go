@@ -23,7 +23,7 @@ func userDTO(u db.User) map[string]any {
 	return map[string]any{
 		"id": u.ID, "email": u.Email, "name": u.Name, "role": u.Role, "stripe_account_id": u.StripeAccountID,
 		"stripe_account_label": u.StripeAccountLabel, "disabled": u.Disabled, "has_password": u.PasswordHash != "",
-		"last_login_at": tsp(u.LastLoginAt), "created_at": ts(u.CreatedAt),
+		"mfa_enabled": u.MFAEnabledAt != nil, "last_login_at": tsp(u.LastLoginAt), "created_at": ts(u.CreatedAt),
 	}
 }
 
@@ -49,7 +49,8 @@ func (h *Handler) authConfig(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) startSession(w http.ResponseWriter, r *http.Request, u *db.User) error {
-	token, exp, err := auth.NewSession(h.S.DB, u.ID, h.ip(r), r.UserAgent(), h.S.Cfg.SessionTTL)
+	// With MFA required every new session starts unverified, however the user signed in.
+	token, exp, err := auth.NewSession(h.S.DB, u.ID, h.ip(r), r.UserAgent(), h.S.Cfg.SessionTTL, !h.S.Cfg.MFARequired)
 	if err != nil {
 		return err
 	}
@@ -108,7 +109,7 @@ func (h *Handler) setup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.audit(r, &u, "auth.setup", "user", u.ID, nil)
-	h.created(w, map[string]any{"user": userDTO(u)})
+	h.created(w, map[string]any{"user": h.meDTO(u, !h.S.Cfg.MFARequired)})
 }
 
 func firstNonEmpty(ss ...string) string {
@@ -152,7 +153,7 @@ func (h *Handler) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.audit(r, &u, "auth.login", "user", u.ID, nil)
-	h.ok(w, map[string]any{"user": userDTO(u)})
+	h.ok(w, map[string]any{"user": h.meDTO(u, !h.S.Cfg.MFARequired)})
 }
 
 func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +164,10 @@ func (h *Handler) logout(w http.ResponseWriter, r *http.Request) {
 	noContent(w)
 }
 
-func (h *Handler) me(w http.ResponseWriter, r *http.Request, u *db.User) { h.ok(w, userDTO(*u)) }
+func (h *Handler) me(w http.ResponseWriter, r *http.Request, u *db.User) {
+	_, sess, _ := h.session(r)
+	h.ok(w, h.meDTO(*u, sess != nil && h.sessionVerified(sess)))
+}
 
 func (h *Handler) updateMe(w http.ResponseWriter, r *http.Request, u *db.User) {
 	var in struct {

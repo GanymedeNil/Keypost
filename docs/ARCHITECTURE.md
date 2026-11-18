@@ -5,7 +5,7 @@
 | 组件 | 路径 | 职责 |
 | --- | --- | --- |
 | API 服务 | `backend/cmd/server` | LS 兼容 API、License API、Stripe Webhook、客户 API、Admin API、下载、后台任务 |
-| 运维 CLI | `backend/cmd/dfctl` | `migrate`、`admin create / reset-password`、`apikey create`（直接操作数据库） |
+| 运维 CLI | `backend/cmd/dfctl` | `migrate`、`admin create / reset-password / reset-mfa`、`apikey create`（直接操作数据库） |
 | Web | `frontend/` | Next.js：`/admin/*` 管理后台、`/my-orders/*` 客户页面；`rewrites` 反代到后端 |
 
 后端包划分（`backend/internal`）：
@@ -61,6 +61,7 @@ storage     本地磁盘 / S3 兼容   mail   SMTP 与邮件模板   ratelimit /
 | --- | --- |
 | 密钥落盘 | Stripe 密钥、Webhook 签名密钥、SMTP 密码、出站 Webhook secret 用 `APP_SECRET` 派生密钥做 AES-256-GCM 加密；API 永不回显明文（只给 `set/source/hint`） |
 | 后台会话 | 随机令牌，库中仅存 SHA-256；HttpOnly + SameSite=Lax Cookie；所有写请求要求 `X-Requested-With: df-admin`；登录按 IP 与账号限流；密码 bcrypt(12) 并对不存在账号做等价耗时比较 |
+| 两步验证 | 所有成员（含「使用 Stripe 登录」的）登录后会话都是未验证状态，只能访问 `/me`、`/auth/mfa/*` 和退出；通过 TOTP（RFC 6238）或一次性恢复码后才可用。密钥用 `APP_SECRET` 加密存库、恢复码存带密钥的哈希；同一时间窗的验证码不能重放；连续错 5 次锁定账号 15 分钟；owner 可重置他人，最后手段是 `dfctl admin reset-mfa`。`MFA_REQUIRED=false` 仅用于本地开发 |
 | API Key | `dfk_live_…/dfk_test_…`，库中仅存 SHA-256，创建时只显示一次，可设过期/吊销 |
 | 角色 | `owner` > `admin` > `viewer`（所有写操作 403）；不能删除/降级最后一个 owner |
 | 客户登录 | 魔法链接 15 分钟、一次性、库中存哈希；对不存在的邮箱同样返回 204（防枚举）；按 IP/邮箱限流；会话 Cookie 为 HMAC 签名 |

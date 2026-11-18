@@ -38,6 +38,7 @@ type Config struct {
 	TrustProxyHeaders  bool
 	CORSAllowedOrigins []string
 	DisableKeysRefund  bool // disable license keys on full refund
+	MFARequired        bool // every admin must pass a TOTP step after signing in (default true)
 	WebhookMaxAttempts int
 }
 
@@ -129,6 +130,7 @@ func Load() (*Config, error) {
 		TrustProxyHeaders:  envBool("TRUST_PROXY_HEADERS", false),
 		CORSAllowedOrigins: splitList(os.Getenv("CORS_ALLOWED_ORIGINS")),
 		DisableKeysRefund:  envBool("DISABLE_LICENSE_ON_REFUND", true),
+		MFARequired:        envBool("MFA_REQUIRED", true),
 		WebhookMaxAttempts: envInt("WEBHOOK_MAX_ATTEMPTS", 4),
 	}
 	if c.AppSecret == "" {

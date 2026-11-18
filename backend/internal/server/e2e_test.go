@@ -150,7 +150,10 @@ type env struct {
 	mu     sync.Mutex
 }
 
-func newEnv(t *testing.T) *env {
+func newEnv(t *testing.T) *env { return newEnvCfg(t, nil) }
+
+// newEnvCfg builds the harness; mod may adjust the configuration before the app starts.
+func newEnvCfg(t *testing.T, mod func(*config.Config)) *env {
 	t.Helper()
 	fs := newFakeStripe(t)
 	e := &env{t: t, stripe: fs, hook: newReceiver(t)}
@@ -174,6 +177,9 @@ func newEnv(t *testing.T) *env {
 		SMTP:             config.SMTPConfig{Host: "smtp.test", From: "Shop <shop@example.com>", Port: 587, Security: "none"},
 		LicenseRateLimit: 1000, APIRateLimit: 1000, DownloadLimitDay: 3, DownloadURLTTL: time.Hour, SessionTTL: time.Hour,
 		DisableKeysRefund: true, WebhookMaxAttempts: 2, AdminEmail: "owner@example.com", AdminPassword: "correct horse battery", AdminName: "Owner",
+	}
+	if mod != nil {
+		mod(cfg)
 	}
 	st, err := storage.NewLocal(t.TempDir())
 	if err != nil {
@@ -1010,6 +1016,203 @@ func TestResumeSubscriptionNeverSendsBothCancelFields(t *testing.T) {
 		if !lp.Has(c.wantKey) || lp.Has("cancel_at") && lp.Has("cancel_at_period_end") {
 			t.Errorf("%s: resume sent %v", c.name, lp)
 		}
+	}
+}
+
+// Every member must pass a TOTP step after signing in, however they signed in.
+func TestMFAIsEnforcedForEveryMember(t *testing.T) {
+	e := newEnvCfg(t, func(c *config.Config) { c.MFARequired = true })
+	e.seedCatalog()
+	g := e.app.DB
+	csrf := map[string]string{"Content-Type": "application/json", "X-Requested-With": "df-admin"}
+	call := func(cookie, method, path string, body any) (int, map[string]any) {
+		var rd io.Reader
+		if body != nil {
+			b, _ := json.Marshal(body)
+			rd = bytes.NewReader(b)
+		}
+		h := map[string]string{"Cookie": cookie}
+		for k, v := range csrf {
+			h[k] = v
+		}
+		rr := e.do(method, path, h, rd)
+		var out map[string]any
+		_ = json.Unmarshal(rr.Body.Bytes(), &out)
+		return rr.Code, out
+	}
+	login := func(email, pw string) (string, map[string]any) {
+		rr := e.do("POST", "/admin-api/auth/login", csrf, strings.NewReader(fmt.Sprintf(`{"email":%q,"password":%q}`, email, pw)))
+		if rr.Code != 200 {
+			t.Fatalf("login %s: %d %s", email, rr.Code, rr.Body.String())
+		}
+		return cookieValue(rr, "df_admin"), decode(t, rr)
+	}
+	code := func(m map[string]any) string { return fmt.Sprint(sub(m, "error", "code")) }
+	enrol := func(cookie string) (secret string, recovery []any) {
+		c, d := call(cookie, "POST", "/admin-api/auth/mfa/setup", nil)
+		secret, _ = d["secret"].(string)
+		if c != 200 || secret == "" || !strings.HasPrefix(fmt.Sprint(d["otpauth_uri"]), "otpauth://totp/Keypost") {
+			t.Fatalf("setup: %d %v", c, d)
+		}
+		if c, d := call(cookie, "POST", "/admin-api/auth/mfa/enable", map[string]string{"code": "000000"}); c != 422 || sub(d, "error", "fields", "code") == nil {
+			t.Fatalf("wrong enable code: %d %v", c, d)
+		}
+		c, d = call(cookie, "POST", "/admin-api/auth/mfa/enable", map[string]string{"code": auth.TOTPCodeAt(secret, time.Now())})
+		recovery, _ = d["recovery_codes"].([]any)
+		if c != 200 || len(recovery) != 10 {
+			t.Fatalf("enable: %d %v", c, d)
+		}
+		return secret, recovery
+	}
+	// the next 30-second step: valid (one step of drift is accepted) and newer than the one enable used
+	next := func(secret string) string { return auth.TOTPCodeAt(secret, time.Now().Add(30*time.Second)) }
+
+	// 1) a fresh login is unverified and can do nothing but set MFA up
+	owner, lu := login("owner@example.com", "correct horse battery")
+	if sub(lu, "user", "mfa", "required") != true || sub(lu, "user", "mfa", "enabled") != false || sub(lu, "user", "mfa", "verified") != false {
+		t.Fatalf("login mfa block: %v", sub(lu, "user", "mfa"))
+	}
+	if c, d := call(owner, "GET", "/admin-api/products", nil); c != 403 || code(d) != "mfa_setup_required" {
+		t.Fatalf("products before MFA: %d %v", c, d)
+	}
+	if c, d := call(owner, "POST", "/admin-api/products", map[string]any{"name": "x"}); c != 403 || code(d) != "mfa_setup_required" {
+		t.Fatalf("writes before MFA: %d %v", c, d)
+	}
+	if c, d := call(owner, "GET", "/admin-api/me", nil); c != 200 || sub(d, "mfa", "verified") != false {
+		t.Fatalf("/me must stay reachable: %d %v", c, d)
+	}
+	if c, d := call(owner, "POST", "/admin-api/auth/mfa/verify", map[string]string{"code": "123456"}); c != 409 || code(d) != "mfa_setup_required" {
+		t.Fatalf("verify without enrolment: %d %v", c, d)
+	}
+
+	// 2) enrolment unlocks the session and shows the recovery codes once
+	secret, recovery := enrol(owner)
+	if c, _ := call(owner, "GET", "/admin-api/products", nil); c != 200 {
+		t.Fatalf("products after enrolment: %d", c)
+	}
+	if c, d := call(owner, "POST", "/admin-api/auth/mfa/setup", nil); c != 409 {
+		t.Fatalf("a second setup must be refused: %d %v", c, d)
+	}
+	var u db.User
+	g.Where("email = ?", "owner@example.com").First(&u)
+	if u.MFASecret == "" || strings.Contains(u.MFASecret, secret) || len(u.MFARecoveryCodes.V) != 10 || strings.Contains(strings.Join(u.MFARecoveryCodes.V, ","), fmt.Sprint(recovery[0])) {
+		t.Fatal("the secret must be encrypted and recovery codes hashed at rest")
+	}
+
+	// 3) a new session needs the code; a code is good once
+	owner2, _ := login("owner@example.com", "correct horse battery")
+	if c, d := call(owner2, "GET", "/admin-api/orders", nil); c != 403 || code(d) != "mfa_required" {
+		t.Fatalf("orders before verify: %d %v", c, d)
+	}
+	if c, d := call(owner2, "POST", "/admin-api/auth/mfa/verify", map[string]string{"code": auth.TOTPCodeAt(secret, time.Now())}); c != 422 {
+		t.Fatalf("the code used for enrolment must not work again: %d %v", c, d)
+	}
+	good := next(secret)
+	if c, d := call(owner2, "POST", "/admin-api/auth/mfa/verify", map[string]string{"code": good}); c != 200 || sub(d, "mfa", "verified") != true {
+		t.Fatalf("verify: %d %v", c, d)
+	}
+	if c, _ := call(owner2, "GET", "/admin-api/orders", nil); c != 200 {
+		t.Fatalf("orders after verify: %d", c)
+	}
+	owner3, _ := login("owner@example.com", "correct horse battery")
+	if c, _ := call(owner3, "POST", "/admin-api/auth/mfa/verify", map[string]string{"code": good}); c != 422 {
+		t.Fatalf("replaying a code must fail: %d", c)
+	}
+
+	// 4) five wrong codes lock the account, even against the right code
+	g.Model(&db.User{}).Where("id = ?", u.ID).Update("mfa_failed", 0)
+	owner4, _ := login("owner@example.com", "correct horse battery")
+	var last int
+	for i := 0; i < 5; i++ {
+		last, _ = call(owner4, "POST", "/admin-api/auth/mfa/verify", map[string]string{"code": "000000"})
+	}
+	if last != 429 {
+		t.Fatalf("5th wrong code: %d, want 429", last)
+	}
+	if c, d := call(owner4, "POST", "/admin-api/auth/mfa/verify", map[string]string{"code": next(secret)}); c != 429 {
+		t.Fatalf("locked account accepted a correct code: %d %v", c, d)
+	}
+	g.Model(&db.User{}).Where("id = ?", u.ID).Update("mfa_locked_until", nil)
+
+	// 5) recovery codes: single use, case-insensitive; the used one is gone
+	rc := fmt.Sprint(recovery[0])
+	if c, d := call(owner4, "POST", "/admin-api/auth/mfa/verify", map[string]string{"recovery_code": strings.ToUpper(rc)}); c != 200 || sub(d, "mfa", "recovery_codes_left") != float64(9) {
+		t.Fatalf("recovery login: %d %v", c, d)
+	}
+	owner5, _ := login("owner@example.com", "correct horse battery")
+	if c, _ := call(owner5, "POST", "/admin-api/auth/mfa/verify", map[string]string{"recovery_code": rc}); c != 422 {
+		t.Fatalf("a recovery code must work once: %d", c)
+	}
+
+	// 6) regenerating recovery codes needs a fresh TOTP code and voids the old ones
+	if c, _ := call(owner4, "POST", "/admin-api/me/mfa/recovery-codes", map[string]string{"code": "000000"}); c != 422 {
+		t.Fatalf("regenerate with a wrong code: %d", c)
+	}
+	g.Model(&db.User{}).Where("id = ?", u.ID).Update("mfa_last_step", 0) // as if a few steps had passed since the last code was used
+	c, d := call(owner4, "POST", "/admin-api/me/mfa/recovery-codes", map[string]string{"code": auth.TOTPCodeAt(secret, time.Now())})
+	if c != 200 || len(d["recovery_codes"].([]any)) != 10 {
+		t.Fatalf("regenerate: %d %v", c, d)
+	}
+	owner6, _ := login("owner@example.com", "correct horse battery")
+	if c, _ := call(owner6, "POST", "/admin-api/auth/mfa/verify", map[string]string{"recovery_code": fmt.Sprint(recovery[1])}); c != 422 {
+		t.Fatalf("an old recovery code must be void: %d", c)
+	}
+
+	// 7) a new member has to enrol too; an owner can reset them, never themselves
+	c, d = call(owner4, "POST", "/admin-api/users", map[string]any{"email": "ana@example.com", "name": "Ana", "role": "viewer", "password": "long enough password"})
+	if c != 201 {
+		t.Fatalf("create member: %d %v", c, d)
+	}
+	ana, _ := login("ana@example.com", "long enough password")
+	if c, d := call(ana, "GET", "/admin-api/dashboard", nil); c != 403 || code(d) != "mfa_setup_required" {
+		t.Fatalf("a viewer must enrol as well: %d %v", c, d)
+	}
+	anaSecret, _ := enrol(ana) // a viewer may set MFA up although the role is read-only
+	_ = anaSecret
+	anaID := int64(d["id"].(float64))
+	if c, d := call(owner4, "POST", fmt.Sprintf("/admin-api/users/%d/mfa/reset", u.ID), nil); c != 409 {
+		t.Fatalf("self reset: %d %v", c, d)
+	}
+	if c, d := call(owner4, "POST", fmt.Sprintf("/admin-api/users/%d/mfa/reset", anaID), nil); c != 200 || d["mfa_enabled"] != false {
+		t.Fatalf("reset: %d %v", c, d)
+	}
+	if c, _ := call(ana, "GET", "/admin-api/me", nil); c != 401 {
+		t.Fatalf("a reset must end the member's sessions: %d", c)
+	}
+	ana2, _ := login("ana@example.com", "long enough password")
+	if c, d := call(ana2, "GET", "/admin-api/dashboard", nil); c != 403 || code(d) != "mfa_setup_required" {
+		t.Fatalf("after a reset the member enrols again: %d %v", c, d)
+	}
+	if c, d := call(ana2, "POST", "/admin-api/users/1/mfa/reset", nil); c != 403 {
+		t.Fatalf("a non-owner must not reset anyone: %d %v", c, d)
+	}
+
+	// 8) "Sign in with Stripe" does not skip it
+	if err := e.app.Svc.Settings.Set("stripe.login_accounts", "acct_mfa"); err != nil {
+		t.Fatal(err)
+	}
+	e.stripe.set("POST", "/oauth/token", `{"stripe_user_id":"acct_mfa","scope":"read_write","livemode":false,"token_type":"bearer"}`)
+	e.stripe.set("POST", "/oauth/deauthorize", `{"stripe_user_id":"acct_mfa"}`)
+	e.stripe.set("GET", "/v1/account", `{"id":"acct_mfa","email":"stripe-user@example.com","country":"US","business_profile":{"name":"Acme"}}`)
+	st := e.do("GET", "/admin-api/auth/stripe/start?mode=login", nil, nil)
+	loc, _ := url.Parse(st.Header().Get("Location"))
+	cb := e.do("GET", "/admin-api/auth/stripe/callback?code=ac_1&state="+loc.Query().Get("state"), map[string]string{"Cookie": cookieValue(st, "df_oauth")}, nil)
+	sc := cookieValue(cb, "df_admin")
+	if cb.Code != 302 || sc == "" {
+		t.Fatalf("stripe login: %d %s", cb.Code, cb.Header().Get("Location"))
+	}
+	if c, d := call(sc, "GET", "/admin-api/orders", nil); c != 403 || code(d) != "mfa_setup_required" {
+		t.Fatalf("a Stripe sign-in must still go through MFA: %d %v", c, d)
+	}
+
+	// 9) MFA_REQUIRED=false keeps the old behaviour (sessions are verified at once)
+	e2 := newEnvCfg(t, func(c *config.Config) { c.MFARequired = false })
+	rr := e2.do("POST", "/admin-api/auth/login", csrf, strings.NewReader(`{"email":"owner@example.com","password":"correct horse battery"}`))
+	if rr.Code != 200 || sub(decode(t, rr), "user", "mfa", "verified") != true {
+		t.Fatalf("login without MFA: %d %s", rr.Code, rr.Body.String())
+	}
+	if p := e2.do("GET", "/admin-api/products", map[string]string{"Cookie": cookieValue(rr, "df_admin")}, nil); p.Code != 200 {
+		t.Fatalf("products without MFA: %d", p.Code)
 	}
 }
 

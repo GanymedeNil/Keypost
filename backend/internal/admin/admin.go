@@ -88,23 +88,39 @@ func (h *Handler) decode(w http.ResponseWriter, r *http.Request, v any) bool {
 type level int
 
 const (
-	lvlRead  level = iota // any signed-in user
-	lvlWrite              // owner or admin
-	lvlOwner              // owner only
-	lvlSelf               // any signed-in user, even for writes (own profile)
+	lvlRead    level = iota // any signed-in user
+	lvlWrite                // owner or admin
+	lvlOwner                // owner only
+	lvlSelf                 // any signed-in user, even for writes (own profile)
+	lvlSession              // like lvlSelf, and also allowed before the MFA step is passed
 )
 
 func (h *Handler) secureCookie() bool { return strings.HasPrefix(h.S.Cfg.PublicURL, "https://") }
 
 func (h *Handler) ip(r *http.Request) string { return httpx.ClientIP(r, h.S.Cfg.TrustProxyHeaders) }
 
-func (h *Handler) currentUser(r *http.Request) (*db.User, bool) {
+// session resolves the cookie to its user and session row, verified or not.
+func (h *Handler) session(r *http.Request) (*db.User, *db.AdminSession, bool) {
 	c, err := r.Cookie(sessionCookie)
 	if err != nil {
-		return nil, false
+		return nil, nil, false
 	}
-	u, err := auth.SessionUser(h.S.DB, c.Value)
+	u, s, err := auth.SessionInfo(h.S.DB, c.Value)
 	if err != nil {
+		return nil, nil, false
+	}
+	return u, s, true
+}
+
+// sessionVerified: the session may use the back office (MFA passed, or not required).
+func (h *Handler) sessionVerified(s *db.AdminSession) bool {
+	return !h.S.Cfg.MFARequired || s.MFAVerified
+}
+
+// currentUser resolves a fully signed-in user (MFA passed).
+func (h *Handler) currentUser(r *http.Request) (*db.User, bool) {
+	u, s, ok := h.session(r)
+	if !ok || !h.sessionVerified(s) {
 		return nil, false
 	}
 	return u, true
@@ -112,7 +128,7 @@ func (h *Handler) currentUser(r *http.Request) (*db.User, bool) {
 
 func (h *Handler) guard(l level, next handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		u, ok := h.currentUser(r)
+		u, sess, ok := h.session(r)
 		if !ok {
 			h.fail(w, http.StatusUnauthorized, "unauthenticated", "Sign in required.", nil)
 			return
@@ -122,7 +138,15 @@ func (h *Handler) guard(l level, next handler) http.HandlerFunc {
 			h.fail(w, http.StatusForbidden, "forbidden", "Missing X-Requested-With header.", nil)
 			return
 		}
-		if l != lvlSelf && (mutating || l >= lvlWrite) && u.Role == auth.RoleViewer {
+		if l != lvlSession && !h.sessionVerified(sess) {
+			if u.MFAEnabledAt == nil {
+				h.fail(w, http.StatusForbidden, "mfa_setup_required", "Two-factor authentication must be set up before you can continue.", nil)
+			} else {
+				h.fail(w, http.StatusForbidden, "mfa_required", "Enter your two-factor authentication code to continue.", nil)
+			}
+			return
+		}
+		if l != lvlSelf && l != lvlSession && (mutating || l >= lvlWrite) && u.Role == auth.RoleViewer {
 			h.fail(w, http.StatusForbidden, "forbidden", "Your role is read-only.", nil)
 			return
 		}
@@ -301,6 +325,7 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	wr := func(pat string, f handler) { mux.HandleFunc(pat, h.guard(lvlWrite, f)) }
 	ow := func(pat string, f handler) { mux.HandleFunc(pat, h.guard(lvlOwner, f)) }
 	self := func(pat string, f handler) { mux.HandleFunc(pat, h.guard(lvlSelf, f)) }
+	sess := func(pat string, f handler) { mux.HandleFunc(pat, h.guard(lvlSession, f)) }
 	m := func(method, path string) string { return method + " " + p + path }
 
 	// auth
@@ -310,7 +335,11 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc(m("POST", "/auth/logout"), h.open(h.logout))
 	mux.HandleFunc(m("GET", "/auth/stripe/start"), h.stripeStart)
 	mux.HandleFunc(m("GET", "/auth/stripe/callback"), h.stripeCallback)
-	rd(m("GET", "/me"), h.me)
+	sess(m("GET", "/me"), h.me)
+	sess(m("POST", "/auth/mfa/setup"), h.mfaSetup)
+	sess(m("POST", "/auth/mfa/enable"), h.mfaEnable)
+	sess(m("POST", "/auth/mfa/verify"), h.mfaVerify)
+	self(m("POST", "/me/mfa/recovery-codes"), h.mfaRecoveryCodes)
 	self(m("PATCH", "/me"), h.updateMe)
 	self(m("POST", "/me/password"), h.changePassword)
 	self(m("DELETE", "/me/stripe"), h.unlinkStripe)
@@ -391,6 +420,7 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	ow(m("POST", "/users"), h.createUser)
 	ow(m("PATCH", "/users/{id}"), h.updateUser)
 	ow(m("DELETE", "/users/{id}"), h.deleteUser)
+	ow(m("POST", "/users/{id}/mfa/reset"), h.mfaReset)
 	rd(m("GET", "/audit-logs"), h.listAudit)
 	rd(m("GET", "/email-logs"), h.listEmailLogs)
 	wr(m("POST", "/email-logs/test"), h.testEmail)

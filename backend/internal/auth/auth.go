@@ -40,12 +40,13 @@ func BurnPassword(p string) { _ = bcrypt.CompareHashAndPassword(dummyHash, []byt
 
 // ---------------------------------------------------------------- sessions
 
-// NewSession stores a session and returns the cookie token.
-func NewSession(g *gorm.DB, userID int64, ip, ua string, ttl time.Duration) (token string, exp time.Time, err error) {
+// NewSession stores a session and returns the cookie token. verified says
+// whether the session already counts as having passed two-step verification.
+func NewSession(g *gorm.DB, userID int64, ip, ua string, ttl time.Duration, verified bool) (token string, exp time.Time, err error) {
 	token = crypt.RandomToken(32)
 	now := db.Now()
 	exp = now.Add(ttl)
-	s := db.AdminSession{ID: crypt.SHA256Hex(token), UserID: userID, IP: ip, UserAgent: trunc(ua, 255), ExpiresAt: exp, CreatedAt: now, LastSeenAt: now}
+	s := db.AdminSession{ID: crypt.SHA256Hex(token), UserID: userID, IP: ip, UserAgent: trunc(ua, 255), ExpiresAt: exp, CreatedAt: now, LastSeenAt: now, MFAVerified: verified}
 	return token, exp, g.Create(&s).Error
 }
 
@@ -56,26 +57,37 @@ func trunc(s string, n int) string {
 	return s
 }
 
-// SessionUser resolves a cookie token to its (enabled) user.
-func SessionUser(g *gorm.DB, token string) (*db.User, error) {
+// SessionInfo resolves a cookie token to its (enabled) user and the session row.
+func SessionInfo(g *gorm.DB, token string) (*db.User, *db.AdminSession, error) {
 	if token == "" {
-		return nil, errors.New("no session")
+		return nil, nil, errors.New("no session")
 	}
 	var s db.AdminSession
 	if err := g.Where("id = ? AND expires_at > ?", crypt.SHA256Hex(token), db.Now()).First(&s).Error; err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var u db.User
 	if err := g.First(&u, s.UserID).Error; err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if u.Disabled {
-		return nil, errors.New("user disabled")
+		return nil, nil, errors.New("user disabled")
 	}
 	if time.Since(s.LastSeenAt) > 5*time.Minute {
 		g.Model(&s).Update("last_seen_at", db.Now())
 	}
-	return &u, nil
+	return &u, &s, nil
+}
+
+// SessionUser resolves a cookie token to its (enabled) user.
+func SessionUser(g *gorm.DB, token string) (*db.User, error) {
+	u, _, err := SessionInfo(g, token)
+	return u, err
+}
+
+// VerifySession marks the session behind a cookie token as having passed the second step.
+func VerifySession(g *gorm.DB, token string) error {
+	return g.Model(&db.AdminSession{}).Where("id = ?", crypt.SHA256Hex(token)).Update("mfa_verified", true).Error
 }
 
 func DestroySession(g *gorm.DB, token string) {

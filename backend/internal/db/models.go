@@ -22,6 +22,16 @@ type User struct {
 	LastLoginAt        *time.Time
 	CreatedAt          time.Time
 	UpdatedAt          time.Time
+
+	// Two-step verification (TOTP). Secrets are encrypted with APP_SECRET, recovery
+	// codes are stored as keyed hashes.
+	MFASecret        string              `gorm:"column:mfa_secret;size:512"`
+	MFAPendingSecret string              `gorm:"column:mfa_pending_secret;size:512"` // enrolment started, not confirmed yet
+	MFAEnabledAt     *time.Time          `gorm:"column:mfa_enabled_at"`
+	MFALastStep      int64               `gorm:"column:mfa_last_step"` // last accepted 30 s step: a code works once
+	MFAFailed        int                 `gorm:"column:mfa_failed"`
+	MFALockedUntil   *time.Time          `gorm:"column:mfa_locked_until"`
+	MFARecoveryCodes JSONField[[]string] `gorm:"column:mfa_recovery_codes"`
 }
 
 type AdminSession struct {
@@ -32,6 +42,8 @@ type AdminSession struct {
 	ExpiresAt  time.Time
 	CreatedAt  time.Time
 	LastSeenAt time.Time
+	// MFAVerified: the second step was passed in this session (see docs/ADMIN_API.md §1.1).
+	MFAVerified bool `gorm:"column:mfa_verified"`
 }
 
 type APIKey struct {

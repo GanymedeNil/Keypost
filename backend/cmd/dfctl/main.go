@@ -3,6 +3,7 @@
 //	dfctl migrate
 //	dfctl admin create --email you@example.com --password '…' [--name Name] [--role owner|admin|viewer]
 //	dfctl admin reset-password --email you@example.com --password '…'
+//	dfctl admin reset-mfa --email you@example.com
 //	dfctl apikey create --name ci [--test] [--email owner@example.com]
 //	dfctl demo-data [--test-mode] [--force]   sample catalogue, orders, licences… to explore the UI
 package main
@@ -68,6 +69,26 @@ func adminCmd(g *gorm.DB, sub string, args []string) {
 	name := fs.String("name", "Admin", "display name")
 	role := fs.String("role", auth.RoleOwner, "owner | admin | viewer")
 	_ = fs.Parse(args)
+	if sub == "reset-mfa" { // last resort for a member (typically the only owner) who lost the authenticator
+		if *email == "" {
+			fatal(fmt.Errorf("--email is required"))
+		}
+		var u db.User
+		if err := g.Where("LOWER(email) = ?", strings.ToLower(*email)).First(&u).Error; err != nil {
+			fatal(fmt.Errorf("no user with email %s", *email))
+		}
+		err := g.Model(&db.User{}).Where("id = ?", u.ID).Updates(map[string]any{
+			"mfa_secret": "", "mfa_pending_secret": "", "mfa_enabled_at": nil, "mfa_last_step": 0, "mfa_failed": 0,
+			"mfa_locked_until": nil, "mfa_recovery_codes": db.J([]string(nil)), "updated_at": db.Now(),
+		}).Error
+		if err != nil {
+			fatal(err)
+		}
+		g.Where("user_id = ?", u.ID).Delete(&db.AdminSession{})
+		g.Create(&db.AuditLog{UserEmail: u.Email, UserID: &u.ID, Action: "user.mfa_reset", ResourceType: "user", ResourceID: fmt.Sprint(u.ID), Details: db.J(map[string]any{"via": "dfctl"}), CreatedAt: db.Now()})
+		fmt.Printf("two-factor authentication reset for %s; they set it up again at the next sign-in and their sessions were revoked\n", u.Email)
+		return
+	}
 	if *email == "" || len(*password) < 10 {
 		fatal(fmt.Errorf("--email and a --password of at least 10 characters are required"))
 	}
@@ -124,7 +145,7 @@ func apikeyCreate(g *gorm.DB, args []string) {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: dfctl migrate | demo-data | admin create|reset-password --email … --password … | apikey create --name … [--test]")
+	fmt.Fprintln(os.Stderr, "usage: dfctl migrate | demo-data | admin create|reset-password --email … --password … | admin reset-mfa --email … | apikey create --name … [--test]")
 	os.Exit(2)
 }
 

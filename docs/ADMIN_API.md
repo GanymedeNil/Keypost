@@ -34,9 +34,28 @@
 | `POST /me/password` | `{"current_password","new_password"}`（≥10 位） |
 | `DELETE /me/stripe` | 解除 Stripe 账号绑定（须已设密码，否则 409） |
 
-`User`：`{id,email,name,role,stripe_account_id,stripe_account_label,disabled,has_password,last_login_at,created_at}`
+`User`：`{id,email,name,role,stripe_account_id,stripe_account_label,disabled,has_password,mfa_enabled,last_login_at,created_at}`；`/me`、`/auth/login`、`/auth/setup`、`/auth/mfa/verify` 里另有 `mfa`（见 §1.1）。
 
 登录页应展示两种方式：邮箱密码表单、「使用 Stripe 登录」按钮（`stripe_login=true` 时，链接到 `/admin-api/auth/stripe/start?mode=login`）。
+
+### 1.1 强制两步验证（MFA，TOTP）
+
+`MFA_REQUIRED`（环境变量，默认 `true`）为真时，**所有成员**——不论用邮箱密码还是「使用 Stripe 登录」——每次登录后会话都是**未验证**状态，必须再通过一次 TOTP（或恢复码）才能使用后台。没有开关可让成员自己关闭 MFA。
+
+- **未验证会话只能调用**：`GET /me`、`POST /auth/logout`、`/auth/mfa/*`。其余 `/admin-api/*` 一律 `403`：`{"error":{"code":"mfa_setup_required"|"mfa_required","message":"…"}}`（已绑定 → `mfa_required`，未绑定 → `mfa_setup_required`）。前端据此跳转 `/admin/mfa`。
+- `/v1/*` 的 API Key 是机器凭据，不受影响。
+- `GET /me` 与 `POST /auth/login`（以及 `/auth/setup`）返回的 `User` 多一个 `mfa`：`{"required":true,"enabled":false,"verified":false,"recovery_codes_left":0}`；`enabled` = 已绑定验证器，`verified` = **当前会话**已通过验证。`users` 列表项只带 `mfa_enabled`。
+- 算法：RFC 6238，SHA-1、6 位、30 秒，接受前后各一个时间窗；同一时间窗的验证码不能重复使用。密钥用 `APP_SECRET` 加密存库，恢复码只存哈希。
+
+| 方法 路径 | 说明 |
+| --- | --- |
+| `POST /auth/mfa/setup` | 开始绑定：生成新密钥（覆盖上一次未完成的）。已绑定 → `409`。返回 `{"secret":"BASE32…","otpauth_uri":"otpauth://totp/…"}`，前端把 `otpauth_uri` 渲染成二维码，同时显示 `secret` 供手动输入 |
+| `POST /auth/mfa/enable` | `{"code":"123456"}` 校验通过后正式启用，会话变为已验证，返回 `{"recovery_codes":["xxxxx-xxxxx",…10 个]}`——**仅此一次**显示。错误 → `422`（`fields.code`） |
+| `POST /auth/mfa/verify` | `{"code":"123456"}` 或 `{"recovery_code":"xxxxx-xxxxx"}`；通过后会话变为已验证，返回 `User`。连续错误 5 次锁定该账号 15 分钟（`429 rate_limited`，`message` 带剩余分钟）；恢复码一次性 |
+| `POST /me/mfa/recovery-codes` | 已验证会话 + `{"code":"123456"}` → 作废旧恢复码并返回新的 10 个 `{"recovery_codes":[…]}` |
+| `POST /users/{id}/mfa/reset` | **owner**：清除该成员的验证器和恢复码并让其所有会话失效，下次登录重新绑定（用于换手机/丢设备）。不能对自己使用（`409`），审计 `user.mfa_reset` |
+
+最后手段（例如唯一的 owner 丢了设备）：服务器上执行 `dfctl admin reset-mfa --email you@example.com`。审计动作：`auth.mfa_enabled`、`auth.mfa_verified`、`auth.mfa_failed`、`auth.mfa_recovery_used`、`auth.mfa_recovery_regenerated`、`user.mfa_reset`。
 
 ## 2. 仪表盘
 
