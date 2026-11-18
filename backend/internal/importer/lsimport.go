@@ -60,6 +60,10 @@ func (r *Runner) StartLemonSqueezyAPI(createdBy string, o LSOptions) (*db.Import
 	if err != nil {
 		return nil, service.Invalid("/resources", err.Error())
 	}
+	onConflict, err := normalizeConflict(o.OnConflict)
+	if err != nil {
+		return nil, service.Invalid("/on_conflict", err.Error())
+	}
 	base := strings.TrimRight(strings.TrimSpace(o.BaseURL), "/")
 	if base == "" {
 		base = defaultLSBase
@@ -70,7 +74,7 @@ func (r *Runner) StartLemonSqueezyAPI(createdBy string, o LSOptions) (*db.Import
 	storeIDs := append([]int64{}, o.StoreIDs...)
 	opts := map[string]any{
 		"api_key": redactKey(o.APIKey), "base_url": base, "test_mode": o.TestMode, "store_ids": storeIDs,
-		"resources": ordered, "download_files": o.DownloadFiles, "dry_run": o.DryRun,
+		"resources": ordered, "download_files": o.DownloadFiles, "dry_run": o.DryRun, "on_conflict": onConflict,
 	}
 	key := strings.TrimSpace(o.APIKey)
 	return r.start(kindLSAPI, createdBy, opts, nil, func(ctx context.Context, j *jobCtl) error {
@@ -79,7 +83,7 @@ func (r *Runner) StartLemonSqueezyAPI(createdBy string, o LSOptions) (*db.Import
 			return err
 		}
 		src := &apiSource{c: client, storeIDs: storeIDs, downloadFiles: o.DownloadFiles && !o.DryRun, httpc: r.client()}
-		cfg := ingestCfg{testMode: o.TestMode, dryRun: o.DryRun, downloadFiles: o.DownloadFiles, storeIDs: storeIDs, resources: want}
+		cfg := ingestCfg{testMode: o.TestMode, dryRun: o.DryRun, downloadFiles: o.DownloadFiles, storeIDs: storeIDs, resources: want, onConflict: onConflict}
 		if o.DryRun {
 			j.set("dry_run", true)
 			j.info("dry run: everything is fetched and checked, nothing is written or downloaded")
@@ -94,7 +98,14 @@ func (r *Runner) StartLemonSqueezyArchive(createdBy, zipPath string, o ArchiveOp
 	if strings.TrimSpace(zipPath) == "" {
 		return nil, service.Invalid("/file", "An archive file is required.")
 	}
-	opts := map[string]any{"source": "archive", "test_mode": o.TestMode, "download_files": o.DownloadFiles, "dry_run": o.DryRun}
+	onConflict, err := normalizeConflict(o.OnConflict)
+	if err != nil {
+		if cleanup != nil {
+			cleanup()
+		}
+		return nil, service.Invalid("/on_conflict", err.Error())
+	}
+	opts := map[string]any{"source": "archive", "test_mode": o.TestMode, "download_files": o.DownloadFiles, "dry_run": o.DryRun, "on_conflict": onConflict}
 	return r.start(kindLSFiles, createdBy, opts, cleanup, func(ctx context.Context, j *jobCtl) error {
 		src, err := openArchive(zipPath, j, o.DownloadFiles && !o.DryRun, r.client())
 		if err != nil {
@@ -102,7 +113,7 @@ func (r *Runner) StartLemonSqueezyArchive(createdBy, zipPath string, o ArchiveOp
 		}
 		defer src.Close()
 		want, _, _ := normalizeResources(nil)
-		cfg := ingestCfg{testMode: o.TestMode, dryRun: o.DryRun, downloadFiles: o.DownloadFiles, resources: want}
+		cfg := ingestCfg{testMode: o.TestMode, dryRun: o.DryRun, downloadFiles: o.DownloadFiles, resources: want, onConflict: onConflict}
 		if o.DryRun {
 			j.set("dry_run", true)
 			j.info("dry run: the archive is read and checked, nothing is written")

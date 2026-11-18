@@ -23,6 +23,7 @@ type ingestCfg struct {
 	downloadFiles bool
 	storeIDs      []int64
 	resources     map[string]bool
+	onConflict    string // ConflictAbort (default) | ConflictOverwrite
 }
 
 // stageHandler maps and stores the objects of one resource.
@@ -100,6 +101,9 @@ type ingest struct {
 	namesDone bool
 	paypal    int
 	warned    map[string]bool
+
+	conflicts int             // rows whose id belongs to a different local row (see guard.go)
+	matched   map[string]bool // rows of orders.csv placed by their natural key: exempt from the id guard
 }
 
 func newIngest(r *Runner, j *jobCtl, cfg ingestCfg, src source) *ingest {
@@ -108,7 +112,7 @@ func newIngest(r *Runner, j *jobCtl, cfg ingestCfg, src source) *ingest {
 		// printing every failed statement (with all its values) as well
 		r: r, svc: r.svc, g: r.svc.DB.Session(&gorm.Session{Logger: r.svc.DB.Logger.LogMode(logger.Silent)}), j: j, cfg: cfg, src: src,
 		subByItem: map[int64]int64{}, custRemap: map[int64]int64{}, custIDs: map[int64]bool{}, custMail: map[string]int64{},
-		nextIDs: map[string]int64{}, orderIDs: map[string]int64{}, warned: map[string]bool{},
+		nextIDs: map[string]int64{}, orderIDs: map[string]int64{}, warned: map[string]bool{}, matched: map[string]bool{},
 	}
 	in.initCaches()
 	in.initScope()
@@ -187,14 +191,17 @@ func (in *ingest) run(ctx context.Context) (err error) {
 	if len(absent) > 0 {
 		in.j.info("not present in the source, nothing to import: %s", strings.Join(absent, ", "))
 	}
-	return nil
+	return in.finishConflicts()
 }
 
-// preflight warns about data that Lemon Squeezy ids could collide with.
+// preflight tells what the id guard will protect.
 func (in *ingest) preflight() {
 	var n int64
 	if in.g.Model(&db.Order{}).Where("source <> ?", "lemonsqueezy").Count(&n).Error == nil && n > 0 {
-		in.j.warn("this database already holds %d order(s) created by Stripe checkouts or by hand: Lemon Squeezy ids are kept, so imported rows can collide with local rows that use the same ids (orders are protected, other tables are not). A clean migration imports into an empty database", n)
+		in.j.info("this database already holds %d order(s) created by Stripe checkouts or by hand: every incoming id is checked against local rows, and the import stops instead of overwriting a different one", n)
+	}
+	if in.cfg.onConflict == ConflictOverwrite {
+		in.j.warn("id conflicts are set to overwrite: local rows that use the same id as a Lemon Squeezy row WILL be replaced")
 	}
 }
 

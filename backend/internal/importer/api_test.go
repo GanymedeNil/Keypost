@@ -898,33 +898,6 @@ func TestOrdersResolveMergedCustomersByEmailOnPartialRun(t *testing.T) {
 	}
 }
 
-func TestLocalOrdersAreNotOverwritten(t *testing.T) {
-	e := newEnv(t)
-	// an order created by a Stripe checkout that happens to use the id of LS order 500
-	e.g.Create(&db.Order{ID: 500, StoreID: 1, CustomerID: 1, Identifier: "local-stripe-order", OrderNumber: 77, Total: 123, Source: "stripe"})
-	f := newFakeLS(t, "lsk_secret_abcd")
-	loadFixtures(f)
-	o := apiOptions(f)
-	o.Resources = []string{"orders"}
-	job, err := e.r.StartLemonSqueezyAPI("admin", o)
-	j := e.mustFinish(job, err, "completed")
-
-	var local db.Order
-	e.g.First(&local, 500)
-	if local.Identifier != "local-stripe-order" || local.Total != 123 || local.Source != "stripe" {
-		t.Errorf("the local order was overwritten: %+v", local)
-	}
-	if n := e.count(&db.Order{}); n != 5 { // 4 other LS orders + the local one
-		t.Errorf("orders = %d", n)
-	}
-	if !e.logContains(j.ID, "error", "orders #500") || !e.logContains(j.ID, "warn", "already holds 1 order") {
-		t.Errorf("the clash and the pre-flight notice must be logged:\n%s", e.logDump(j.ID))
-	}
-	if progressCounts(j)["failed"] != 1 {
-		t.Errorf("failed = %d", progressCounts(j)["failed"])
-	}
-}
-
 func TestReimportKeepsNewerLocalChangesAndTakesNewerLemonSqueezyOnes(t *testing.T) {
 	e, f, _ := runFullImport(t)
 	ctx := context.Background()

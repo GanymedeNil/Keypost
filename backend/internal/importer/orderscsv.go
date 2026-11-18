@@ -245,5 +245,8 @@ func (in *ingest) resolveCSV(res string, o *lsObject) bool {
 				"orders.csv: no variant matches %q / %q; its order items are imported without a variant", a.str("product_name"), a.str("variant_name"))
 		}
 	}
+	if o.ID > 0 {
+		in.matched[matchKey(res, o.ID)] = true // placed by e-mail / identifier: the same row by definition
+	}
 	return o.ID > 0
 }

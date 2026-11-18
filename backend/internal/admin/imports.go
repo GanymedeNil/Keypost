@@ -95,6 +95,7 @@ func (h *Handler) importLS(w http.ResponseWriter, r *http.Request, u *db.User) {
 	opts.TestMode, _ = b.boolean("test_mode")
 	opts.DownloadFiles, _ = b.boolean("download_files")
 	opts.DryRun, _ = b.boolean("dry_run")
+	opts.OnConflict, _ = b.str("on_conflict")
 	if raw, ok := b["store_ids"].([]any); ok {
 		for _, e := range raw {
 			if f, ok := e.(float64); ok {
@@ -110,7 +111,7 @@ func (h *Handler) importLS(w http.ResponseWriter, r *http.Request, u *db.User) {
 		h.failErr(w, err)
 		return
 	}
-	h.audit(r, u, "import.start", "import", job.ID, map[string]any{"kind": "lemonsqueezy_api", "dry_run": opts.DryRun})
+	h.audit(r, u, "import.start", "import", job.ID, map[string]any{"kind": "lemonsqueezy_api", "dry_run": opts.DryRun, "on_conflict": opts.OnConflict})
 	h.created(w, importDTO(*job))
 }
 
@@ -162,6 +163,7 @@ func (h *Handler) importLSArchive(w http.ResponseWriter, r *http.Request, u *db.
 		DownloadFiles: r.FormValue("download_files") == "true",
 		DryRun:        r.FormValue("dry_run") == "true",
 		TestMode:      r.FormValue("test_mode") == "true",
+		OnConflict:    r.FormValue("on_conflict"),
 	}
 	job, err := h.Imp.StartLemonSqueezyArchive(u.Email, path, opts)
 	if err != nil {
@@ -169,7 +171,7 @@ func (h *Handler) importLSArchive(w http.ResponseWriter, r *http.Request, u *db.
 		h.failErr(w, err)
 		return
 	}
-	h.audit(r, u, "import.start", "import", job.ID, map[string]any{"kind": "lemonsqueezy_files"})
+	h.audit(r, u, "import.start", "import", job.ID, map[string]any{"kind": "lemonsqueezy_files", "dry_run": opts.DryRun, "on_conflict": opts.OnConflict})
 	h.created(w, importDTO(*job))
 }
 

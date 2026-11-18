@@ -109,6 +109,7 @@ func (in *ingest) objectExists(ctx context.Context, key string) bool {
 // valid for an hour, so the bytes are fetched as soon as the row is read.
 func (in *ingest) fileHandler() *stageHandler {
 	h := &stageHandler{flush: func(context.Context) error { return nil }}
+	guard := in.fileGuard()
 	h.add = func(ctx context.Context, o lsObject) error {
 		f, ok := in.mapFile(o)
 		if !ok {
@@ -116,13 +117,14 @@ func (in *ingest) fileHandler() *stageHandler {
 		}
 		in.j.count("files", 1)
 		in.j.advance(1)
-		if in.cfg.dryRun {
-			return nil
+		kept, err := guard([]db.File{f})
+		if err != nil || len(kept) == 0 || in.cfg.dryRun {
+			return err
 		}
 		cols := in.storeFile(ctx, &f, o.A.str("download_url"))
 		spec := upsertSpec{table: "files", cols: cols}
 		failedBefore := in.failed
-		err := writeBatch(in, "files", []db.File{f}, func(f db.File) int64 { return f.ID }, upsertWriter[db.File](in, spec))
+		err = writeBatch(in, "files", []db.File{f}, func(f db.File) int64 { return f.ID }, upsertWriter[db.File](in, spec))
 		if in.failed > failedBefore && f.StorageKey != "" {
 			_ = in.svc.Storage.Delete(ctx, f.StorageKey) // do not leave an object nothing refers to
 		}

@@ -749,6 +749,21 @@ func TestAdminAPI(t *testing.T) {
 	}
 }
 
+func TestAdminImportRejectsUnknownConflictPolicy(t *testing.T) {
+	e := newEnv(t)
+	hdr := map[string]string{"Content-Type": "application/json", "X-Requested-With": "df-admin"}
+	rr := e.do("POST", "/admin-api/auth/login", hdr, strings.NewReader(`{"email":"owner@example.com","password":"correct horse battery"}`))
+	if rr.Code != 200 {
+		t.Fatalf("login: %d %s", rr.Code, rr.Body.String())
+	}
+	hdr["Cookie"] = rr.Result().Cookies()[0].String()
+	// validated before anything is started or sent to Lemon Squeezy
+	bad := e.do("POST", "/admin-api/imports/lemonsqueezy", hdr, strings.NewReader(`{"api_key":"lsk_test_1234","on_conflict":"skip"}`))
+	if bad.Code != 422 || !strings.Contains(bad.Body.String(), "on_conflict") {
+		t.Fatalf("unknown policy: %d %s", bad.Code, bad.Body.String())
+	}
+}
+
 func TestStorefrontDownloadsAndMagicLink(t *testing.T) {
 	e := newEnv(t)
 	once, _ := e.seedCatalog()

@@ -58,6 +58,7 @@ type LSOptions struct {
 	Resources     []string // empty = all
 	DownloadFiles bool
 	DryRun        bool
+	OnConflict    string // what to do when an id belongs to a different local row: "abort" (default) | "overwrite"
 }
 
 // ArchiveOptions configures an offline import from a ZIP archive.
@@ -65,6 +66,7 @@ type ArchiveOptions struct {
 	TestMode      bool
 	DownloadFiles bool
 	DryRun        bool
+	OnConflict    string // as LSOptions.OnConflict
 }
 
 // MatchOptions selects what the Stripe auto-matcher links.

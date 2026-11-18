@@ -16,31 +16,31 @@ const maxBufferedCustomers = 2_000_000
 
 func (in *ingest) initHandlers() {
 	in.handlers = map[string]*stageHandler{
-		"stores": newBatch(in, "stores", in.mapStore, func(s db.Store) int64 { return s.ID }, nil,
+		"stores": newBatch(in, "stores", in.mapStore, func(s db.Store) int64 { return s.ID }, in.storeGuard(),
 			upsertWriter[db.Store](in, in.storeSpec())),
 		"customers": in.customerHandler(),
-		"products": newBatch(in, "products", in.mapProduct, func(p db.Product) int64 { return p.ID }, nil,
+		"products": newBatch(in, "products", in.mapProduct, func(p db.Product) int64 { return p.ID }, in.productGuard(),
 			upsertWriter[db.Product](in, in.newSpec(&db.Product{}, []string{"stripe_product_id"}, nil))),
-		"variants": newBatch(in, "variants", in.mapVariant, func(v db.Variant) int64 { return v.ID }, nil,
+		"variants": newBatch(in, "variants", in.mapVariant, func(v db.Variant) int64 { return v.ID }, in.variantGuard(),
 			upsertWriter[db.Variant](in, in.newSpec(&db.Variant{}, []string{"stripe_product_id"}, nil))),
-		"prices": newBatch(in, "prices", in.mapPrice, func(p db.Price) int64 { return p.ID }, nil,
+		"prices": newBatch(in, "prices", in.mapPrice, func(p db.Price) int64 { return p.ID }, in.priceGuard(),
 			upsertWriter[db.Price](in, in.newSpec(&db.Price{}, []string{"stripe_price_id"}, nil))),
 		"files": in.fileHandler(),
-		"orders": newBatch(in, "orders", in.mapOrder, func(o db.Order) int64 { return o.ID }, in.vetOrders,
+		"orders": newBatch(in, "orders", in.mapOrder, func(o db.Order) int64 { return o.ID }, in.orderGuard(),
 			upsertWriter[db.Order](in, in.newSpec(&db.Order{},
 				[]string{"custom_data", "stripe_checkout_session", "stripe_payment_intent", "stripe_invoice_id", "stripe_charge_id", "stripe_receipt_url", "stripe_customer_id"},
 				[]string{"card_brand", "card_last_four", "city", "country", "postal_code", "tax_number"}))),
-		"order_items": newBatch(in, "order_items", in.mapOrderItem, func(i db.OrderItem) int64 { return i.ID }, nil,
+		"order_items": newBatch(in, "order_items", in.mapOrderItem, func(i db.OrderItem) int64 { return i.ID }, in.orderItemGuard(),
 			upsertWriter[db.OrderItem](in, in.newSpec(&db.OrderItem{}, nil, nil))),
-		"subscriptions": newBatch(in, "subscriptions", in.mapSubscription, func(r subRow) int64 { return r.sub.ID }, nil,
+		"subscriptions": newBatch(in, "subscriptions", in.mapSubscription, func(r subRow) int64 { return r.sub.ID }, in.subscriptionVet(),
 			in.subscriptionWriter()),
-		"subscription_items": newBatch(in, "subscription_items", in.mapSubscriptionItem, func(i db.SubscriptionItem) int64 { return i.ID }, nil,
+		"subscription_items": newBatch(in, "subscription_items", in.mapSubscriptionItem, func(i db.SubscriptionItem) int64 { return i.ID }, in.subscriptionItemGuard(),
 			upsertWriter[db.SubscriptionItem](in, in.newSpec(&db.SubscriptionItem{}, []string{"stripe_subscription_item"}, nil))),
-		"subscription_invoices": newBatch(in, "subscription_invoices", in.mapInvoice, func(i db.SubscriptionInvoice) int64 { return i.ID }, nil,
+		"subscription_invoices": newBatch(in, "subscription_invoices", in.mapInvoice, func(i db.SubscriptionInvoice) int64 { return i.ID }, in.invoiceGuard(),
 			upsertWriter[db.SubscriptionInvoice](in, in.newSpec(&db.SubscriptionInvoice{}, []string{"stripe_invoice_id", "stripe_payment_intent", "stripe_charge_id"}, nil))),
-		"license_keys": newBatch(in, "license_keys", in.mapLicenseKey, func(k db.LicenseKey) int64 { return k.ID }, nil,
+		"license_keys": newBatch(in, "license_keys", in.mapLicenseKey, func(k db.LicenseKey) int64 { return k.ID }, in.licenseKeyGuard(),
 			upsertWriter[db.LicenseKey](in, in.newSpec(&db.LicenseKey{}, nil, nil))),
-		"license_key_instances": newBatch(in, "license_key_instances", in.mapInstance, func(i db.LicenseKeyInstance) int64 { return i.ID }, nil,
+		"license_key_instances": newBatch(in, "license_key_instances", in.mapInstance, func(i db.LicenseKeyInstance) int64 { return i.ID }, in.instanceGuard(),
 			upsertWriter[db.LicenseKeyInstance](in, in.newSpec(&db.LicenseKeyInstance{}, nil, nil))),
 	}
 }
@@ -54,37 +54,31 @@ func (in *ingest) storeSpec() upsertSpec {
 	return spec
 }
 
-// vetOrders refuses to overwrite a local order (one that was not imported
-// from Lemon Squeezy) that happens to use the same id as an imported one.
-func (in *ingest) vetOrders(rows []db.Order) ([]db.Order, error) {
-	ids := make([]int64, len(rows))
-	for i, r := range rows {
-		ids[i] = r.ID
-	}
-	var existing []db.Order
-	if err := in.g.Select("id", "identifier", "source", "order_number").Where("id IN ?", ids).Find(&existing).Error; err != nil {
-		return rows, nil // the write itself will report a broken database
-	}
-	local := map[int64]db.Order{}
-	for _, o := range existing {
-		if o.Source != "lemonsqueezy" {
-			local[o.ID] = o
+// subscriptionVet runs the id guard on the subscriptions of a batch (their
+// first items are written with them and need no check of their own).
+func (in *ingest) subscriptionVet() func([]subRow) ([]subRow, error) {
+	guard := in.subscriptionGuard()
+	return func(rows []subRow) ([]subRow, error) {
+		subs := make([]db.Subscription, len(rows))
+		for i, r := range rows {
+			subs[i] = r.sub
 		}
-	}
-	if len(local) == 0 {
-		return rows, nil
-	}
-	out := make([]db.Order, 0, len(rows))
-	for _, r := range rows {
-		if ex, clash := local[r.ID]; clash && ex.Identifier != r.Identifier {
-			if err := in.rowFailed("orders", r.ID, fmt.Errorf("the id is used by local order #%d (%s, source %s); it was not overwritten", ex.OrderNumber, ex.Identifier, ex.Source)); err != nil {
-				return nil, err
+		kept, err := guard(subs)
+		if err != nil || len(kept) == len(rows) {
+			return rows, err
+		}
+		ok := make(map[int64]bool, len(kept))
+		for _, k := range kept {
+			ok[k.ID] = true
+		}
+		out := make([]subRow, 0, len(kept))
+		for _, r := range rows {
+			if ok[r.sub.ID] {
+				out = append(out, r)
 			}
-			continue
 		}
-		out = append(out, r)
+		return out, nil
 	}
-	return out, nil
 }
 
 // subscriptionWriter upserts subscriptions with their first item and copies
@@ -174,9 +168,14 @@ func (in *ingest) customerHandler() *stageHandler {
 		rows := in.mergeCustomers(buf)
 		buf = nil
 		write := upsertWriter[db.Customer](in, spec)
+		guard := in.customerGuard()
 		for start := 0; start < len(rows); start += in.r.batch() {
 			end := min(start+in.r.batch(), len(rows))
-			if err := writeBatch(in, "customers", rows[start:end], func(c db.Customer) int64 { return c.ID }, write); err != nil {
+			chunk, err := guard(rows[start:end])
+			if err != nil {
+				return err
+			}
+			if err := writeBatch(in, "customers", chunk, func(c db.Customer) int64 { return c.ID }, write); err != nil {
 				return err
 			}
 		}
