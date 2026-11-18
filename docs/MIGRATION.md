@@ -8,8 +8,12 @@
 导入时 **Lemon Squeezy 的 ID 全部保留**（`license_keys.id`、`orders.id`、`customers.id`、订单 `identifier`/`order_number`、License 实例 `identifier` = `instance_id` …），
 老客户端和你自己的业务系统里存的任何 ID、Key、实例 ID 在新服务上继续有效。因此：
 
-- **请在空库（或只有导入数据的库）上做导入。** 新数据的自增 ID 会接在最大 ID 之后（PostgreSQL 导入后自动重置序列）。
-- 导入器会**拒绝覆盖非 LS 来源的订单**（例如你已经用 Stripe 在新服务上成交的订单），但其他表（商品、客户…）按 ID 覆盖。LS 的 ID 是全平台共享的大数，与新服务自增的小 ID 通常不冲突，仍建议先导入、后收款。
+- **请在空库（或只有导入数据的库）上做导入。** 新数据的自增 ID 会接在最大 ID 之后（PostgreSQL 导入后自动重置序列）。LS 的 ID 是全平台共享的大数，与新服务自增的小 ID 通常不冲突，仍建议先导入、后收款。
+- **ID 冲突保护。** 写入每一批数据前，导入器会检查这些 ID 在本库里是否已被**另一条不同的数据**占用（例如 Stripe 结账产生的订单、手工建的产品）。有冲突就**停止导入**——既不覆盖，也不会让后续的变体/订单项/License Key 悄悄挂到那条本地数据上。
+  - "同一条数据"的判断：`created_at` 与来源一致（重复导入时必然成立；本地编辑不会改 `created_at`），或自然键相同——客户（店铺 + 邮箱）、订单（`identifier`）、License Key（Key 字符串）、实例与文件（`identifier`）、店铺（`slug`，所以全新安装的占位店铺会被同 slug 的 LS 店铺接管）。其余表只比 `created_at`。因此来源对象必须带 `created_at`（LS API 与官方导出都有；手写归档请补上）。`orders.csv` 按邮箱和订单号归并，不参与此检查。
+  - 日志逐条列出冲突：表、ID、本地数据与来源数据的摘要。已写入的前面几批属于有效的 LS 数据，保留；排除冲突后可直接重跑。
+  - **试运行同样会检查**，并列出**全部**冲突后以失败结束（真正导入会在第一批冲突处停下），所以上线前的 Dry run 就是冲突检查。
+  - 解决办法：①在空库导入（推荐）；②冲突的本地数据只是可丢弃的测试数据——在导入表单打开"覆盖冲突的 ID"（API 参数 `on_conflict: "overwrite"`，压缩包上传表单字段同名），冲突数据会被替换并逐条记入警告日志。
 - 重复导入是安全的：按主键幂等 upsert；本地已有的 Stripe 关联（`stripe_*`）、激活实例、下载计数不会被覆盖；本地更新时间更新的行不会被 LS 旧数据回退。
 
 ## 1. 准备
@@ -88,6 +92,7 @@ LS 的迁移工具（Migration Hub，2026-12-02 起）会把每个 **variant 变
 - [ ] 抽查老客户的 Key：`POST /v1/licenses/validate`（带 `instance_id`）→ `valid:true`，`activation_usage` 与 LS 一致。
 - [ ] 新激活、超限、停用行为与 LS 一致（`This license key has reached the activation limit.`）。
 - [ ] 订单页（`/my-orders/<identifier>?signature=…`）能看到 Key、文件下载（点开能下到正确字节）、链接。
+- [ ] 试运行（Dry run）无 ID 冲突，真正导入的任务页「ID 冲突」计数为 0。
 - [ ] 后台「缺口报告」为空，或剩余项都已知悉（PayPal 订阅等）。
 - [ ] Stripe 测试环境下：新购 → 订单/Key/收据邮件/出站 Webhook；续费；取消 → Key 到期；退款 → Key 禁用。
 - [ ] Stripe → 设置 → Webhook 密钥已配置，后台「Stripe 事件」无 `failed`。

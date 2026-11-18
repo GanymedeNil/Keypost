@@ -166,8 +166,8 @@ CRUD：`POST {"email","name","role","password"?,"stripe_account_id"?}`；`PATCH 
 
 - `GET /imports`；`GET /imports/{id}`；`GET /imports/{id}/logs?after=<logId>`（增量日志，`[{id,level,message,created_at}]`）；`POST /imports/{id}/cancel`。
 - `ImportJob`：`{id,kind,status(pending|running|completed|failed|cancelled),options,progress:{stage,done,total,counts:{products:3,…},warnings:2},error,created_by,started_at,finished_at,created_at}`
-- `POST /imports/lemonsqueezy`（从 LS API 拉取）：`{"api_key","test_mode":false,"store_ids":[…]?,"resources":["stores","products","variants","prices","files","customers","orders","subscriptions","license_keys"]?,"download_files":true,"dry_run":false}` → `ImportJob`（异步）。
-- `POST /imports/lemonsqueezy/archive`（离线导入）：`multipart`，字段 `file`（ZIP，内含各资源的 JSON:API 分页导出，见 `docs/MIGRATION.md`）、`download_files`。
+- `POST /imports/lemonsqueezy`（从 LS API 拉取）：`{"api_key","test_mode":false,"store_ids":[…]?,"resources":["stores","products","variants","prices","files","customers","orders","subscriptions","license_keys"]?,"download_files":true,"dry_run":false,"on_conflict":"abort"}` → `ImportJob`（异步）。`on_conflict`：`"abort"`（默认）遇到"ID 已被本库另一条不同数据占用"就停止并以 `failed` 结束；`"overwrite"` 覆盖本地数据（逐条警告）。其他取值 → 422 `/on_conflict`。试运行同样检查，列出全部冲突后以 `failed` 结束。详见 `docs/MIGRATION.md` §0。
+- `POST /imports/lemonsqueezy/archive`（离线导入）：`multipart`，字段 `file`（ZIP，内含各资源的 JSON:API 分页导出，见 `docs/MIGRATION.md`）、`download_files`、`dry_run`、`test_mode`、`on_conflict`（同上）。
 - `POST /imports/stripe-mapping`：`multipart`，字段 `file`（LS 迁移工具给出的「LS Customer ID → Stripe Customer ID」CSV）、可选 `kind=customers|products|subscriptions`（默认 customers）。
 - `POST /imports/stripe-auto-match`：`{"customers":true,"products":true,"subscriptions":true}` 通过 Stripe API 以邮箱 / 产品名自动匹配，未匹配项写入日志。
 - `GET /imports/mapping-report.csv`：当前未建立 Stripe 映射的 customers / variants / subscriptions 清单（CSV 下载）。
@@ -230,5 +230,5 @@ Cookie `df_customer`（HttpOnly，30 天）。POST 同样需要 `X-Requested-Wit
 - `PUT /settings` → 与 `GET /settings` 相同的完整结构。
 - `POST /imports/*` → `ImportJob`。`ImportJob.options` 永不包含 LS API Key 明文（只保留末 4 位）。
 - `ImportJob.kind`：`lemonsqueezy_api` | `lemonsqueezy_files`（ZIP）| `stripe_mapping` | `stripe_auto_match`。同一 kind 同时只能运行一个（再次启动返回 409）。
-- `progress`：`{stage, done, total, counts:{…}, warnings, errors?, dry_run?}`。`done/total` 是**当前阶段**的进度，`total=0` 表示未知。`stage` 取值：LS 导入为资源名（`stores customers products variants prices files orders order_items subscriptions subscription_items subscription_invoices license_keys license_key_instances`）；映射任务为 `customers|products|subscriptions`；自动匹配为 `customers products prices subscriptions`。
+- `progress`：`{stage, done, total, counts:{…}, warnings, errors?, dry_run?}`；`counts` 除各资源数量外还可能有 `invalid`、`failed`、`conflicts`（ID 被另一条本地数据占用的行数）、`overwritten`（`on_conflict=overwrite` 时被覆盖的行数）。`options.on_conflict` 回显生效的策略。`done/total` 是**当前阶段**的进度，`total=0` 表示未知。`stage` 取值：LS 导入为资源名（`stores customers products variants prices files orders order_items subscriptions subscription_items subscription_invoices license_keys license_key_instances`）；映射任务为 `customers|products|subscriptions`；自动匹配为 `customers products prices subscriptions`。
 - 上传文件：表单里的 `name` 若不带扩展名，会自动补上传文件的扩展名。
