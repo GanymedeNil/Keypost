@@ -1,5 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Keypost">
-  <defs><linearGradient id="g" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse"><stop stop-color="#6d70f5"/><stop offset="1" stop-color="#3f37c9"/></linearGradient></defs>
-  <rect width="64" height="64" rx="15" fill="url(#g)"/>
-  <g transform="translate(8 8) scale(2)" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" color="#fff"><rect x="3" y="8" width="8" height="8" rx="2.5"/><circle cx="7" cy="12" r="1" fill="currentColor" stroke="none"/><path d="M11 12h10M16.5 12v3.2M20 12v2.2"/></g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="80 60 490 190" width="640" height="240" role="img" aria-label="Keypost">
+  <style>:root{--c:#192837}@media (prefers-color-scheme:dark){:root{--c:#e8edf5}}</style>
+  <g color="#192837" style="color:var(--c)">
+    <mask id="c" maskUnits="userSpaceOnUse" x="90" y="78" width="200" height="154">
+      <rect x="90" y="78" width="200" height="154" fill="#fff"/>
+      <path d="M96 118 L180 186 L264 118 M96 226 L150 172 M264 226 L210 172" fill="none" stroke="#000" stroke-width="8" stroke-linejoin="miter"/>
+      <path d="M243 141.6 A31 31 0 1 1 267 141.6 L267 178 L264 180 L264 188 L267 190 L267 196 L259 198 L259 206 L267 208 L267 217 Q267 227 257 227 L250 227 Q243 227 243 217 Z" fill="#000" stroke="#000" stroke-width="20" stroke-linejoin="round"/>
+    </mask>
+    <rect x="94" y="118" width="172" height="109" fill="currentColor" mask="url(#c)"/>
+    <path d="M243 141.6 A31 31 0 1 1 267 141.6 L267 178 L264 180 L264 188 L267 190 L267 196 L259 198 L259 206 L267 208 L267 217 Q267 227 257 227 L250 227 Q243 227 243 217 Z M264 105 A9 9 0 1 0 246 105 A9 9 0 1 0 264 105 Z" fill="currentColor" fill-rule="evenodd"/>
+    <text x="305" y="190" fill="currentColor" font-family="'Plus Jakarta Sans','Poppins','Avenir Next','Avenir','Segoe UI','Helvetica Neue',Arial,sans-serif" font-weight="600" font-size="58" textLength="240" lengthAdjust="spacingAndGlyphs" letter-spacing="-0.5">Keypost</text>
+  </g>
 </svg>

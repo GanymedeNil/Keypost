@@ -212,9 +212,7 @@ function MfaInner() {
       </div>
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center text-center">
-          <span className="mb-3 grid size-11 place-items-center rounded-xl bg-accent text-accent-fg shadow-card">
-            <BrandMark className="size-7" />
-          </span>
+          <BrandMark className="mb-4 h-14 w-auto text-fg" />
           <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
           {user && <p className="mt-1 text-sm text-muted">{user.email}</p>}
         </div>

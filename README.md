@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/logo.svg" width="72" height="72" alt="Keypost"></p>
+<p align="center"><img src="docs/logo.svg" width="300" alt="Keypost"></p>
 
 # Keypost
 

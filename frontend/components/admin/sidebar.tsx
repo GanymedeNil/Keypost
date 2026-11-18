@@ -36,9 +36,7 @@ export function Brand() {
   const t = useT();
   return (
     <Link href="/admin" className="flex items-center gap-2.5 px-2.5 py-1">
-      <span className="grid size-7 place-items-center rounded-lg bg-accent text-accent-fg">
-        <BrandMark className="size-4.5" />
-      </span>
+      <BrandMark className="h-6 w-auto shrink-0 text-fg" />
       <span className="text-sm font-semibold tracking-tight text-fg">{t('shell.brand')}</span>
     </Link>
   );
