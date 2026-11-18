@@ -24,6 +24,9 @@
   <img alt="Keypost back office: dashboard" src="docs/screenshots/dashboard.webp" width="100%">
 </picture>
 
+> [!WARNING]
+> **Test it thoroughly in your own business scenario before you take real money with it.** Keypost handles payments, refunds, subscriptions and license entitlements. The author provides it as is, with no warranty, and accepts no responsibility for any loss, including financial loss. See the [Disclaimer](#disclaimer).
+
 ## Why Keypost
 
 Lemon Squeezy stops processing transactions on **March 31, 2027**. Its official advice is to move to Stripe Managed Payments, but that only collects payments:
@@ -239,3 +242,22 @@ scripts/    Offline export script and friends
 - The `*_usd` conversions on orders use a built-in approximate exchange-rate table (override it with the environment variable `FX_RATES='{"EUR":1.09}'`, where each value is how many US dollars one unit of the currency is worth). They are for reports only and never affect what is charged.
 - Operations: every instance needs a public HTTPS address for Stripe webhook callbacks. In a multi-instance deployment, webhook deliveries and import jobs use database leases to avoid duplicates, but rate limiting is per process.
 - Receipt and sign-in e-mails are English only.
+
+## Disclaimer
+
+Keypost is an independent, community-style open-source project. It is **not affiliated with, endorsed by or supported by Lemon Squeezy or Stripe**; "Lemon Squeezy" and "Stripe" are trademarks of their respective owners and are used here only to describe compatibility.
+
+**The software is provided "as is", without warranty of any kind**, express or implied, including but not limited to merchantability, fitness for a particular purpose, accuracy and non-infringement. Compatibility with Lemon Squeezy was checked against a test-mode account and a Stripe sandbox, as described in [API compatibility](docs/API_COMPATIBILITY.md). That is not a guarantee that it behaves identically in every case, in your environment or with your data.
+
+**You are responsible for testing it rigorously in your own business scenario before you use it in production.** At a minimum:
+
+- Run the whole flow end to end in Stripe test mode with your own products, prices, tax settings, currencies and webhooks: purchase, fulfillment, renewal, failed payment, cancellation, refund and chargeback.
+- Run the migration as a dry run first, then on a copy of your data, and check the result against your Lemon Squeezy records (customers, orders, license keys, activations, subscriptions, files) before you cut over.
+- Check the amounts, taxes and currencies that Keypost shows and sends. The `*_usd` figures use an approximate exchange-rate table and are for reporting only.
+- Verify that your own clients and servers work against the License API, the JSON:API and the outgoing webhooks, and that webhook signatures verify.
+- Keep backups of the database and file storage, and keep your Lemon Squeezy exports and tax documents.
+- Review the [known limitations](#known-limitations), and secure the server, the database, `APP_SECRET` and your Stripe keys yourself.
+
+**To the maximum extent permitted by law, the author and contributors are not liable for any claim, damage or loss arising from the use of, or inability to use, this software.** That covers, without limitation, lost or duplicated payments, wrong or missing refunds, incorrect charges, taxes or invoices, lost orders, license keys or files, unauthorized access, downtime, and any indirect or consequential loss. All decisions and the consequences of running a payment system are yours.
+
+This section is not legal advice. If you handle real money, check your legal, tax and payment-provider obligations with a qualified professional.
