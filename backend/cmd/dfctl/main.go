@@ -1,5 +1,6 @@
 // Command dfctl is the operator CLI: it works directly on the database.
 //
+//	dfctl version
 //	dfctl migrate
 //	dfctl admin create --email you@example.com --password '…' [--name Name] [--role owner|admin|viewer]
 //	dfctl admin reset-password --email you@example.com --password '…'
@@ -20,11 +21,16 @@ import (
 	"fulfillment/internal/config"
 	"fulfillment/internal/crypt"
 	"fulfillment/internal/db"
+	"fulfillment/internal/version"
 )
 
 func main() {
 	if len(os.Args) < 2 {
 		usage()
+	}
+	if os.Args[1] == "version" || os.Args[1] == "--version" || os.Args[1] == "-version" {
+		fmt.Println("dfctl", version.String())
+		return
 	}
 	cfg, err := config.Load()
 	if err != nil {
@@ -145,7 +151,7 @@ func apikeyCreate(g *gorm.DB, args []string) {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage: dfctl migrate | demo-data | admin create|reset-password --email … --password … | admin reset-mfa --email … | apikey create --name … [--test]")
+	fmt.Fprintln(os.Stderr, "usage: dfctl version | migrate | demo-data | admin create|reset-password --email … --password … | admin reset-mfa --email … | apikey create --name … [--test]")
 	os.Exit(2)
 }
 
