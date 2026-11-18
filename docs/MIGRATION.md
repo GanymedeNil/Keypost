@@ -97,7 +97,7 @@ Handle whatever is still unmatched item by item with **Download mapping report**
 - [ ] In the Stripe test environment: new purchase → order/key/receipt email/outgoing webhook; renewal; cancellation → key expires; refund → key disabled.
 - [ ] The webhook signing secret is configured (Stripe page), and the Events tab on the Stripe page shows no `failed`.
 - [ ] Storage is backed up (local `DATA_DIR/files` or S3 bucket) + database backup.
-- [ ] You have tested your own business scenario end to end (your products, prices, taxes, currencies, clients and webhook consumers), not just the checks above. The service is provided as is; see the [Disclaimer](../README.md#disclaimer) in the README.
+- [ ] The whole flow has been tested end to end in your own business scenario (products, prices, taxes, currencies, clients, webhook consumers), not just the checks above. Keypost is provided as is, without warranty; see the [Disclaimer](../README.md#disclaimer).
 
 ## 6. Rollback and safeguards
 
