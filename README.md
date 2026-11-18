@@ -12,6 +12,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/GanymedeNil/Keypost/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/GanymedeNil/Keypost/actions/workflows/ci.yml/badge.svg?branch=main"></a>
   <img alt="Go" src="https://img.shields.io/badge/Go-API-00ADD8?logo=go&logoColor=white">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white">
   <img alt="shadcn/ui" src="https://img.shields.io/badge/shadcn%2Fui-neutral-000000">
@@ -225,6 +226,10 @@ if the only owner loses theirs, run `dfctl admin reset-mfa --email you@example.c
 | [docs/ADMIN_API.md](docs/ADMIN_API.md) | The back-office API contract |
 | [docs/FRONTEND_NOTES.md](docs/FRONTEND_NOTES.md) | Frontend structure, shadcn/ui and theming |
 | [docs/RESEARCH_LEMONSQUEEZY.md](docs/RESEARCH_LEMONSQUEEZY.md) | Research notes on Lemon Squeezy Digital Fulfillment |
+
+## Contributing
+
+`main` only accepts pull requests, and CI (Go tests on SQLite and PostgreSQL 18, frontend lint, type check and build, version check) must pass. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [CHANGELOG](CHANGELOG.md).
 
 ## Repository layout
 

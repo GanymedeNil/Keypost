@@ -4,6 +4,8 @@ All notable changes to Keypost are documented here. The format follows [Keep a C
 
 **Cutting a release:** bump `backend/internal/version/VERSION` and `frontend/package.json` to the same number, add the entry here, merge through a pull request, then tag the merge commit `vX.Y.Z`. `scripts/check-version.sh` (run in CI) keeps the three in step.
 
+## [Unreleased]
+
 ## [0.1.0] - 2026-11-18
 
 First public release.
